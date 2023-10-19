@@ -12274,5 +12274,123 @@ export class Synth {
     }
 }
 
+export class AsyncSynth {
+    audioCtx: AudioContext | undefined;
+    audioWorkletNode: AudioWorkletNode | undefined;
+    isPlayingSong = false;
+
+    play() {
+        if (this.audioCtx == null) {
+            this.audioCtx = this.audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+
+            if (this.audioCtx?.audioWorklet) {
+                let source = `${BeepboxAudioProcessor}; registerProcessor('beepbox-audio-processor', BeepboxAudioProcessor);`;
+                const workletBlob = new Blob([source], { type: "application/javascript" });
+                const workletURL = URL.createObjectURL(workletBlob);
+                this.audioCtx.audioWorklet.addModule(workletURL).then(() => {
+                    this.audioWorkletNode = new AudioWorkletNode(this.audioCtx!!, 'beepbox-audio-processor');
+                    this.audioWorkletNode.channelCountMode = 'explicit';
+                    this.audioWorkletNode.channelInterpretation = 'speakers';
+                    this.audioWorkletNode.connect(this.audioCtx!!.destination);
+                    this.isPlayingSong = true;
+                });
+            } else {
+                return console.error("AsyncSynth requires audioWorklet");
+            }
+        }
+        else if (this.audioCtx && this.audioWorkletNode) {
+            this.resume();
+        } else {
+            console.log("Audio cannot be resumed because it's not paused or audioWorklet is not initialized.");
+        }
+    }
+
+    pause() {
+        if (this.audioWorkletNode && this.isPlayingSong) {
+            // Schedule a value change for the AudioParam to pause playback.
+            let params = this.audioWorkletNode.parameters as any;
+            params.get("playbackRate").setValueAtTime(0, this.audioCtx!!.currentTime);
+            console.log("Audio paused");
+            this.isPlayingSong = false;
+        } else {
+            console.log("Audio is not playing");
+        }
+    }
+
+    resume() {
+        if (this.audioWorkletNode && !this.isPlayingSong) {
+            // Schedule a value change for the AudioParam to resume playback.
+            let params = this.audioWorkletNode.parameters as any;
+            params.get("playbackRate").setValueAtTime(1, this.audioCtx!!.currentTime);
+            console.log("Audio resumed");
+            this.isPlayingSong = true;
+        } else {
+            console.log("Audio cannot be resumed because it's not paused or audio context is not initialized.");
+        }
+    }
+
+}
+
+
+
+declare var AudioWorkletProcessor: any;
+declare var registerProcessor: any;
+if (typeof AudioWorkletProcessor === 'undefined') (window as any).AudioWorkletProcessor = Object;
+
+export class BeepboxAudioProcessor extends AudioWorkletProcessor {
+    private sampleRate: number;
+    private t: number;
+
+    constructor() {
+        super();
+        this.sampleRate = 44100; // You can adjust the sample rate as needed.
+        this.t = 0;
+    }
+
+    static get parameterDescriptors() {
+        return [
+            {
+                name: "playbackRate",
+                defaultValue: 1,
+                minValue: 0,
+                maxValue: 1,
+                automationRate: "a-rate",
+            },
+        ];
+    }
+
+    process(inputs: any, outputs: any, parameters: any) {
+        const output = outputs[0];
+        const numChannels = output.length;
+
+
+        let playbackRate = parameters["playbackRate"][0];
+        if (!playbackRate) return true;
+
+        for (let channel = 0; channel < numChannels; channel++) {
+            const outputChannel = output[channel];
+
+            for (let i = 0; i < outputChannel.length; i++) {
+                // Generate a simple sine wave at 440 Hz (A4) for a basic tone.
+                const frequency = 440;
+                const amplitude = 0.5; // Adjust the amplitude as needed.
+                const sample = amplitude * Math.sin(2 * Math.PI * frequency * this.t / this.sampleRate);
+
+                // Write the sample to the output channel.
+                outputChannel[i] = sample;
+
+                // Increment the time.
+                this.t++;
+            }
+        }
+
+        return true;
+    }
+}
+
+if (typeof registerProcessor !== "undefined") {
+    registerProcessor('beepbox-audio-processor', BeepboxAudioProcessor);
+}
+
 // When compiling synth.ts as a standalone module named "beepbox", expose these classes as members to JavaScript:
 export { Dictionary, DictionaryArray, FilterType, EnvelopeType, InstrumentType, Transition, Chord, Envelope, Config };
