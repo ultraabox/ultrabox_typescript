@@ -13,7 +13,7 @@ declare global {
         webkitAudioContext: any;
     }
 }
-
+const doc = typeof document === "undefined" ? undefined : document;
 const epsilon: number = (1.0e-24); // For detecting and avoiding float denormals, which have poor performance.
 
 // For performance debugging:
@@ -2743,7 +2743,7 @@ export class Song {
         this.patternInstruments = false;
 
         this.title = "Untitled";
-        document.title = EditorConfig.versionDisplayName;
+        if (doc) doc.title = EditorConfig.versionDisplayName;
 
         if (andResetChannels) {
             this.pitchChannelCount = 3;
@@ -3596,7 +3596,7 @@ export class Song {
                 // Length of song name string
                 var songNameLength = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                 this.title = decodeURIComponent(compressed.substring(charIndex, charIndex + songNameLength));
-                document.title = this.title + " - " + EditorConfig.versionDisplayName;
+                if (doc) doc.title = this.title + " - " + EditorConfig.versionDisplayName;
 
                 charIndex += songNameLength;
             } break;
@@ -4109,7 +4109,7 @@ export class Song {
                     }
                 }
                 else if (fromGoldBox && !beforeFour && beforeSix) {
-                    if (document.URL.substring(document.URL.length - 13).toLowerCase() != "legacysamples") {
+                    if (doc && doc.URL.substring(doc.URL.length - 13).toLowerCase() != "legacysamples") {
                             if (!willLoadLegacySamplesForOldSongs) {
                                 willLoadLegacySamplesForOldSongs = true;
                                 Config.willReloadForCustomSamples = true;
@@ -12274,28 +12274,35 @@ export class Synth {
     }
 }
 
-export class AsyncSynth {
+
+// When compiling synth.ts as a standalone module named "beepbox", expose these classes as members to JavaScript:
+export { Dictionary, DictionaryArray, FilterType, EnvelopeType, InstrumentType, Transition, Chord, Envelope, Config };
+
+export class WorkletSynth {
     audioCtx: AudioContext | undefined;
     audioWorkletNode: AudioWorkletNode | undefined;
     isPlayingSong = false;
+
+    constructor(private scriptSourceUrl: string, private song: string) { }
 
     play() {
         if (this.audioCtx == null) {
             this.audioCtx = this.audioCtx || new (window.AudioContext || window.webkitAudioContext)();
 
             if (this.audioCtx?.audioWorklet) {
-                let source = `${BeepboxAudioProcessor}; registerProcessor('beepbox-audio-processor', BeepboxAudioProcessor);`;
-                const workletBlob = new Blob([source], { type: "application/javascript" });
-                const workletURL = URL.createObjectURL(workletBlob);
-                this.audioCtx.audioWorklet.addModule(workletURL).then(() => {
+                // let source = `${BeepboxAudioProcessor}; registerProcessor('beepbox-audio-processor', BeepboxAudioProcessor);`;
+                // const workletBlob = new Blob([source], { type: "application/javascript" });
+                // const workletURL = URL.createObjectURL(workletBlob);
+                this.audioCtx.audioWorklet.addModule(this.scriptSourceUrl).then(() => {
                     this.audioWorkletNode = new AudioWorkletNode(this.audioCtx!!, 'beepbox-audio-processor');
                     this.audioWorkletNode.channelCountMode = 'explicit';
                     this.audioWorkletNode.channelInterpretation = 'speakers';
                     this.audioWorkletNode.connect(this.audioCtx!!.destination);
                     this.isPlayingSong = true;
+                    this.audioWorkletNode.port.postMessage({ type: 'songData', data: this.song });
                 });
             } else {
-                return console.error("AsyncSynth requires audioWorklet");
+                return console.error("WorkletSynth requires audioWorklet");
             }
         }
         else if (this.audioCtx && this.audioWorkletNode) {
@@ -12323,6 +12330,7 @@ export class AsyncSynth {
             let params = this.audioWorkletNode.parameters as any;
             params.get("playbackRate").setValueAtTime(1, this.audioCtx!!.currentTime);
             console.log("Audio resumed");
+            this.audioWorkletNode.port.postMessage({ type: 'songData', data: this.song });
             this.isPlayingSong = true;
         } else {
             console.log("Audio cannot be resumed because it's not paused or audio context is not initialized.");
@@ -12332,19 +12340,29 @@ export class AsyncSynth {
 }
 
 
-
 declare var AudioWorkletProcessor: any;
 declare var registerProcessor: any;
 if (typeof AudioWorkletProcessor === 'undefined') (window as any).AudioWorkletProcessor = Object;
 
 export class BeepboxAudioProcessor extends AudioWorkletProcessor {
-    private sampleRate: number;
-    private t: number;
+    private songData: string;
+    private synth?: Synth;
 
     constructor() {
         super();
         this.sampleRate = 44100; // You can adjust the sample rate as needed.
         this.t = 0;
+
+        this.port.onmessage = (event: any) => {
+            if (event.data.type === 'songData') {
+                // Now event.data.data holds your song data
+                this.songData = event.data.data;
+                console.log("worklet received a song.");
+                (globalThis as any).beepbox = { Synth, Config };
+                console.log("Synth", { this: globalThis })
+                this.synth = new Synth(this.songData);
+            }
+        };
     }
 
     static get parameterDescriptors() {
@@ -12361,28 +12379,11 @@ export class BeepboxAudioProcessor extends AudioWorkletProcessor {
 
     process(inputs: any, outputs: any, parameters: any) {
         const output = outputs[0];
-        const numChannels = output.length;
-
 
         let playbackRate = parameters["playbackRate"][0];
         if (!playbackRate) return true;
 
-        for (let channel = 0; channel < numChannels; channel++) {
-            const outputChannel = output[channel];
-
-            for (let i = 0; i < outputChannel.length; i++) {
-                // Generate a simple sine wave at 440 Hz (A4) for a basic tone.
-                const frequency = 440;
-                const amplitude = 0.5; // Adjust the amplitude as needed.
-                const sample = amplitude * Math.sin(2 * Math.PI * frequency * this.t / this.sampleRate);
-
-                // Write the sample to the output channel.
-                outputChannel[i] = sample;
-
-                // Increment the time.
-                this.t++;
-            }
-        }
+        this.synth?.synthesize(output[0], output[1], output[0].length, true);
 
         return true;
     }
@@ -12392,5 +12393,3 @@ if (typeof registerProcessor !== "undefined") {
     registerProcessor('beepbox-audio-processor', BeepboxAudioProcessor);
 }
 
-// When compiling synth.ts as a standalone module named "beepbox", expose these classes as members to JavaScript:
-export { Dictionary, DictionaryArray, FilterType, EnvelopeType, InstrumentType, Transition, Chord, Envelope, Config };

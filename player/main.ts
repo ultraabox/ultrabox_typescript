@@ -5,7 +5,6 @@ import { ColorConfig } from "../editor/ColorConfig";
 import { NotePin, Note, Pattern, Instrument, Channel, Synth } from "../synth/synth";
 import { oscilascopeCanvas } from "../global/Oscilascope";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
-import { type } from "jquery";
 
 	const {a, button, div, h1, input, canvas} = HTML;
 	const {svg, circle, rect, path} = SVG;
