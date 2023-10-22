@@ -12278,12 +12278,24 @@ export class Synth {
 // When compiling synth.ts as a standalone module named "beepbox", expose these classes as members to JavaScript:
 export { Dictionary, DictionaryArray, FilterType, EnvelopeType, InstrumentType, Transition, Chord, Envelope, Config };
 
+//=== start of paganaye main changes ===
+
 export class WorkletSynth {
     audioCtx: AudioContext | undefined;
     audioWorkletNode: AudioWorkletNode | undefined;
     isPlayingSong = false;
-
+    _volume = 1;
     constructor(private scriptSourceUrl: string, private song: string) { }
+
+    get volume(): number {
+        return this._volume;
+    }
+
+    set volume(volume: number) {
+        this._volume = volume;
+        this.audioWorkletNode?.port.postMessage({ type: 'volume', data: volume });
+    }
+
 
     play() {
         if (this.audioCtx == null) {
@@ -12354,13 +12366,19 @@ export class BeepboxAudioProcessor extends AudioWorkletProcessor {
         this.t = 0;
 
         this.port.onmessage = (event: any) => {
-            if (event.data.type === 'songData') {
-                // Now event.data.data holds your song data
-                this.songData = event.data.data;
-                console.log("worklet received a song.");
-                (globalThis as any).beepbox = { Synth, Config };
-                console.log("Synth", { this: globalThis })
-                this.synth = new Synth(this.songData);
+            let value = event.data.data;
+            switch (event.data.type) {
+                case "songData":
+                    // Now event.data.data holds your song data
+                    this.songData = value;
+                    console.log("worklet received a song.");
+                    (globalThis as any).beepbox = { Synth, Config };
+                    console.log("Synth", { this: globalThis })
+                    this.synth = new Synth(this.songData);
+                    break;
+                case "volume":
+                    if (this.synth) this.synth.volume = value;
+                    break;
             }
         };
     }
@@ -12392,4 +12410,3 @@ export class BeepboxAudioProcessor extends AudioWorkletProcessor {
 if (typeof registerProcessor !== "undefined") {
     registerProcessor('beepbox-audio-processor', BeepboxAudioProcessor);
 }
-
