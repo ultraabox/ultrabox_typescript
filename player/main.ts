@@ -9,6 +9,7 @@ import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
 	const {a, button, div, h1, input, canvas} = HTML;
 	const {svg, circle, rect, path} = SVG;
 
+	if (typeof navigator==="undefined") (globalThis as any).navigator={};
 	const isMobile: boolean = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|android|ipad|playbook|silk/i.test(navigator.userAgent);
 
 	document.head.appendChild(HTML.style({type: "text/css"}, `

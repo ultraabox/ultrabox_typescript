@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<title>UltraBox Synth Example</title>
+	<meta name="robots" content="noindex, nofollow" />
+	<style>
+		body {
+			font-family: Verdana, Geneva, Tahoma, sans-serif;
+		}
+
+		p {
+			margin: 5px;
+			padding: 5px;
+		}
+
+		button {
+			margin: 5px;
+			min-width: 100px;
+		}
+
+		button {
+			float: left;
+		}
+
+		div {
+			clear: both;
+		}
+	</style>
+</head>
+
+<body>
+	<div>
+		<button onclick="togglePlay()">Play/Pause</button>
+		<h2>Original Synth</h2>
+		<p>The class is still accessible normally. It works fine unless your navigator is very busy.</p>
+		<hr />
+	</div>
+	<div>
+		<button onclick="toggleWorkletPlay()">Play/Pause</button>
+		<h2>Worklet Synth</h2>
+		<p>This new class uses an Javascript AudioWorklet to run the music in the background.</p>
+		<p>It is not affected much by the browser activity.</p>
+		<hr />
+	</div>
+	<div>
+		<button onclick="javascriptCalculations()">Calculations</button>
+		<h2>Run browser calculations</h2>
+		<p>This will make the browser very busy for a few seconds.</p>
+		<p>Typically the Original synth will stutter while the worket synth won't even notice.</p>
+		<hr />
+	</div>
+	<div>
+		<p>View page source to see how to play this song from javascript!</p>
+	</div>
+	<script type="text/javascript" src="beepbox_synth.js"></script>
+	<script type="text/javascript">
+		var synth = new beepbox.Synth("5sbk4l00e0ftaa7g0fj7i0r1w1100f0000d1110c0000h0000v2200o3320b4z8Ql6hkpUsiczhkp5hDxN8Od5hAl6u74z8Ql6hkpUsp24ZFzzQ1E39kxIceEtoV8s66138l1S0L1u2139l1H39McyaeOgKA0TxAU213jj0NM4x8i0o0c86ywz7keUtVxQk1E3hi6OEcB8Atl0q0Qmm6eCexg6wd50oczkhO8VcsEeAc26gG3E1q2U406hG3i6jw94ksf8i5Uo0dZY26kHHzxp2gAgM0o4d516ej7uegceGwd0q84czm6yj8Xa0Q1EIIctcvq0Q1EE3ihE8W1OgV8s46Icxk7o24110w0OdgqMOk392OEWhS1ANQQ4toUctBpzRxx1M0WNSk1I3ANMEXwS3I79xSzJ7q6QtEXgw0");
+		var workletSynth = new beepbox.WorkletSynth("beepbox_synth.js", "5sbk4l00e0ftaa7g0fj7i0r1w1100f0000d1110c0000h0000v2200o3320b4z8Ql6hkpUsiczhkp5hDxN8Od5hAl6u74z8Ql6hkpUsp24ZFzzQ1E39kxIceEtoV8s66138l1S0L1u2139l1H39McyaeOgKA0TxAU213jj0NM4x8i0o0c86ywz7keUtVxQk1E3hi6OEcB8Atl0q0Qmm6eCexg6wd50oczkhO8VcsEeAc26gG3E1q2U406hG3i6jw94ksf8i5Uo0dZY26kHHzxp2gAgM0o4d516ej7uegceGwd0q84czm6yj8Xa0Q1EIIctcvq0Q1EE3ihE8W1OgV8s46Icxk7o24110w0OdgqMOk392OEWhS1ANQQ4toUctBpzRxx1M0WNSk1I3ANMEXwS3I79xSzJ7q6QtEXgw0");
+
+		function togglePlay() {
+			if (synth.isPlayingSong) {
+				synth.pause();
+			} else {
+				synth.play();
+			}
+		}
+
+		function toggleWorkletPlay() {
+			if (workletSynth.isPlayingSong) {
+				workletSynth.pause();
+			} else {
+				workletSynth.play();
+			}
+		}
+
+		function javascriptCalculations() {
+			let res = 0;
+			for (i = 0; i < 1e8; i++) res += Math.sin(i);
+			console.log("Calculation result", res)
+		}
+	</script>
+</body>
+
+</html>
