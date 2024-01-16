@@ -1412,7 +1412,9 @@ export class SongEditor {
             const waveformSelect: HTMLSelectElement = buildOptions(select({ style: "width: 100%;", title: "Waveform" }), Config.operatorWaves.map(wave => wave.name));
             const waveformDropdown: HTMLButtonElement = button({ style: "margin-left:0em; margin-right: 2px; height:1.5em; width: 8px; max-width: 10px; padding: 0px; font-size: 8px;", onclick: () => this._toggleDropdownMenu(DropdownID.FM, i) }, "▼");
             const waveformDropdownHint: HTMLSpanElement = span({ class: "tip", style: "margin-left: 10px;", onclick: () => this._openPrompt("operatorWaveform") }, "Wave:");
-            const waveformPulsewidthSlider: Slider = new Slider(input({ style: "margin-left: 10px; width: 85%;", type: "range", min: "0", max: Config.pwmOperatorWaves.length - 1, value: "0", step: "1", title: "Pulse Width" }), this._doc, (oldValue: number, newValue: number) => new ChangeOperatorPulseWidth(this._doc, operatorIndex, oldValue, newValue), true);
+            const waveformPulsewidthSlider: Slider = new Slider(input({ style: "", type: "range", min: "0", max: (Config.pulseWidthRange * 2) - 1, value: "0", step: "1", title: "Pulse Width" }), this._doc, (oldValue: number, newValue: number) => new ChangeOperatorPulseWidth(this._doc, operatorIndex, oldValue, newValue), true);
+            waveformPulsewidthSlider.container.style.marginLeft = "10px";
+            waveformPulsewidthSlider.container.style.width = "50%";
             const waveformDropdownRow: HTMLElement = div({ class: "selectRow" }, waveformDropdownHint, waveformPulsewidthSlider.container,
                 div({ class: "selectContainer", style: "width: 6em; margin-left: .3em;" }, waveformSelect));
             const waveformDropdownGroup: HTMLDivElement = div({ class: "operatorRow" }, waveformDropdownRow);
@@ -1950,6 +1952,18 @@ export class SongEditor {
                 return this._supersawSpreadSlider;
             case Config.modulators.dictionary["saw shape"].index:
                 return this._supersawShapeSlider;
+            case Config.modulators.dictionary["fm pwm 1"].index:
+                return this._operatorWaveformPulsewidthSliders[0];
+            case Config.modulators.dictionary["fm pwm 2"].index:
+                return this._operatorWaveformPulsewidthSliders[1];
+            case Config.modulators.dictionary["fm pwm 3"].index:
+                return this._operatorWaveformPulsewidthSliders[2];
+            case Config.modulators.dictionary["fm pwm 4"].index:
+                return this._operatorWaveformPulsewidthSliders[3];
+            case Config.modulators.dictionary["fm pwm 5"].index:
+                return this._operatorWaveformPulsewidthSliders[4];
+            case Config.modulators.dictionary["fm pwm 6"].index:
+                return this._operatorWaveformPulsewidthSliders[5];
             default:
                 return null;
         }
@@ -2455,7 +2469,7 @@ export class SongEditor {
                     this._operatorAmplitudeSliders[i].updateValue(instrument.operators[i].amplitude);
                     setSelectedValue(this._operatorWaveformSelects[i], instrument.operators[i].waveform);
                     this._operatorWaveformPulsewidthSliders[i].updateValue(instrument.operators[i].pulseWidth);
-                    this._operatorWaveformPulsewidthSliders[i].input.title = "" + Config.pwmOperatorWaves[instrument.operators[i].pulseWidth].name;
+                    this._operatorWaveformPulsewidthSliders[i].input.title = "" + prettyNumber(instrument.operators[i].pulseWidth - instrument.operators[i].pulseWidthDecimalOffset / 100) + "%";
                     this._operatorDropdownGroups[i].style.color = isCarrier ? ColorConfig.primaryText : "";
                     const operatorName: string = (isCarrier ? "Voice " : "Modulator ") + (i + 1);
                     this._operatorFrequencySelects[i].title = operatorName + " Frequency";
@@ -3018,6 +3032,10 @@ export class SongEditor {
                             settingList.push("fm slider 3");
                             settingList.push("fm slider 4");
                             settingList.push("fm feedback");
+                            settingList.push("fm pwm 1");
+                            settingList.push("fm pwm 2");
+                            settingList.push("fm pwm 3");
+                            settingList.push("fm pwm 4");
                         }
                         if (tgtInstrumentTypes.includes(InstrumentType.fm6op)) {
                             settingList.push("fm slider 1");
@@ -3027,6 +3045,12 @@ export class SongEditor {
                             settingList.push("fm slider 5");
                             settingList.push("fm slider 6");
                             settingList.push("fm feedback");
+                            settingList.push("fm pwm 1");
+                            settingList.push("fm pwm 2");
+                            settingList.push("fm pwm 3");
+                            settingList.push("fm pwm 4");
+                            settingList.push("fm pwm 5");
+                            settingList.push("fm pwm 6");
                         }
                         if (tgtInstrumentTypes.includes(InstrumentType.pwm) || tgtInstrumentTypes.includes(InstrumentType.supersaw)) {
                             settingList.push("pulse width");

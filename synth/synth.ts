@@ -662,7 +662,11 @@ export class Operator {
     public frequency: number = 4;
     public amplitude: number = 0;
     public waveform: number = 0;
-    public pulseWidth: number = 0.5;
+    // This used to be an index into Config.pwmOperatorWaves (i.e. [0, 10]),
+    // but it's now a value in the range [0, Config.pulseWidthRange * 2], to
+    // match the "pulse width" instrument.
+    public pulseWidth: number = Config.pulseWidthRange;
+    public pulseWidthDecimalOffset: number = 0;
 
     constructor(index: number) {
         this.reset(index);
@@ -672,7 +676,9 @@ export class Operator {
         this.frequency = 4; //defualt to 1x
         this.amplitude = (index <= 1) ? Config.operatorAmplitudeMax : 0;
         this.waveform = 0;
-        this.pulseWidth = 5;
+        // Start with a square wave.
+        this.pulseWidth = Config.pulseWidthRange;
+        this.pulseWidthDecimalOffset = 0;
     }
 
     public copy(other: Operator): void {
@@ -680,6 +686,7 @@ export class Operator {
         this.amplitude = other.amplitude;
         this.waveform = other.waveform;
         this.pulseWidth = other.pulseWidth;
+        this.pulseWidthDecimalOffset = other.pulseWidthDecimalOffset;
     }
 }
 
@@ -1957,6 +1964,7 @@ export class Instrument {
                     "amplitude": operator.amplitude,
                     "waveform": Config.operatorWaves[operator.waveform].name,
                     "pulseWidth": operator.pulseWidth,
+                    "pulseWidthDecimalOffset": operator.pulseWidthDecimalOffset,
                 });
             }
             if(this.type == InstrumentType.fm){
@@ -2412,7 +2420,8 @@ export class Instrument {
                         // GoldBox compatibility
                         if (operatorObject["waveform"] == "square") {
                             operator.waveform = Config.operatorWaves.dictionary["pulse width"].index;
-                            operator.pulseWidth = 5;
+                            operator.pulseWidth = Config.pulseWidthRange;
+                            operator.pulseWidthDecimalOffset = 0;
                         } else {
                             operator.waveform = 0;
                         }
@@ -2422,9 +2431,84 @@ export class Instrument {
                     operator.waveform = 0;
                 }
                 if (operatorObject["pulseWidth"] != undefined) {
-                    operator.pulseWidth = operatorObject["pulseWidth"] | 0;
+                    if (operatorObject["pulseWidthDecimalOffset"] != undefined) {
+                        // New format, similar to the pulse width instrument
+                        operator.pulseWidth = operatorObject["pulseWidth"] | 0;
+                        operator.pulseWidthDecimalOffset = operatorObject["pulseWidthDecimalOffset"] | 0;
+                    } else {
+                        // Old format
+                        const pwmOperatorWaveIndex: number = operatorObject["pulseWidth"] | 0;
+                        // @TODO: Should these instead use [0, 1] values
+                        // multiplied by Config.pulseWidthRange * 2?
+                        // @TODO: Probably should keep these in a table
+                        // somewhere in Config.
+                        switch (pwmOperatorWaveIndex) {
+                            case 0: {
+                                // 1%
+                                operator.pulseWidth = 1;
+                                operator.pulseWidthDecimalOffset = 0;
+                            } break;
+                            case 1: {
+                                // 5%
+                                operator.pulseWidth = 5;
+                                operator.pulseWidthDecimalOffset = 0;
+                            } break;
+                            case 2: {
+                                // 12.5%
+                                operator.pulseWidth = 13;
+                                operator.pulseWidthDecimalOffset = 50;
+                            } break;
+                            case 3: {
+                                // 25%
+                                operator.pulseWidth = 25;
+                                operator.pulseWidthDecimalOffset = 0;
+                            } break;
+                            case 4: {
+                                // 33%
+                                operator.pulseWidth = 33;
+                                // @TODO: Use 67 here and 34 above?
+                                operator.pulseWidthDecimalOffset = 0;
+                            } break;
+                            case 5: {
+                                // 50%
+                                operator.pulseWidth = 50;
+                                operator.pulseWidthDecimalOffset = 0;
+                            } break;
+                            case 6: {
+                                // 66%
+                                operator.pulseWidth = 66;
+                                // @TODO: Use 34 here and 67 above?
+                                operator.pulseWidthDecimalOffset = 0;
+                            } break;
+                            case 7: {
+                                // 75%
+                                operator.pulseWidth = 75;
+                                operator.pulseWidthDecimalOffset = 0;
+                            } break;
+                            case 8: {
+                                // 87.5%
+                                operator.pulseWidth = 88;
+                                operator.pulseWidthDecimalOffset = 50;
+                            } break;
+                            case 9: {
+                                // 95%
+                                operator.pulseWidth = 95;
+                                operator.pulseWidthDecimalOffset = 0;
+                            } break;
+                            case 10: {
+                                // 99%
+                                operator.pulseWidth = 99;
+                                operator.pulseWidthDecimalOffset = 0;
+                            } break;
+                            default: {
+                                throw new Error("Unknown pulse width operator wave index: " + pwmOperatorWaveIndex);
+                            } break;
+                        }
+                    }
                 } else {
-                    operator.pulseWidth = 5;
+                    // Use a square wave as the fallback.
+                    operator.pulseWidth = Config.pulseWidthRange;
+                    operator.pulseWidthDecimalOffset = 0;
                 }
             }
         }
@@ -3252,7 +3336,16 @@ export class Song {
                         buffer.push(base64IntToCharCode[instrument.operators[o].waveform]);
                         // Push pulse width if that type is used
                         if (instrument.operators[o].waveform == 2) {
-                            buffer.push(base64IntToCharCode[instrument.operators[o].pulseWidth]);
+                            // This used to be an index into Config.pwmOperatorWaves ([0, 10] range),
+                            // but now it shares the same range as the pulse width instrument.
+                            // To avoid bumping the URL version, since we have room here,
+                            // we can push a "sentinel value" that wouldn't have been used previously,
+                            // and use it to know that we're using this new format.
+                            buffer.push(base64IntToCharCode[11]);
+                            // We have to use two characters because this actually
+                            // uses twice the range of the pulse width slider.
+                            buffer.push(base64IntToCharCode[instrument.operators[o].pulseWidth >> 6], base64IntToCharCode[instrument.operators[o].pulseWidth & 0x3f]); 
+                            buffer.push(base64IntToCharCode[instrument.operators[o].pulseWidthDecimalOffset >> 6], base64IntToCharCode[instrument.operators[o].pulseWidthDecimalOffset & 0x3f]); 
                         }
                     }
                 } else if (instrument.type == InstrumentType.customChipWave) {
@@ -5091,11 +5184,17 @@ export class Song {
                         const pre3To3g = [0, 1, 3, 2, 2, 2, 4, 5];
                         const old: number = clamp(0, pre3To3g.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                         if (old == 3) {
-                            instrument.operators[o].pulseWidth = 5;
+                            // 50%
+                            instrument.operators[o].pulseWidth = 50;
+                            instrument.operators[o].pulseWidthDecimalOffset = 0;
                         } else if (old == 4) {
-                            instrument.operators[o].pulseWidth = 4;
+                            // 25%
+                            instrument.operators[o].pulseWidth = 25;
+                            instrument.operators[o].pulseWidthDecimalOffset = 0;
                         } else if (old == 5) {
-                            instrument.operators[o].pulseWidth = 6;
+                            // 75%
+                            instrument.operators[o].pulseWidth = 75;
+                            instrument.operators[o].pulseWidthDecimalOffset = 0;
                         }
                         instrument.operators[o].waveform = pre3To3g[old];
                     }
@@ -5109,7 +5208,79 @@ export class Song {
                         }
                         // Pulse width follows, if it is a pulse width operator wave
                         if (instrument.operators[o].waveform == 2) {
-                            instrument.operators[o].pulseWidth = clamp(0, Config.pwmOperatorWaves.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                            const pwmOperatorWaveIndex: number = clamp(0, 11 + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                            // @TODO: Should these instead use [0, 1] values
+                            // multiplied by Config.pulseWidthRange * 2?
+                            // @TODO: Probably should keep these in a table
+                            // somewhere in Config.
+                            switch (pwmOperatorWaveIndex) {
+                                case 0: {
+                                    // 1%
+                                    instrument.operators[o].pulseWidth = 1;
+                                    instrument.operators[o].pulseWidthDecimalOffset = 0;
+                                } break;
+                                case 1: {
+                                    // 5%
+                                    instrument.operators[o].pulseWidth = 5;
+                                    instrument.operators[o].pulseWidthDecimalOffset = 0;
+                                } break;
+                                case 2: {
+                                    // 12.5%
+                                    instrument.operators[o].pulseWidth = 13;
+                                    instrument.operators[o].pulseWidthDecimalOffset = 50;
+                                } break;
+                                case 3: {
+                                    // 25%
+                                    instrument.operators[o].pulseWidth = 25;
+                                    instrument.operators[o].pulseWidthDecimalOffset = 0;
+                                } break;
+                                case 4: {
+                                    // 33%
+                                    instrument.operators[o].pulseWidth = 33;
+                                    // @TODO: Use 67 here and 34 above?
+                                    instrument.operators[o].pulseWidthDecimalOffset = 0;
+                                } break;
+                                case 5: {
+                                    // 50%
+                                    instrument.operators[o].pulseWidth = 50;
+                                    instrument.operators[o].pulseWidthDecimalOffset = 0;
+                                } break;
+                                case 6: {
+                                    // 66%
+                                    instrument.operators[o].pulseWidth = 66;
+                                    // @TODO: Use 34 here and 67 above?
+                                    instrument.operators[o].pulseWidthDecimalOffset = 0;
+                                } break;
+                                case 7: {
+                                    // 75%
+                                    instrument.operators[o].pulseWidth = 75;
+                                    instrument.operators[o].pulseWidthDecimalOffset = 0;
+                                } break;
+                                case 8: {
+                                    // 87.5%
+                                    instrument.operators[o].pulseWidth = 88;
+                                    instrument.operators[o].pulseWidthDecimalOffset = 50;
+                                } break;
+                                case 9: {
+                                    // 95%
+                                    instrument.operators[o].pulseWidth = 95;
+                                    instrument.operators[o].pulseWidthDecimalOffset = 0;
+                                } break;
+                                case 10: {
+                                    // 99%
+                                    instrument.operators[o].pulseWidth = 99;
+                                    instrument.operators[o].pulseWidthDecimalOffset = 0;
+                                } break;
+                                case 11: {
+                                    // Sentinel value, used to indicate the new pulse width operator format.
+                                    // See also the comment in toBase64String.
+                                    instrument.operators[o].pulseWidth = clamp(0, (Config.pulseWidthRange * 2 - 1) + 1, (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                    instrument.operators[o].pulseWidthDecimalOffset = clamp(0, 99 + 1, (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                } break;
+                                default: {
+                                    throw new Error("Unknown pulse width operator wave index: " + pwmOperatorWaveIndex);
+                                } break;
+                            }
                         }
                     }
                 }
@@ -7101,6 +7272,8 @@ class Tone {
     public stringSustainEnd: number = 0;
     public readonly phases: number[] = [];
     public readonly operatorWaves: OperatorWave[] = [];
+    public readonly operatorPulseWidths: number[] = [];
+    public readonly operatorPulseWidthDeltas: number[] = [];
     public readonly phaseDeltas: number[] = [];
 			// advloop addition
         public directions: number[] = [];
@@ -7170,6 +7343,8 @@ class Tone {
                 this.chipWaveCompletionsLastWave[i] = 0;
                 // advloop addition
             this.operatorWaves[i] = Config.operatorWaves[0];
+            this.operatorPulseWidths[i] = getPulseWidthRatio(Config.pulseWidthRange);
+            this.operatorPulseWidthDeltas[i] = 0;
             this.feedbackOutputs[i] = 0.0;
             this.prevPitchExpressions[i] = null;
         }
@@ -8231,8 +8406,8 @@ export class Synth {
                 // Check effects
                 if (!((Config.modulators[instrument.modulators[mod]].associatedEffect != EffectType.length && !(tgtInstrument.effects & (1 << Config.modulators[instrument.modulators[mod]].associatedEffect)))
                     // Instrument type specific
-                    || ((tgtInstrument.type != InstrumentType.fm && tgtInstrument.type != InstrumentType.fm6op) && (str == "fm slider 1" || str == "fm slider 2" || str == "fm slider 3" || str == "fm slider 4" || str == "fm feedback"))
-                    || tgtInstrument.type != InstrumentType.fm6op && (str == "fm slider 5" || str == "fm slider 6")
+                    || ((tgtInstrument.type != InstrumentType.fm && tgtInstrument.type != InstrumentType.fm6op) && (str == "fm slider 1" || str == "fm slider 2" || str == "fm slider 3" || str == "fm slider 4" || str == "fm feedback" || str == "fm pwm 1" || str == "fm pwm 2" || str == "fm pwm 3" || str == "fm pwm 4" || str == "fm pwm 5" || str == "fm pwm 6"))
+                    || tgtInstrument.type != InstrumentType.fm6op && (str == "fm slider 5" || str == "fm slider 6" || str == "fm pwm 5" || str == "fm pwm 6")
                     || ((tgtInstrument.type != InstrumentType.pwm && tgtInstrument.type != InstrumentType.supersaw) && (str == "pulse width" || str == "decimal offset"))
                     || ((tgtInstrument.type != InstrumentType.supersaw) && (str == "dynamism" || str == "spread" || str == "saw shape"))
                     // Arp check
@@ -10669,6 +10844,26 @@ export class Synth {
                 tone.operatorExpressions[i] = expressionStart;
                 tone.operatorExpressionDeltas[i] = (expressionEnd - expressionStart) / roundedSamplesPerTick;
 
+                const basePulseWidth: number = getPulseWidthRatio(instrument.operators[i].pulseWidth);
+                const basePulseWidthDecimalOffset: number = instrument.operators[i].pulseWidthDecimalOffset;
+                let pulseWidthModStart = basePulseWidth;
+                let pulseWidthModEnd = basePulseWidth;
+                if (this.isModActive(Config.modulators.dictionary["fm pwm 1"].index + i, channelIndex, tone.instrumentIndex)) {
+                    pulseWidthModStart = (this.getModValue(Config.modulators.dictionary["fm pwm 1"].index + i, channelIndex, tone.instrumentIndex, false)) / (Config.pulseWidthRange * 2);
+                    pulseWidthModEnd = (this.getModValue(Config.modulators.dictionary["fm pwm 1"].index + i, channelIndex, tone.instrumentIndex, true)) / (Config.pulseWidthRange * 2);
+                }
+                let pulseWidthDecimalOffsetModStart = basePulseWidthDecimalOffset;
+                let pulseWidthDecimalOffsetModEnd = basePulseWidthDecimalOffset;
+                // if (this.isModActive(Config.modulators.dictionary["fm pwm offset 1"].index + i, channelIndex, tone.instrumentIndex)) {
+                //     pulseWidthDecimalOffsetModStart = (this.getModValue(Config.modulators.dictionary["fm pwm offset 1"].index + i, channelIndex, tone.instrumentIndex, false));
+                //     pulseWidthDecimalOffsetModEnd = (this.getModValue(Config.modulators.dictionary["fm pwm offset 1"].index + i, channelIndex, tone.instrumentIndex, true));
+                // }
+                const pulseWidthDecimalOffsetStart: number = (pulseWidthDecimalOffsetModStart /* * envelopeStarts[EnvelopeComputeIndex.operatorPulseWidthDecimalOffset0 + i] */) / 10000;
+                const pulseWidthDecimalOffsetEnd: number = (pulseWidthDecimalOffsetModEnd /* * envelopeEnds[EnvelopeComputeIndex.operatorPulseWidthDecimalOffset0 + i] */) / 10000;
+                const pulseWidthStart: number = (pulseWidthModStart * envelopeStarts[EnvelopeComputeIndex.operatorPulseWidth0 + i]) - pulseWidthDecimalOffsetStart;
+                const pulseWidthEnd: number = (pulseWidthModEnd * envelopeEnds[EnvelopeComputeIndex.operatorPulseWidth0 + i]) - pulseWidthDecimalOffsetEnd;
+                tone.operatorPulseWidths[i] = pulseWidthStart;
+                tone.operatorPulseWidthDeltas[i] = (pulseWidthEnd - pulseWidthStart) / roundedSamplesPerTick;
             }
 
             sineExpressionBoost *= (Math.pow(2.0, (2.0 - 1.4 * instrument.feedbackAmplitude / 15.0)) - 1.0) / 3.0;
@@ -11048,7 +11243,17 @@ export class Synth {
 
     public static getInstrumentSynthFunction(instrument: Instrument): Function {
         if (instrument.type == InstrumentType.fm) {
-            const fingerprint: string = instrument.algorithm + "_" + instrument.feedbackType;
+            let operatorWaveFingerprint: string = "";
+            for (let i: number = 0; i < Config.operatorCount; i++) {
+                operatorWaveFingerprint += instrument.operators[i].waveform == 2 ? "1" : "0";
+            }
+            const fingerprint: string = (
+                instrument.algorithm
+                + "_"
+                + instrument.feedbackType
+                + "_"
+                + operatorWaveFingerprint
+            );
             if (Synth.fmSynthFunctionCache[fingerprint] == undefined) {
                 const synthSource: string[] = [];
 
@@ -11061,7 +11266,12 @@ export class Synth {
                         synthSource.push(line.replace("/*operator#Scaled*/", outputs.join(" + ")));
                     } else if (line.indexOf("// INSERT OPERATOR COMPUTATION HERE") != -1) {
                         for (let j: number = Config.operatorCount - 1; j >= 0; j--) {
-                            for (const operatorLine of Synth.operatorSourceTemplate) {
+                            const operatorSourceTemplate: string[] = (
+                                instrument.operators[j].waveform == 2
+                                ? Synth.pwmOperatorSourceTemplate
+                                : Synth.operatorSourceTemplate
+                            );
+                            for (const operatorLine of operatorSourceTemplate) {
                                 if (operatorLine.indexOf("/* + operator@Scaled*/") != -1) {
                                     let modulators = "";
                                     for (const modulatorNumber of Config.algorithms[instrument.algorithm].modulatedBy[j]) {
@@ -11092,7 +11302,7 @@ export class Synth {
                     }
                 }
 
-                //console.log(synthSource.join("\n"));
+                // console.log(synthSource.join("\n"));
 
                 const wrappedFmSynth: string = "return (synth, bufferIndex, roundedSamplesPerTick, tone, instrument) => {" + synthSource.join("\n") + "}";
 
@@ -11126,7 +11336,17 @@ export class Synth {
         } else if (instrument.type == InstrumentType.mod) {
             return Synth.modSynth;
         } else if (instrument.type == InstrumentType.fm6op) {
-            const fingerprint: string = instrument.customAlgorithm.name + "_" + instrument.customFeedbackType.name;
+            let operatorWaveFingerprint: string = "";
+            for (let i: number = 0; i < Config.operatorCount; i++) {
+                operatorWaveFingerprint += instrument.operators[i].waveform == 2 ? "1" : "0";
+            }
+            const fingerprint: string = (
+                instrument.customAlgorithm.name
+                + "_"
+                + instrument.customFeedbackType
+                + "_"
+                + operatorWaveFingerprint
+            );
             if (Synth.fm6SynthFunctionCache[fingerprint] == undefined) {
                 const synthSource: string[] = [];
 
@@ -11139,7 +11359,12 @@ export class Synth {
                         synthSource.push(line.replace("/*operator#Scaled*/", outputs.join(" + ")));
                     } else if (line.indexOf("// INSERT OPERATOR COMPUTATION HERE") != -1) {
                         for (let j: number = Config.operatorCount+2 - 1; j >= 0; j--) {
-                            for (const operatorLine of Synth.operatorSourceTemplate) {
+                            const operatorSourceTemplate: string[] = (
+                                instrument.operators[j].waveform == 2
+                                ? Synth.pwmOperatorSourceTemplate
+                                : Synth.operatorSourceTemplate
+                            );
+                            for (const operatorLine of operatorSourceTemplate) {
                                 if (operatorLine.indexOf("/* + operator@Scaled*/") != -1) {
                                     let modulators = "";
                                     for (const modulatorNumber of instrument.customAlgorithm.modulatedBy[j]) {
@@ -12624,6 +12849,8 @@ export class Synth {
 		const operator#OutputDelta = +tone.operatorExpressionDeltas[#];
 		let operator#Output      = +tone.feedbackOutputs[#];
         const operator#Wave      = tone.operatorWaves[#].samples;
+        let operator#PulseWidth = tone.operatorPulseWidths[#];
+        const operator#PulseWidthDelta = tone.operatorPulseWidthDeltas[#];
 		let feedbackMult         = +tone.feedbackMult;
 		const feedbackDelta        = +tone.feedbackDelta;
         let expression = +tone.expression;
@@ -12649,6 +12876,7 @@ export class Synth {
 				operator#OutputMult += operator#OutputDelta;
 				operator#Phase += operator#PhaseDelta;
 			operator#PhaseDelta *= operator#PhaseDeltaScale;
+            operator#PulseWidth += operator#PulseWidthDelta;
 			
 			const output = sample * expression;
 			expression += expressionDelta;
@@ -12658,6 +12886,7 @@ export class Synth {
 			
 			tone.phases[#] = operator#Phase / ` + Config.sineWaveLength + `;
 			tone.phaseDeltas[#] = operator#PhaseDelta / ` + Config.sineWaveLength + `;
+			tone.operatorPulseWidths[#] = operator#PulseWidth;
 			tone.operatorExpressions[#] = operator#OutputMult;
 		    tone.feedbackOutputs[#] = operator#Output;
 		    tone.feedbackMult = feedbackMult;
@@ -12674,6 +12903,49 @@ export class Synth {
 				const operator#Index    = operator#PhaseInt & ` + Config.sineWaveMask + `;
                 const operator#Sample   = operator#Wave[operator#Index];
                 operator#Output         = operator#Sample + (operator#Wave[operator#Index + 1] - operator#Sample) * (operator#PhaseMix - operator#PhaseInt);
+				const operator#Scaled   = operator#OutputMult * operator#Output;
+		`).split("\n");
+
+    // Compared with pulseWidthSynth, the Config.pwmOperatorWaves tables have:
+    // - A vertical range (amplitude) of [-1, 1].
+    //   This is the same in both. Hitting -1 or 1 is expected, as this will be
+    //   multiplied by the proper volume by the synthesizer later.
+    // - A horizontal range (time) of [0, 255].
+    //   This is the time in samples for a full cycle (of say, a sine wave,
+    //   with one peak and one valley).
+    //   pulseWidthSynth does not have that additional time scaling, so this
+    //   has to be dealt with by carefully introducing a Config.sineWaveLength
+    //   term in some places, stretching or squishing time as necessary.
+    //   (Why [0, 255]? To keep the table size as a power of two. Then,
+    //   wrapping the playback cursor is done without a division/modulo, but
+    //   rather with `index & (tableSize - 1)`, which should be faster.)
+    // - The resulting tables always hit -1 or 1 at the edges of the pulse
+    //   wave, which is not the case for the pulseWidthSynth approach, so the
+    //   resulting wave needs a vertical offset applied
+    // The PolyBLEP code has also been adapted to work under these conditions,
+    // but it is optional - the original tables are used with only linear
+    // interpolation at most.
+    private static pwmOperatorSourceTemplate: string[] = (`
+				const operator#PhaseMix = operator#Phase/* + operator@Scaled*/;
+				const operator#SawPhaseA = ((operator#PhaseMix) + 1000) % ` + Config.sineWaveLength + `;
+				const operator#SawPhaseB = ((operator#PhaseMix - operator#PulseWidth * ` + Config.sineWaveLength + `) + 1000) % ` + Config.sineWaveLength + `;
+				let operator#PulseWave = operator#SawPhaseB - operator#SawPhaseA;
+				// This is a PolyBLEP, which smooths out discontinuities at any frequency to reduce aliasing. 
+				if (operator#SawPhaseA < operator#PhaseDelta) {
+					const t = operator#SawPhaseA / operator#PhaseDelta;
+					operator#PulseWave += (t + t - t * t - 1) * ` + Config.sineWaveLength + ` * 0.5;
+				} else if (operator#SawPhaseA > ` + Config.sineWaveLength + ` - operator#PhaseDelta) {
+					const t = (operator#SawPhaseA - ` + Config.sineWaveLength + `) / operator#PhaseDelta;
+					operator#PulseWave += (t + t + t * t + 1) * ` + Config.sineWaveLength + ` * 0.5;
+				}
+				if (operator#SawPhaseB < operator#PhaseDelta) {
+					const t = operator#SawPhaseB / operator#PhaseDelta;
+					operator#PulseWave -= (t + t - t * t - 1) * ` + Config.sineWaveLength + ` * 0.5;
+				} else if (operator#SawPhaseB > ` + Config.sineWaveLength + ` - operator#PhaseDelta) {
+					const t = (operator#SawPhaseB - ` + Config.sineWaveLength + `) / operator#PhaseDelta;
+					operator#PulseWave -= (t + t + t * t + 1) * ` + Config.sineWaveLength + ` * 0.5;
+				}
+				operator#Output = (operator#PulseWave / ` + Config.sineWaveLength + ` + operator#PulseWidth - 0.5) * 2.0;
 				const operator#Scaled   = operator#OutputMult * operator#Output;
 		`).split("\n");
 
@@ -13090,7 +13362,8 @@ export class Synth {
             return Config.operatorWaves[waveform];
         }
         else {
-            return Config.pwmOperatorWaves[pulseWidth];
+            // @TODO: Remove this.
+            return Config.pwmOperatorWaves[5];
         }
     }
 
