@@ -11,6 +11,7 @@ import { CustomChipPrompt } from "./CustomChipPrompt";
 import { CustomFilterPrompt } from "./CustomFilterPrompt";
 import { InstrumentExportPrompt } from "./InstrumentExportPrompt";
 import { InstrumentImportPrompt } from "./InstrumentImportPrompt";
+import { PresetBrowserPrompt } from "./PresetBrowserPrompt";
 import { EditorConfig, isMobile, prettyNumber, Preset, PresetCategory } from "./EditorConfig";
 import { EuclideanRhythmPrompt } from "./EuclidgenRhythmPrompt";
 import { ExportPrompt } from "./ExportPrompt";
@@ -79,6 +80,7 @@ function buildHeaderedOptions(header: string, menu: HTMLSelectElement, items: Re
 function buildPresetOptions(isNoise: boolean, idSet: string): HTMLSelectElement {
     const menu: HTMLSelectElement = select({ id: idSet });
 
+    menu.appendChild(option({ value: "presetBrowser" }, "Manage Custom Presets..."));
 
     // Show the "spectrum" custom type in both pitched and noise channels.
     //const customTypeGroup: HTMLElement = optgroup({label: EditorConfig.presetCategories[0].name});
@@ -2055,10 +2057,13 @@ export class SongEditor {
                     this.prompt = new RecordingSetupPrompt(this._doc);
                     break;
                 case "exportInstrument":
-                    this.prompt = new InstrumentExportPrompt(this._doc);//, this);
+                    this.prompt = new InstrumentExportPrompt(this._doc);
                     break;
                 case "importInstrument":
-                    this.prompt = new InstrumentImportPrompt(this._doc);//, this);
+                    this.prompt = new InstrumentImportPrompt(this._doc);
+                    break;
+                case "presetBrowser":
+                    this.prompt = new PresetBrowserPrompt(this._doc);
                     break;
                 case "stringSustain":
 					this.prompt = new SustainPrompt(this._doc);
@@ -4550,6 +4555,9 @@ export class SongEditor {
         this._doc.record(new ChangeRandomGeneratedInstrument(this._doc));
     }
 
+    private _presetBrowser(): void {
+        this._openPrompt("presetBrowser");
+    }
 
     private _whenSetTempo = (): void => {
         this._doc.record(new ChangeTempo(this._doc, -1, parseInt(this._tempoStepper.value) | 0));
@@ -4630,6 +4638,9 @@ export class SongEditor {
                     break;
                 case "randomGenerated":
                     this._randomGenerated();
+                    break;
+                case "presetBrowser":
+                    this._presetBrowser();
                     break;
             }
             this._doc.notifier.changed();
