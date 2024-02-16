@@ -849,7 +849,7 @@ document.head.appendChild(HTML.style({ type: "text/css" }, `
 }
 @media (min-width: 711px) {
 	.select2 {
-	  width: calc(var(--settings-area-width)) * 0.625) !important;
+	  width: calc(var(--settings-area-width) * 0.625) !important;
 	}
 }
 

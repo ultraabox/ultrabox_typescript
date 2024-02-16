@@ -116,6 +116,18 @@ export class ChannelRow {
 			} else {
 				box.container.style.visibility = "hidden";
 			}
+			if (i == this._doc.synth.loopBarStart) {
+				box.container.style.setProperty("border-left", `1px dashed ${ColorConfig.uiWidgetFocus}`);
+			}
+			else {
+				box.container.style.setProperty("border-left", "none");
+            }
+			if (i == this._doc.synth.loopBarEnd) {
+				box.container.style.setProperty("border-right", `1px dashed ${ColorConfig.uiWidgetFocus}`);
+			}
+			else {
+				box.container.style.setProperty("border-right", "none");
+            }
 		}
 	}
 }

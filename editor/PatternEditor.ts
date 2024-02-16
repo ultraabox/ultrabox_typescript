@@ -847,6 +847,12 @@ export class PatternEditor {
             applyToMods.push(modulator.index);
             if (toApply) applyValues.push(this._doc.prefs.volume - modulator.convertRealFactor);
         }
+        // Also for song volume, when holding the slider at a single value.
+        else if (this._doc.continuingModRecordingChange != null && this._doc.continuingModRecordingChange.storedChange == null && this._doc.continuingModRecordingChange.storedSlider == null) {
+            var modulator = Config.modulators.dictionary["song volume"];
+            applyToMods.push(modulator.index);
+            if (toApply) applyValues.push(this._doc.continuingModRecordingChange.storedValues![0]);
+        }
         else if (change instanceof ChangeTempo) {
             var modulator = Config.modulators.dictionary["tempo"];
             applyToMods.push(modulator.index);
@@ -1377,7 +1383,7 @@ export class PatternEditor {
                 let prevNote: Note | null = null;
 
                 // Debug, get an unaltered copy of the current pattern (usedPatterns[i]) for comparison if an error is thrown down below.
-                let patternCopy: Pattern = JSON.parse(JSON.stringify(usedPatterns[i].notes));
+                // let patternCopy: Pattern = JSON.parse(JSON.stringify(usedPatterns[i].notes));
 
                 // Explicitly set the mod to the applied value, just in case the note we add isn't picked up in the next synth run.
                 const modNoteIndex: number = Config.modCount - 1 - usedModIndices[i];
@@ -1529,7 +1535,6 @@ export class PatternEditor {
 
                 // A few sanity checks.
                 let lastNoteEnds: number[] = [-1, -1, -1, -1, -1, -1];
-                patternCopy = patternCopy;
                 usedPatterns[i].notes.sort(function (a, b) { return (a.start == b.start) ? a.pitches[0] - b.pitches[0] : a.start - b.start; });
                 for (let checkIndex: number = 0; checkIndex < usedPatterns[i].notes.length; checkIndex++) {
                     const note: Note = usedPatterns[i].notes[checkIndex];

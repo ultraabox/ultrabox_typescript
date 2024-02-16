@@ -735,7 +735,7 @@ export class SongEditor {
     private readonly _patternEditorNext: PatternEditor = new PatternEditor(this._doc, false, 1);
     private readonly _trackEditor: TrackEditor = new TrackEditor(this._doc, this);
     private readonly _muteEditor: MuteEditor = new MuteEditor(this._doc, this);
-    private readonly _loopEditor: LoopEditor = new LoopEditor(this._doc);
+    private readonly _loopEditor: LoopEditor = new LoopEditor(this._doc, this._trackEditor);
     private readonly _piano: Piano = new Piano(this._doc);
     private readonly _octaveScrollBar: OctaveScrollBar = new OctaveScrollBar(this._doc, this._piano);
     private readonly _playButton: HTMLButtonElement = button({ class: "playButton", type: "button", title: "Play (Space)" }, span("Play"));
@@ -770,6 +770,7 @@ export class SongEditor {
         option({ value: "copyUrl" }, "⎘ Copy Song URL"),
         option({ value: "shareUrl" }, "⤳ Share Song URL"),
         option({ value: "shortenUrl" }, "… Shorten Song URL"),
+        // option({ value: "customUrlShortener" }, " Customize Url Shortener"),
         option({ value: "viewPlayer" }, "▶ View in Song Player"),
         option({ value: "copyEmbed" }, "⎘ Copy HTML Embed Code"),
         option({ value: "songRecovery" }, "⚠ Recover Recent Song..."),
@@ -802,18 +803,20 @@ export class SongEditor {
         option({ selected: true, disabled: true, hidden: false }, "Preferences"), // todo: "hidden" should be true but looks wrong on mac chrome, adds checkmark next to first visible option even though it's not selected. :(
         option({ value: "autoPlay" }, "Auto Play on Load"),
         option({ value: "autoFollow" }, "Auto Follow Playhead"),
-        option({ value: "enableNotePreview" }, "Hear of Added Notes"),
-        option({ value: "showLetters" }, "Show Piano Keys"),
-        option({ value: "showFifth" }, 'Highlight "Fifth" Note'),
+        option({ value: "enableNotePreview" }, "Hear Added Notes"),
         option({ value: "notesOutsideScale" }, "Place Notes Out of Scale"),
         option({ value: "setDefaultScale" }, "Set Current Scale as Default"),
         option({ value: "alwaysFineNoteVol" }, "Always Fine Note Volume"),
-        option({ value: "notesFlashWhenPlayed" }, "Notes Flash When Played"),
+        option({ value: "enableChannelMuting" }, "Enable Channel Muting"),
+        option({ value: "instrumentCopyPaste" }, "Enable Copy/Paste Buttons"),
+        option({ value: "instrumentImportExport" }, "Enable Import/Export Buttons"),
+        option({ value: "displayBrowserUrl" }, "Enable Song Data in URL"),
         option({ value: "closePromptByClickoff" }, "Close Prompts on Click Off"),
+        option({ value: "showFifth" }, 'Highlight "Fifth" Note'),
+        option({ value: "notesFlashWhenPlayed" }, "Notes Flash When Played"),
         option({ value: "showChannels" }, "Show All Channels"),
         option({ value: "showScrollBar" }, "Show Octave Scroll Bar"),
-        option({ value: "enableChannelMuting" }, "Enable Channel Muting"),
-        option({ value: "displayBrowserUrl" }, "Show Song Data in URL"),
+        option({ value: "showLetters" }, "Show Piano Keys"),
         option({ value: "displayVolumeBar" }, "Show Playback Volume"),
         option({ value: "showOscilloscope" }, "Show Oscilloscope"),
         option({ value: "showSampleLoadingStatus" }, "Show Sample Loading Status"),
@@ -1207,6 +1210,9 @@ export class SongEditor {
     private readonly _instrumentSettingsGroup: HTMLDivElement = div({ class: "editor-controls" },
         this._instrumentSettingsTextRow,
         this._instrumentsButtonRow,
+        // these could've been put into _instrumentSettingsGroup as well but I decided not to
+        // this._instrumentCopyGroup,
+        // this._instrumentExportGroup,
         this._instrumentTypeSelectRow,
         this._instrumentVolumeSliderRow,
         //this._customizeInstrumentButton,
@@ -2151,6 +2157,8 @@ export class SongEditor {
         this._globalOscscopeContainer.style.display = this._doc.prefs.showOscilloscope ? "" : "none";
         this._doc.synth.oscEnabled = this._doc.prefs.showOscilloscope;
         this._sampleLoadingStatusContainer.style.display = this._doc.prefs.showSampleLoadingStatus ? "" : "none";
+        this._instrumentCopyGroup.style.display = this._doc.prefs.instrumentCopyPaste ? "" : "none";
+        this._instrumentExportGroup.style.display = this._doc.prefs.instrumentImportExport ? "" : "none";
         if (document.getElementById('text-content'))
             document.getElementById('text-content')!.style.display = this._doc.prefs.showDescription ? "" : "none";
 
@@ -2195,17 +2203,19 @@ export class SongEditor {
             (prefs.autoPlay ? textOnIcon : textOffIcon) + "Auto Play on Load",
             (prefs.autoFollow ? textOnIcon : textOffIcon) + "Auto Follow Playhead",
             (prefs.enableNotePreview ? textOnIcon : textOffIcon) + "Hear Added Notes",
-            (prefs.showLetters ? textOnIcon : textOffIcon) + "Show Piano Keys",
-            (prefs.showFifth ? textOnIcon : textOffIcon) + 'Highlight "Fifth" Note',
             (prefs.notesOutsideScale ? textOnIcon : textOffIcon) + "Place Notes Out of Scale",
             (prefs.defaultScale == this._doc.song.scale ? textOnIcon : textOffIcon) + "Set Current Scale as Default",
             (prefs.alwaysFineNoteVol ? textOnIcon : textOffIcon) + "Always Fine Note Volume",
-            (prefs.notesFlashWhenPlayed ? textOnIcon : textOffIcon) + "Notes Flash When Played",
+            (prefs.enableChannelMuting ? textOnIcon : textOffIcon) + "Enable Channel Muting",
+            (prefs.instrumentCopyPaste ? textOnIcon : textOffIcon) + "Enable Copy/Paste Buttons",
+            (prefs.instrumentImportExport ? textOnIcon : textOffIcon) + "Enable Import/Export Buttons",
+            (prefs.displayBrowserUrl ? textOnIcon : textOffIcon) + "Enable Song Data in URL",
             (prefs.closePromptByClickoff ? textOnIcon : textOffIcon) + "Close Prompts on Click Off",
+            (prefs.showFifth ? textOnIcon : textOffIcon) + 'Highlight "Fifth" Note',
+            (prefs.notesFlashWhenPlayed ? textOnIcon : textOffIcon) + "Notes Flash When Played",
             (prefs.showChannels ? textOnIcon : textOffIcon) + "Show All Channels",
             (prefs.showScrollBar ? textOnIcon : textOffIcon) + "Show Octave Scroll Bar",
-            (prefs.enableChannelMuting ? textOnIcon : textOffIcon) + "Enable Channel Muting",
-            (prefs.displayBrowserUrl ? textOnIcon : textOffIcon) + "Show Song Data in URL",
+            (prefs.showLetters ? textOnIcon : textOffIcon) + "Show Piano Keys",
             (prefs.displayVolumeBar ? textOnIcon : textOffIcon) + "Show Playback Volume",
             (prefs.showOscilloscope ? textOnIcon : textOffIcon) + "Show Oscilloscope",
             (prefs.showSampleLoadingStatus ? textOnIcon : textOffIcon) + "Show Sample Loading Status",
@@ -2276,8 +2286,8 @@ export class SongEditor {
             this._detuneSliderRow.style.display = "";
             this._instrumentVolumeSliderRow.style.display = "";
             this._instrumentTypeSelectRow.style.setProperty("display", "");
-            this._instrumentSettingsGroup.appendChild(this._instrumentCopyGroup);
-            this._instrumentSettingsGroup.appendChild(this._instrumentExportGroup);
+            this._instrumentSettingsGroup.insertBefore(this._instrumentExportGroup, this._instrumentSettingsGroup.firstChild);
+            this._instrumentSettingsGroup.insertBefore(this._instrumentCopyGroup, this._instrumentSettingsGroup.firstChild);
             this._instrumentSettingsGroup.insertBefore(this._instrumentsButtonRow, this._instrumentSettingsGroup.firstChild);
             this._instrumentSettingsGroup.insertBefore(this._instrumentSettingsTextRow, this._instrumentSettingsGroup.firstChild);
 
@@ -2779,8 +2789,8 @@ export class SongEditor {
             this._drumPresetSelect.style.display = "none";
             $("#pitchPresetSelect").parent().hide();
             $("#drumPresetSelect").parent().hide();
-            this._modulatorGroup.appendChild(this._instrumentCopyGroup);
-            this._modulatorGroup.appendChild(this._instrumentExportGroup);
+            this._modulatorGroup.insertBefore(this._instrumentExportGroup, this._modulatorGroup.firstChild);
+            this._modulatorGroup.insertBefore(this._instrumentCopyGroup, this._modulatorGroup.firstChild);
 
             this._modulatorGroup.insertBefore(this._instrumentsButtonRow, this._modulatorGroup.firstChild);
             this._modulatorGroup.insertBefore(this._instrumentSettingsTextRow, this._modulatorGroup.firstChild);
@@ -3553,6 +3563,7 @@ export class SongEditor {
 
     private _onTrackAreaScroll = (event: Event): void => {
 		this._doc.barScrollPos = (this._trackAndMuteContainer.scrollLeft / this._doc.getBarWidth());
+        this._doc.channelScrollPos = (this._trackAndMuteContainer.scrollTop / ChannelRow.patternHeight);
 		//this._doc.notifier.changed();
 	}
 
@@ -3767,8 +3778,11 @@ export class SongEditor {
                     if (this._trackEditor.movePlayheadToMouse() || this._patternEditor.movePlayheadToMouse()) {
                         if (!this._doc.synth.playing) this._doc.performance.play();
                     }
-                    this._doc.synth.loopBar = -1;
-                    this._loopEditor.setLoopAt(this._doc.synth.loopBar);
+                    if (Math.floor(this._doc.synth.playhead) < this._doc.synth.loopBarStart || Math.floor(this._doc.synth.playhead) > this._doc.synth.loopBarEnd) {
+                        this._doc.synth.loopBarStart = -1;
+                        this._doc.synth.loopBarEnd = -1;
+                        this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+                    }
                 } else {
                     this.togglePlay();
                 }
@@ -3779,8 +3793,9 @@ export class SongEditor {
                 if (canPlayNotes) break;
                 if (event.ctrlKey || event.metaKey) {
                     this._toggleRecord();
-                    this._doc.synth.loopBar = -1;
-                    this._loopEditor.setLoopAt(this._doc.synth.loopBar);
+                    this._doc.synth.loopBarStart = -1;
+                    this._doc.synth.loopBarEnd = -1;
+                    this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
 
                     event.preventDefault();
                     this.refocusStage();
@@ -3833,8 +3848,13 @@ export class SongEditor {
                     if (event.shiftKey) {
                         this._openPrompt("beatsPerBar");
                     } else { 
-                        if (this._doc.synth.loopBar != this._doc.bar) {
-                            this._doc.synth.loopBar = this._doc.bar;
+                        const leftSel = Math.min(this._doc.selection.boxSelectionX0, this._doc.selection.boxSelectionX1);
+                        const rightSel = Math.max(this._doc.selection.boxSelectionX0, this._doc.selection.boxSelectionX1);
+                        if ((leftSel < this._doc.synth.loopBarStart || this._doc.synth.loopBarStart == -1)
+                            || (rightSel > this._doc.synth.loopBarEnd || this._doc.synth.loopBarEnd == -1)
+                        ) {
+                            this._doc.synth.loopBarStart = leftSel;
+                            this._doc.synth.loopBarEnd = rightSel;    
 
                             if (!this._doc.synth.playing) {
                                 this._doc.synth.snapToBar();
@@ -3842,11 +3862,12 @@ export class SongEditor {
                             }
                         }
                         else {
-                            this._doc.synth.loopBar = -1;
+                            this._doc.synth.loopBarStart = -1;
+                            this._doc.synth.loopBarEnd = -1;
                         }
 
                         // Pressed while viewing a different bar than the current synth playhead.
-                        if (this._doc.bar != Math.floor(this._doc.synth.playhead) && this._doc.synth.loopBar != -1) {
+                        if (this._doc.bar != Math.floor(this._doc.synth.playhead) && this._doc.synth.loopBarStart != -1) {
 
                             this._doc.synth.goToBar(this._doc.bar);
                             this._doc.synth.snapToBar();
@@ -3858,7 +3879,7 @@ export class SongEditor {
 
                         }
 
-                        this._loopEditor.setLoopAt(this._doc.synth.loopBar);
+                        this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
                     
                     }
                 }
@@ -3876,8 +3897,9 @@ export class SongEditor {
                 event.preventDefault();
                 break;
             case 13: // enter/return
-                this._doc.synth.loopBar = -1;
-                this._loopEditor.setLoopAt(this._doc.synth.loopBar);
+                this._doc.synth.loopBarStart = -1;
+                this._doc.synth.loopBarEnd = -1;
+                this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
 
                 if (event.ctrlKey || event.metaKey) {
                     this._doc.selection.insertChannel();
@@ -3887,8 +3909,9 @@ export class SongEditor {
                 event.preventDefault();
                 break;
             case 8: // backspace/delete
-                this._doc.synth.loopBar = -1;
-                this._loopEditor.setLoopAt(this._doc.synth.loopBar);
+                this._doc.synth.loopBarStart = -1;
+                this._doc.synth.loopBarEnd = -1;
+                this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
 
                 if (event.ctrlKey || event.metaKey) {
                     this._doc.selection.deleteChannel();
@@ -3930,8 +3953,9 @@ export class SongEditor {
                 if (canPlayNotes) break;
                 if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
 
-                    this._doc.synth.loopBar = -1;
-                    this._loopEditor.setLoopAt(this._doc.synth.loopBar);
+                    this._doc.synth.loopBarStart = -1;
+                    this._doc.synth.loopBarEnd = -1;
+                    this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
 
                     this._doc.synth.snapToStart();
                     this._doc.synth.initModFilters(this._doc.song);
@@ -3947,15 +3971,17 @@ export class SongEditor {
 
                 if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
 
-                    if (this._doc.synth.loopBar != this._doc.bar) {
-                        this._doc.synth.loopBar = -1;
-                        this._loopEditor.setLoopAt(this._doc.synth.loopBar);
-                    }
-
                     this._doc.synth.goToBar(this._doc.bar);
                     this._doc.synth.snapToBar();
                     this._doc.synth.initModFilters(this._doc.song);
                     this._doc.synth.computeLatestModValues();
+
+                    if (Math.floor(this._doc.synth.playhead) < this._doc.synth.loopBarStart || Math.floor(this._doc.synth.playhead) > this._doc.synth.loopBarEnd) {
+                        this._doc.synth.loopBarStart = -1;
+                        this._doc.synth.loopBarEnd = -1;
+                        this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+                    }
+
                     if (this._doc.prefs.autoFollow) {
                         this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
                     }
@@ -4172,12 +4198,15 @@ export class SongEditor {
             case 219: // left brace
                 if (canPlayNotes) break;
                 if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
-                    this._doc.synth.loopBar = -1;
-                    this._loopEditor.setLoopAt(this._doc.synth.loopBar);
-
                     this._doc.synth.goToPrevBar();
                     this._doc.synth.initModFilters(this._doc.song);
                     this._doc.synth.computeLatestModValues();
+                    if (Math.floor(this._doc.synth.playhead) < this._doc.synth.loopBarStart || Math.floor(this._doc.synth.playhead) > this._doc.synth.loopBarEnd) {
+                        this._doc.synth.loopBarStart = -1;
+                        this._doc.synth.loopBarEnd = -1;
+                        this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+                    }
+
                     if (this._doc.prefs.autoFollow) {
                         this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
                     }
@@ -4187,12 +4216,15 @@ export class SongEditor {
             case 221: // right brace
                 if (canPlayNotes) break;
                 if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
-                    this._doc.synth.loopBar = -1;
-                    this._loopEditor.setLoopAt(this._doc.synth.loopBar);
-
                     this._doc.synth.goToNextBar();
                     this._doc.synth.initModFilters(this._doc.song);
                     this._doc.synth.computeLatestModValues();
+                    if (Math.floor(this._doc.synth.playhead) < this._doc.synth.loopBarStart || Math.floor(this._doc.synth.playhead) > this._doc.synth.loopBarEnd) {
+                        this._doc.synth.loopBarStart = -1;
+                        this._doc.synth.loopBarEnd = -1;
+                        this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+                    }
+
                     if (this._doc.prefs.autoFollow) {
                         this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
                     }
@@ -4378,16 +4410,22 @@ export class SongEditor {
     }
 
     private _whenPrevBarPressed = (): void => {
-        this._doc.synth.loopBar = -1;
-        this._loopEditor.setLoopAt(this._doc.synth.loopBar);
         this._doc.synth.goToPrevBar();
+        if (Math.floor(this._doc.synth.playhead) < this._doc.synth.loopBarStart || Math.floor(this._doc.synth.playhead) > this._doc.synth.loopBarEnd) {
+            this._doc.synth.loopBarStart = -1;
+            this._doc.synth.loopBarEnd = -1;
+            this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+        }
         this._barScrollBar.animatePlayhead();
     }
 
     private _whenNextBarPressed = (): void => {
-        this._doc.synth.loopBar = -1;
-        this._loopEditor.setLoopAt(this._doc.synth.loopBar);
         this._doc.synth.goToNextBar();
+        if (Math.floor(this._doc.synth.playhead) < this._doc.synth.loopBarStart || Math.floor(this._doc.synth.playhead) > this._doc.synth.loopBarEnd) {
+            this._doc.synth.loopBarStart = -1;
+            this._doc.synth.loopBarEnd = -1;
+            this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+        }
         this._barScrollBar.animatePlayhead();
     }
 
@@ -5037,6 +5075,12 @@ export class SongEditor {
                 break;
             case "closePromptByClickoff":
                 this._doc.prefs.closePromptByClickoff = !this._doc.prefs.closePromptByClickoff;
+                break;
+            case "instrumentCopyPaste":
+                this._doc.prefs.instrumentCopyPaste = !this._doc.prefs.instrumentCopyPaste;
+                break;
+            case "instrumentImportExport":
+                this._doc.prefs.instrumentImportExport = !this._doc.prefs.instrumentImportExport;
                 break;
         }
         this._optionsMenu.selectedIndex = 0;

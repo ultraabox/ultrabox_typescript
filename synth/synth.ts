@@ -2290,6 +2290,7 @@ export class Instrument {
         if (instrumentObject["spectrum"] != undefined) {
             for (let i: number = 0; i < Config.spectrumControlPoints; i++) {
                 this.spectrumWave.spectrum[i] = Math.max(0, Math.min(Config.spectrumMax, Math.round(Config.spectrumMax * (+instrumentObject["spectrum"][i]) / 100)));
+                this.spectrumWave.markCustomWaveDirty();
             }
         } else {
             this.spectrumWave.reset(isNoiseChannel);
@@ -3631,6 +3632,14 @@ export class Song {
                 fromJummBox = false;
                 fromGoldBox = false;
 		        fromUltraBox = true;
+                charIndex++;
+        } else if (variantTest == 0x64) { //"d" 
+                fromBeepBox = false;
+                fromJummBox = true;
+                fromGoldBox = false;
+		        fromUltraBox = false;
+                // to-do: add explicit dogebox2 support
+                //fromDogeBox2 = true;
                 charIndex++;
             } else {
             fromBeepBox = true;
@@ -8313,7 +8322,8 @@ export class Synth {
     public static readonly tempFilterEndCoefficients: FilterCoefficients = new FilterCoefficients();
     private tempDrumSetControlPoint: FilterControlPoint = new FilterControlPoint();
     public tempFrequencyResponse: FrequencyResponse = new FrequencyResponse();
-    public loopBar: number = -1;
+    public loopBarStart: number = -1;
+    public loopBarEnd: number = -1;
 
     private static readonly fmSynthFunctionCache: Dictionary<Function> = {};
     private static readonly fm6SynthFunctionCache: Dictionary<Function> = {};
@@ -8876,10 +8886,10 @@ export class Synth {
             if (nextBar >= this.song!.barCount) {
                 nextBar = this.song!.barCount - 1;
             }
-        } else if (this.bar == this.loopBar && !this.renderingSong) {
-            nextBar = this.bar;
+        } else if (this.bar == this.loopBarEnd && !this.renderingSong) {
+            nextBar = this.loopBarStart;
         }
-        else if (this.loopRepeatCount != 0 && nextBar == this.song!.loopStart + this.song!.loopLength) {
+        else if (this.loopRepeatCount != 0 && nextBar == Math.max(this.loopBarEnd+1, this.song!.loopStart + this.song!.loopLength)) {
             nextBar = this.song!.loopStart;
         }
         return nextBar;
@@ -8888,15 +8898,21 @@ export class Synth {
     public skipBar(): void {
         if (!this.song) return;
         const samplesPerTick: number = this.getSamplesPerTick();
-        this.bar++;
+        if (this.loopBarEnd != this.bar)
+            this.bar++;
+        else {
+            this.bar = this.loopBarStart;
+        }
         this.beat = 0;
         this.part = 0;
         this.tick = 0;
         this.tickSampleCountdown = samplesPerTick;
 	    this.isAtStartOfTick = true;
 
-        if (this.loopRepeatCount != 0 && this.bar == this.song.loopStart + this.song.loopLength) {
+        if (this.loopRepeatCount != 0 && this.bar == Math.max(this.song.loopStart + this.song.loopLength, this.loopBarEnd)) {
             this.bar = this.song.loopStart;
+            if (this.loopBarStart != -1)
+                this.bar = this.loopBarStart;
             if (this.loopRepeatCount > 0) this.loopRepeatCount--;
         }
 
@@ -9066,8 +9082,10 @@ export class Synth {
 		    					// Unable to continue, as we have skipped back to a previously visited bar without generating new samples, which means we are infinitely skipping.
                 // In this case processing will return before the designated number of samples are processed. In other words, silence will be generated.
                 let barVisited = skippedBars.includes(this.bar);
-                if (barVisited && bufferIndex == firstSkippedBufferIndex)
+                if (barVisited && bufferIndex == firstSkippedBufferIndex) {
+                    this.pause();
                     return;
+                }
                 if (firstSkippedBufferIndex == -1) {
                     firstSkippedBufferIndex = bufferIndex;
                 }

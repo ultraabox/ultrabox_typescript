@@ -3830,6 +3830,8 @@ export class ColorConfig {
 					--mod-label-primary-text:   black;
 					--disabled-note-primary:    #999;
 					--disabled-note-secondary:  #666;
+					--note-flash: firebrick;
+  					--note-flash-secondary: firebrick;
 				}
 			`,
 			 "shitbox 3.0": `
@@ -3954,6 +3956,10 @@ export class ColorConfig {
 					--mod-label-primary-text:   black;
 					--disabled-note-primary:    #999;
 					--disabled-note-secondary:  #666;
+				}
+
+				.beepboxEditor {
+					line-height: 1.25;
 				}
 			
 			`,

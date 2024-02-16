@@ -1477,6 +1477,7 @@ export class ChangeChannelCount extends Change {
                                 const preset: Preset = EditorConfig.valueToPreset(presetValue)!;
                                 instrument.fromJsonObject(preset.settings, isNoise, isMod, doc.song.rhythm == 0 || doc.song.rhythm == 2, doc.song.rhythm >= 2);
                                 instrument.preset = presetValue;
+                                instrument.effects |= 1 << EffectType.panning;
                             } else {
                                 instrument.setTypeAndReset(InstrumentType.mod, isNoise, isMod);
                             }
@@ -2558,6 +2559,7 @@ export class ChangeAddChannelInstrument extends Change {
         const instrument: Instrument = new Instrument(isNoise, isMod);
         instrument.fromJsonObject(preset.settings, isNoise, isMod, false, false, 1);
         instrument.preset = presetValue;
+        instrument.effects |= 1 << EffectType.panning;
         instrument.volume = 0;
         channel.instruments.push(instrument);
         if (!isMod) { // Mod channels lose information when changing set instrument
@@ -3481,6 +3483,7 @@ export function setDefaultInstruments(song: Song): void {
             const preset: Preset = EditorConfig.valueToPreset(presetValue)!;
             instrument.fromJsonObject(preset.settings, isNoise, isMod, song.rhythm == 0 || song.rhythm == 2, song.rhythm >= 2, 1);
             instrument.preset = presetValue;
+            instrument.effects |= 1 << EffectType.panning;
         }
     }
 }

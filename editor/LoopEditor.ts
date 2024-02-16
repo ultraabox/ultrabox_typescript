@@ -4,6 +4,7 @@ import { SongDocument } from "./SongDocument";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
 import { ChangeLoop, ChangeChannelBar } from "./changes";
 import { ColorConfig } from "./ColorConfig";
+import { TrackEditor } from "./TrackEditor";
 
 interface Cursor {
 	startBar: number;
@@ -20,7 +21,9 @@ export class LoopEditor {
 		private readonly _startMode:   number = 0;
 		private readonly _endMode:     number = 1;
 		private readonly _bothMode:    number = 2;
-		private _loopAtPoint: number = -1;
+		private readonly _loopMode:    number = 3;
+		private _loopAtPointStart: number = -1;
+		private _loopAtPointEnd: number = -1;
 		
 		private readonly _loop: SVGPathElement = SVG.path({fill: "none", stroke: ColorConfig.loopAccent, "stroke-width": 4});
 		private readonly _barLoop: SVGPathElement = SVG.path({fill: "none", stroke: ColorConfig.uiWidgetFocus, "stroke-width": 2});
@@ -49,9 +52,10 @@ export class LoopEditor {
 	private _renderedLoopStop: number = -1;
 	private _renderedBarCount: number = 0;
 	private _renderedBarWidth: number = -1;
-	private _renderedBarLoop: number = -1;
+	private _renderedBarLoopStart: number = -1;
+	private _renderedBarLoopEnd: number = -1;
 		
-	constructor(private _doc: SongDocument) {
+	constructor(private _doc: SongDocument, private _trackEditor: TrackEditor) {
 		this._updateCursorStatus();
 		this._render();
 		this._doc.notifier.watch(this._documentChanged);
@@ -72,7 +76,10 @@ export class LoopEditor {
 		const bar: number = this._mouseX / this._barWidth;
 		this._cursor.startBar = bar;
 			
-		if (bar > this._doc.song.loopStart - 0.25 && bar < this._doc.song.loopStart + this._doc.song.loopLength + 0.25) {
+		if (bar >= this._loopAtPointStart && bar <= this._loopAtPointEnd + 1) {
+			this._cursor.mode = this._loopMode;
+        }
+		else if (bar > this._doc.song.loopStart - 0.25 && bar < this._doc.song.loopStart + this._doc.song.loopLength + 0.25) {
 			if (bar - this._doc.song.loopStart < this._doc.song.loopLength * 0.5) {
 				this._cursor.mode = this._startMode;
 			} else {
@@ -205,6 +212,11 @@ export class LoopEditor {
 				const endPoints: Endpoints = this._findEndPoints(bar);
 				this._change = new ChangeLoop(this._doc, oldStart, oldEnd - oldStart, endPoints.start, endPoints.length);
 			}
+			else if (this._cursor.mode == this._loopMode) {
+				this._doc.synth.loopBarStart = -1;
+				this._doc.synth.loopBarEnd = -1;
+				this.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+            }
 			this._doc.synth.jumpIntoLoop();
 			if (this._doc.prefs.autoFollow) {
 				new ChangeChannelBar(this._doc, this._doc.channel, Math.floor(this._doc.synth.playhead), true);
@@ -249,20 +261,37 @@ export class LoopEditor {
 				highlightStop = (this._doc.song.loopStart) * this._barWidth + radius * 2;
 			} else if (this._cursor.mode == this._endMode) {
 				highlightStart = (this._doc.song.loopStart + this._doc.song.loopLength) * this._barWidth - radius * 2;
-			} else {
+			} else if (this._cursor.mode == this._bothMode) {
 				const endPoints: Endpoints = this._findEndPoints(this._cursor.startBar);
 				highlightStart = (endPoints.start) * this._barWidth;
 				highlightStop = (endPoints.start + endPoints.length) * this._barWidth;
 			}
 				
-			this._highlight.setAttribute("d",
-				`M ${highlightStart + radius} ${4} ` +
-				`L ${highlightStop - radius} ${4} ` +
-				`A ${radius - 4} ${radius - 4} ${0} ${0} ${1} ${highlightStop - radius} ${this._editorHeight - 4} ` +
-				`L ${highlightStart + radius} ${this._editorHeight - 4} ` +
-				`A ${radius - 4} ${radius - 4} ${0} ${0} ${1} ${highlightStart + radius} ${4} ` +
-				`z`
-			);
+			if (this._cursor.mode == this._loopMode) {
+				const barLoopStart = (this._loopAtPointStart + 0.5) * this._barWidth;
+				const barLoopEnd = (this._loopAtPointEnd + 0.5) * this._barWidth;
+				this._highlight.setAttribute("d",
+					`M ${barLoopStart} ${radius * 1.7} ` +
+					`L ${barLoopStart - radius * 1.5} ${radius}` +
+					`L ${barLoopStart} ${radius * 0.3}` +
+					`L ${barLoopEnd} ${radius * 0.3}` +
+					`L ${barLoopEnd + radius * 1.5} ${radius}` +
+					`L ${barLoopEnd} ${radius * 1.7}` +
+					`z`
+				);
+			}
+			else {
+
+				this._highlight.setAttribute("d",
+					`M ${highlightStart + radius} ${4} ` +
+					`L ${highlightStop - radius} ${4} ` +
+					`A ${radius - 4} ${radius - 4} ${0} ${0} ${1} ${highlightStop - radius} ${this._editorHeight - 4} ` +
+					`L ${highlightStart + radius} ${this._editorHeight - 4} ` +
+					`A ${radius - 4} ${radius - 4} ${0} ${0} ${1} ${highlightStart + radius} ${4} ` +
+					`z`
+				);
+
+			}
 		}
 	}
 		
@@ -270,8 +299,10 @@ export class LoopEditor {
 		this._render();
 	}
 
-	public setLoopAt(bar: number): void {
-		this._loopAtPoint = bar;
+	public setLoopAt(startBar: number, endBar: number): void {
+		this._loopAtPointStart = startBar;
+		this._loopAtPointEnd = endBar;
+		this._trackEditor.render();
 		this._render();
     }
 		
@@ -303,9 +334,10 @@ export class LoopEditor {
 			);
 		}
 
-		const barLoopStart = (this._loopAtPoint + 0.5) * this._barWidth;
-		if (this._renderedBarLoop != barLoopStart) {
-			if (barLoopStart < 0) {
+		const barLoopStart = (this._loopAtPointStart + 0.5) * this._barWidth;
+		const barLoopEnd = (this._loopAtPointEnd + 0.5) * this._barWidth;
+		if (this._renderedBarLoopStart != barLoopStart || this._renderedBarLoopEnd != barLoopEnd) {
+			if (barLoopStart < 0 || barLoopEnd < 0) {
 				this._barLoop.setAttribute("d", "");
 			}
 			else {
@@ -313,11 +345,14 @@ export class LoopEditor {
 					`M ${barLoopStart} ${radius * 1.5} ` +
 					`L ${barLoopStart - radius} ${radius}` +
 					`L ${barLoopStart} ${radius * 0.5}` +
-					`L ${barLoopStart + radius} ${radius}` +
+					`L ${barLoopEnd} ${radius * 0.5}` +
+					`L ${barLoopEnd + radius} ${radius}` +
+					`L ${barLoopEnd} ${radius * 1.5}` +
 					`z`
 				);
 			}
-			this._renderedBarLoop = barLoopStart;
+			this._renderedBarLoopStart = barLoopStart;
+			this._renderedBarLoopEnd = barLoopEnd;
 		}
 			
 		this._updatePreview();

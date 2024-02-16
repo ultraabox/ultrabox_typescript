@@ -18,15 +18,17 @@ export class InstrumentImportPrompt implements Prompt {
 		);
 		private readonly _fileInput: HTMLInputElement = input({type: "file", accept: ".json,application/json"});
 
+		private readonly _strategyInfoText: HTMLDivElement = div({ style: "text-align: left;" },
+		"You must enable either ",
+		code("Simultaneous instruments per channel"),
+		" or ",
+		code("Different instruments per pattern"),
+		" to change the import strategy.",
+		);
+
 		public readonly container: HTMLDivElement = div({ class: "prompt noSelection", style: "width: 300px;" },
 		    h2("Import Instrument(s)"),
-			div({ style: "text-align: left;" },
-			"You must enable either ",
-			code("Simultaneous instruments per channel"),
-			" or ",
-			code("Different instruments per pattern"),
-			" to change the import strategy.",
-			),
+			this._strategyInfoText,
             div({style: "display: flex; flex-direction: row; align-items: center; height: 2em; justify-content: flex-end;"},
 				div({class: "selectContainer", style: "width: 100%;"}, this._importStrategySelect),
 			),
@@ -51,9 +53,11 @@ export class InstrumentImportPrompt implements Prompt {
 		if ((_doc.song.patternInstruments||_doc.song.layeredInstruments)==false) {
 			this._importStrategySelect.disabled = true;
 			this._importStrategySelect.value = "replace";
+			this._strategyInfoText.hidden = false;
 		} else {
 			const lastStrategy: string | null = window.localStorage.getItem("instrumentImportStrategy");
 			if (lastStrategy != null) this._importStrategySelect.value = lastStrategy;
+			this._strategyInfoText.hidden = true;
 		}
 		this._fileInput.addEventListener("change", this._whenFileSelected);
 		this._cancelButton.addEventListener("click", this._close);

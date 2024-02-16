@@ -674,6 +674,7 @@ function onKeyPressed(event: KeyboardEvent): void {
 		case 70: // first bar
 			synth.playhead = 0;
 			synth.computeLatestModValues();
+			renderPlayhead();
 			event.preventDefault();
 			break;
 		case 32: // space
