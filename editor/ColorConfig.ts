@@ -5311,6 +5311,10 @@ export class ColorConfig {
 					--disabled-note-secondary:  #666;
 				}
 
+				#Hotdog {
+					display: inline !important;
+					content: url("hotdog.png") !important;
+				}
 				* {
 					cursor: url("wackybox_cursor.png"), auto !important;
 				}
@@ -5902,36 +5906,36 @@ export class ColorConfig {
 			}
 		/* replaces hotdog (in a hacky way) with an image of the girls using the same scratch sprites from the 404 page*/
 		#Hotdog {
-		display: none;
+			display: none;
 		}
 		.instructions-column > section:first-of-type > p:first-of-type:after {
-		display: block;
-		content: url("UltraboxAzurLaneThemeStarterSquad.png");
-		width: 100%;
-		text-align: center;
-		margin-top: 25px;
+			display: block;
+			content: url("UltraboxAzurLaneThemeStarterSquad.png");
+			width: 100%;
+			text-align: center;
+			margin-top: 25px;
 		}
 		/* sets cursor */
 		* {
-		cursor: url("UltraBoxAzurLaneThemeMouse.png"), auto !important;
+			cursor: url("UltraBoxAzurLaneThemeMouse.png"), auto !important;
 		}
 		/* sets background image */
 		body {
-		background-image: url("UltraBoxAzurLaneThemeMemoryTaskBackground.png") !important;
-		background-size: cover;
-		background-position: center;
-		background-repeat: no-repeat;
-			}
-			/* make editor background transparent */
-		#beepboxEditorContainer, .beepboxEditor, #text-content {
-		background: #0400257d !important;
+			background-image: url("UltraBoxAzurLaneThemeMemoryTaskBackground.png") !important;
+			background-size: cover;
+			background-position: center;
+			background-repeat: no-repeat;
 		}
-			#text-content > section > h1 > font {
-		display: none;
+		/* make editor background transparent */
+			#beepboxEditorContainer, .beepboxEditor, #text-content {
+			background: #0400257d !important;
+		}
+		#text-content > section > h1 > font {
+			display: none;
 		}
 		#text-content > section > h1 {
-		margin: auto;
-		content: url("UltraBoxALThemeLogo.png");
+			margin: auto;
+			content: url("UltraBoxALThemeLogo.png");
 		}
 	}`,
 			  "custom": `${localStorage.getItem("customColors") || `:root {
