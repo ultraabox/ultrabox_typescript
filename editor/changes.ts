@@ -2010,6 +2010,26 @@ export class ChangeSupersawShape extends ChangeInstrumentSlider {
 	}
 }
 
+export class ChangeSlideSpeed extends ChangeInstrumentSlider {
+    constructor(doc: SongDocument, oldValue: number, newValue: number) {
+        super(doc);
+        this._instrument.slideTicks = newValue;
+        // doc.synth.unsetMod(Config.modulators.dictionary["slideTicks"].index, doc.channel, doc.getCurrentInstrument());
+        doc.notifier.changed();
+        if (oldValue != newValue) this._didSomething();
+    }
+}
+
+export class ChangeStrumSpeed extends ChangeInstrumentSlider {
+    constructor(doc: SongDocument, oldValue: number, newValue: number) {
+        super(doc);
+        this._instrument.strumParts = newValue;
+        // doc.synth.unsetMod(Config.modulators.dictionary["strumTicks"].index, doc.channel, doc.getCurrentInstrument());
+        doc.notifier.changed();
+        if (oldValue != newValue) this._didSomething();
+    }
+}
+
 export class ChangePitchShift extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);

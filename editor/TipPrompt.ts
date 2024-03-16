@@ -547,6 +547,18 @@ export class TipPrompt implements Prompt {
 					p("This setting is a volume multiplier applied to the second voice. This setting will only work correctly with two voices."),
 				);
 			} break;
+			case "slideSpeedSlider": {
+				message = div(
+					h2("Slide Speed"),
+					p("This slider controls how fast/slow the slide transition is. In other audio software, this setting is sometimes referred to as \"Portamento\"."),
+				);
+			} break;
+			case "strumSpeedSlider": {
+				message = div(
+					h2("Strum Speed"),
+					p("This setting affects how fast your chord will strum."),
+				);
+			} break;
 
 			default:
 				// Check for modSetinfo#
