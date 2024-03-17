@@ -3338,6 +3338,8 @@ export class Song {
                     }
                 } else if (instrument.type == InstrumentType.noise) {
                     buffer.push(SongTagCode.wave, base64IntToCharCode[instrument.chipNoise]);
+                    buffer.push(SongTagCode.unison, base64IntToCharCode[instrument.unison]);
+                    if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                 } else if (instrument.type == InstrumentType.spectrum) {
                     buffer.push(SongTagCode.spectrum);
                     const spectrumBits: BitFieldWriter = new BitFieldWriter();
@@ -3345,6 +3347,8 @@ export class Song {
                         spectrumBits.write(Config.spectrumControlPointBits, instrument.spectrumWave.spectrum[i]);
                     }
                     spectrumBits.encodeBase64(buffer);
+                    buffer.push(SongTagCode.unison, base64IntToCharCode[instrument.unison]);
+                    if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                 } else if (instrument.type == InstrumentType.drumset) {
                     buffer.push(SongTagCode.drumsetEnvelopes);
                     for (let j: number = 0; j < Config.drumCount; j++) {
@@ -3364,7 +3368,9 @@ export class Song {
                     if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                 } else if (instrument.type == InstrumentType.pwm) {
                     buffer.push(SongTagCode.pulseWidth, base64IntToCharCode[instrument.pulseWidth]);
-                    buffer.push(base64IntToCharCode[instrument.decimalOffset >> 6], base64IntToCharCode[instrument.decimalOffset & 0x3f]); 
+                    buffer.push(base64IntToCharCode[instrument.decimalOffset >> 6], base64IntToCharCode[instrument.decimalOffset & 0x3f]);
+                    buffer.push(SongTagCode.unison, base64IntToCharCode[instrument.unison]);
+                    if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                 } else if (instrument.type == InstrumentType.supersaw) {
 					buffer.push(SongTagCode.supersaw, base64IntToCharCode[instrument.supersawDynamism], base64IntToCharCode[instrument.supersawSpread], base64IntToCharCode[instrument.supersawShape]);
 					buffer.push(SongTagCode.pulseWidth, base64IntToCharCode[instrument.pulseWidth]);
@@ -7214,6 +7220,8 @@ class Tone {
     public liveInputSamplesHeld: number = 0;
     public lastInterval: number = 0;
     public noiseSample: number = 0.0;
+    public noiseSampleA: number = 0.0;
+    public noiseSampleB: number = 0.0;
     public stringSustainStart: number = 0;
     public stringSustainEnd: number = 0;
     public readonly phases: number[] = [];
@@ -7278,6 +7286,8 @@ class Tone {
 
     public reset(): void {
         this.noiseSample = 0.0;
+        this.noiseSampleA = 0.0;
+        this.noiseSampleB = 0.0;
         for (let i: number = 0; i < Config.maxPitchOrOperatorCount; i++) {
             this.phases[i] = 0.0;
 						// advloop addition
@@ -8028,8 +8038,19 @@ class InstrumentState {
             this.unisonOffset = instrument.unisonOffset;
             this.unisonExpression = instrument.unisonExpression;
             this.unisonSign = instrument.unisonSign;
+        } else if (instrument.type == InstrumentType.pwm) {
+            this.unisonVoices = instrument.unisonVoices;
+            this.unisonSpread = instrument.unisonSpread;
+            this.unisonOffset = instrument.unisonOffset;
+            this.unisonExpression = instrument.unisonExpression;
+            this.unisonSign = instrument.unisonSign;
         } else if (instrument.type == InstrumentType.noise) {
             this.wave = getDrumWave(instrument.chipNoise, inverseRealFourierTransform, scaleElementsByFactor);
+            this.unisonVoices = instrument.unisonVoices;
+            this.unisonSpread = instrument.unisonSpread;
+            this.unisonOffset = instrument.unisonOffset;
+            this.unisonExpression = instrument.unisonExpression;
+            this.unisonSign = instrument.unisonSign;
         } else if (instrument.type == InstrumentType.harmonics) {
             this.wave = this.harmonicsWave.getCustomWave(instrument.harmonicsWave, instrument.type);
             this.unisonVoices = instrument.unisonVoices;
@@ -8046,6 +8067,11 @@ class InstrumentState {
             this.unisonSign = instrument.unisonSign;
         } else if (instrument.type == InstrumentType.spectrum) {
             this.wave = this.spectrumWave.getCustomWave(instrument.spectrumWave, 8);
+            this.unisonVoices = instrument.unisonVoices;
+            this.unisonSpread = instrument.unisonSpread;
+            this.unisonOffset = instrument.unisonOffset;
+            this.unisonExpression = instrument.unisonExpression;
+            this.unisonSign = instrument.unisonSign;
         } else if (instrument.type == InstrumentType.drumset) {
             for (let i: number = 0; i < Config.drumCount; i++) {
                 this.drumsetSpectrumWaves[i].getCustomWave(instrument.drumsetSpectrumWaves[i], InstrumentState._drumsetIndexToSpectrumOctave(i));
@@ -10908,7 +10934,7 @@ export class Synth {
             }
 
             const startFreq: number = Instrument.frequencyFromPitch(startPitch);
-            if (instrument.type == InstrumentType.chip || instrument.type == InstrumentType.customChipWave || instrument.type == InstrumentType.harmonics || instrument.type == InstrumentType.pickedString) {
+            if (instrument.type == InstrumentType.chip || instrument.type == InstrumentType.customChipWave || instrument.type == InstrumentType.harmonics || instrument.type == InstrumentType.pickedString || instrument.type == InstrumentType.spectrum || instrument.type == InstrumentType.pwm || instrument.type == InstrumentType.noise) {
                 // These instruments have two waves at different frequencies for the unison feature.
                 //const unison: Unison = Config.unisons[instrument.unison];
                 const unisonVoices: number = instrument.unisonVoices;
@@ -12564,14 +12590,19 @@ export class Synth {
         effectsFunction(synth, outputDataL, outputDataR, bufferIndex, runLength, instrumentState);
     }
 
-    private static pulseWidthSynth(synth: Synth, bufferIndex: number, roundedSamplesPerTick: number, tone: Tone, instrument: Instrument): void {
+    private static pulseWidthSynth(synth: Synth, bufferIndex: number, roundedSamplesPerTick: number, tone: Tone, instrumentState: InstrumentState): void {
         const data: Float32Array = synth.tempMonoInstrumentSampleBuffer!;
 
-        let phaseDelta: number = tone.phaseDeltas[0];
-        const phaseDeltaScale: number = +tone.phaseDeltaScales[0];
+        const unisonSign: number = tone.specialIntervalExpressionMult * instrumentState.unisonSign;
+        if (instrumentState.unisonVoices == 1 && !instrumentState.chord!.customInterval) tone.phases[1] = tone.phases[0];
+        let phaseDeltaA: number = tone.phaseDeltas[0];
+        let phaseDeltaB: number = tone.phaseDeltas[1];
+        const phaseDeltaScaleA: number = +tone.phaseDeltaScales[0];
+        const phaseDeltaScaleB: number = +tone.phaseDeltaScales[1];
         let expression: number = +tone.expression;
         const expressionDelta: number = +tone.expressionDelta;
-        let phase: number = (tone.phases[0] % 1);
+        let phaseA: number = (tone.phases[0] % 1);
+        let phaseB: number = (tone.phases[1] % 1);
 
         let pulseWidth: number = tone.pulseWidth;
         const pulseWidthDelta: number = tone.pulseWidthDelta;
@@ -12585,36 +12616,56 @@ export class Synth {
         const stopIndex: number = bufferIndex + roundedSamplesPerTick;
         for (let sampleIndex: number = bufferIndex; sampleIndex < stopIndex; sampleIndex++) {
 
-            const sawPhaseA: number = phase % 1;
-            const sawPhaseB: number = (phase + pulseWidth) % 1;
+            const sawPhaseA: number = phaseA % 1;
+            const sawPhaseB: number = (phaseA + pulseWidth) % 1;
+            const sawPhaseC: number = phaseB % 1;
+            const sawPhaseD: number = (phaseB + pulseWidth) % 1;
 
-            let pulseWave: number = sawPhaseB - sawPhaseA;
+            let pulseWaveA: number = sawPhaseB - sawPhaseA;
+            let pulseWaveB: number = sawPhaseD - sawPhaseC;
 
             // This is a PolyBLEP, which smooths out discontinuities at any frequency to reduce aliasing. 
-            if (!instrument.aliases) {
-                if (sawPhaseA < phaseDelta) {
-                    var t = sawPhaseA / phaseDelta;
-                    pulseWave += (t + t - t * t - 1) * 0.5;
-                } else if (sawPhaseA > 1.0 - phaseDelta) {
-                    var t = (sawPhaseA - 1.0) / phaseDelta;
-                    pulseWave += (t + t + t * t + 1) * 0.5;
+            if (!instrumentState.aliases) {
+                if (sawPhaseA < phaseDeltaA) {
+                    var t = sawPhaseA / phaseDeltaA;
+                    pulseWaveA += (t + t - t * t - 1) * 0.5;
+                } else if (sawPhaseA > 1.0 - phaseDeltaA) {
+                    var t = (sawPhaseA - 1.0) / phaseDeltaA;
+                    pulseWaveA += (t + t + t * t + 1) * 0.5;
                 }
-                if (sawPhaseB < phaseDelta) {
-                    var t = sawPhaseB / phaseDelta;
-                    pulseWave -= (t + t - t * t - 1) * 0.5;
-                } else if (sawPhaseB > 1.0 - phaseDelta) {
-                    var t = (sawPhaseB - 1.0) / phaseDelta;
-                    pulseWave -= (t + t + t * t + 1) * 0.5;
+                if (sawPhaseB < phaseDeltaA) {
+                    var t = sawPhaseB / phaseDeltaA;
+                    pulseWaveA -= (t + t - t * t - 1) * 0.5;
+                } else if (sawPhaseB > 1.0 - phaseDeltaA) {
+                    var t = (sawPhaseB - 1.0) / phaseDeltaA;
+                    pulseWaveA -= (t + t + t * t + 1) * 0.5;
+                }
+
+                if (sawPhaseC < phaseDeltaB) {
+                    var t = sawPhaseC / phaseDeltaB;
+                    pulseWaveB += (t + t - t * t - 1) * 0.5;
+                } else if (sawPhaseC > 1.0 - phaseDeltaB) {
+                    var t = (sawPhaseC - 1.0) / phaseDeltaB;
+                    pulseWaveB += (t + t + t * t + 1) * 0.5;
+                }
+                if (sawPhaseD < phaseDeltaB) {
+                    var t = sawPhaseD / phaseDeltaB;
+                    pulseWaveB -= (t + t - t * t - 1) * 0.5;
+                } else if (sawPhaseD > 1.0 - phaseDeltaB) {
+                    var t = (sawPhaseD - 1.0) / phaseDeltaB;
+                    pulseWaveB -= (t + t + t * t + 1) * 0.5;
                 }
             }
 
-            const inputSample: number = pulseWave;
+            const inputSample: number = pulseWaveA + pulseWaveB * unisonSign;
             const sample: number = applyFilters(inputSample, initialFilterInput1, initialFilterInput2, filterCount, filters);
             initialFilterInput2 = initialFilterInput1;
             initialFilterInput1 = inputSample;
 
-            phase += phaseDelta;
-            phaseDelta *= phaseDeltaScale;
+            phaseA += phaseDeltaA;
+            phaseB += phaseDeltaB;
+            phaseDeltaA *= phaseDeltaScaleA;
+            phaseDeltaB *= phaseDeltaScaleB;
             pulseWidth += pulseWidthDelta;
 
             const output: number = sample * expression;
@@ -12623,8 +12674,10 @@ export class Synth {
             data[sampleIndex] += output;
         }
 
-        tone.phases[0] = phase;
-        tone.phaseDeltas[0] = phaseDelta;
+        tone.phases[0] = phaseA;
+        tone.phases[1] = phaseB;
+        tone.phaseDeltas[0] = phaseDeltaA;
+        tone.phaseDeltas[1] = phaseDeltaB;
         tone.expression = expression;
         tone.pulseWidth = pulseWidth;
 
@@ -12805,70 +12858,97 @@ export class Synth {
 				const operator#Scaled   = operator#OutputMult * operator#Output;
 		`).split("\n");
 
-    private static noiseSynth(synth: Synth, bufferIndex: number, runLength: number, tone: Tone, instrumentState: InstrumentState): void {
-        const data: Float32Array = synth.tempMonoInstrumentSampleBuffer!;
-        const wave: Float32Array = instrumentState.wave!;
-        let phaseDelta: number = +tone.phaseDeltas[0];
-        const phaseDeltaScale: number = +tone.phaseDeltaScales[0];
-        let expression: number = +tone.expression;
-        const expressionDelta: number = +tone.expressionDelta;
-        let phase: number = (tone.phases[0] % 1) * Config.chipNoiseLength;
-        if (tone.phases[0] == 0.0) {
-            // Zero phase means the tone was reset, just give noise a random start phase instead.
-            phase = Math.random() * Config.chipNoiseLength;
+        private static noiseSynth(synth: Synth, bufferIndex: number, runLength: number, tone: Tone, instrumentState: InstrumentState): void {
+            const data: Float32Array = synth.tempMonoInstrumentSampleBuffer!;
+            const wave: Float32Array = instrumentState.wave!;
+            
+            const unisonSign: number = tone.specialIntervalExpressionMult * instrumentState.unisonSign;
+            if (instrumentState.unisonVoices == 1 && !instrumentState.chord!.customInterval) tone.phases[1] = tone.phases[0];
+            let phaseDeltaA: number = tone.phaseDeltas[0];
+            let phaseDeltaB: number = tone.phaseDeltas[1];
+            const phaseDeltaScaleA: number = +tone.phaseDeltaScales[0];
+            const phaseDeltaScaleB: number = +tone.phaseDeltaScales[1];
+            let expression: number = +tone.expression;
+            const expressionDelta: number = +tone.expressionDelta;
+            let phaseA: number = (tone.phases[0] % 1) * Config.chipNoiseLength;
+            let phaseB: number = (tone.phases[1] % 1) * Config.chipNoiseLength;
+            if (tone.phases[0] == 0.0) {
+                // Zero phase means the tone was reset, just give noise a random start phase instead.
+                phaseA = Math.random() * Config.chipNoiseLength;
+                phaseB = Math.random() * Config.chipNoiseLength;
+            }
+            if (tone.phases[1] == 0.0) {
+                // Zero phase means the tone was reset, just give noise a random start phase instead.
+                phaseA = Math.random() * Config.chipNoiseLength;
+                phaseB = Math.random() * Config.chipNoiseLength;
+            }
+            const phaseMask: number = Config.chipNoiseLength - 1;
+            let noiseSampleA: number = +tone.noiseSampleA;
+            let noiseSampleB: number = +tone.noiseSampleB;
+    
+            const filters: DynamicBiquadFilter[] = tone.noteFilters;
+            const filterCount: number = tone.noteFilterCount | 0;
+            let initialFilterInput1: number = +tone.initialNoteFilterInput1;
+            let initialFilterInput2: number = +tone.initialNoteFilterInput2;
+            const applyFilters: Function = Synth.applyFilters;
+    
+            // This is for a "legacy" style simplified 1st order lowpass filter with
+            // a cutoff frequency that is relative to the tone's fundamental frequency.
+            const pitchRelativefilterA: number = Math.min(1.0, phaseDeltaA * instrumentState.noisePitchFilterMult);
+            const pitchRelativefilterB: number = Math.min(1.0, phaseDeltaB * instrumentState.noisePitchFilterMult);
+    
+            const stopIndex: number = bufferIndex + runLength;
+            for (let sampleIndex: number = bufferIndex; sampleIndex < stopIndex; sampleIndex++) {
+                const waveSampleA: number = wave[phaseA & phaseMask];
+                const waveSampleB: number = wave[phaseB & phaseMask];
+    
+                noiseSampleA += (waveSampleA - noiseSampleA) * pitchRelativefilterA;
+                noiseSampleB += (waveSampleB - noiseSampleB) * pitchRelativefilterB;
+    
+                const inputSample: number = noiseSampleA + noiseSampleB * unisonSign;
+                const sample: number = applyFilters(inputSample, initialFilterInput1, initialFilterInput2, filterCount, filters);
+                initialFilterInput2 = initialFilterInput1;
+                initialFilterInput1 = inputSample;
+    
+                phaseA += phaseDeltaA;
+                phaseB += phaseDeltaB;
+                phaseDeltaA *= phaseDeltaScaleA;
+                phaseDeltaB *= phaseDeltaScaleB;
+    
+                const output: number = sample * expression;
+                expression += expressionDelta;
+    
+                data[sampleIndex] += output;
+            }
+    
+            tone.phases[0] = phaseA / Config.chipNoiseLength;
+            tone.phases[1] = phaseB / Config.chipNoiseLength;
+            tone.phaseDeltas[0] = phaseDeltaA;
+            tone.phaseDeltas[1] = phaseDeltaB;
+            tone.expression = expression;
+            tone.noiseSampleA = noiseSampleA;
+            tone.noiseSampleB = noiseSampleB;
+    
+            synth.sanitizeFilters(filters);
+            tone.initialNoteFilterInput1 = initialFilterInput1;
+            tone.initialNoteFilterInput2 = initialFilterInput2;
         }
-        const phaseMask: number = Config.chipNoiseLength - 1;
-        let noiseSample: number = +tone.noiseSample;
-
-        const filters: DynamicBiquadFilter[] = tone.noteFilters;
-        const filterCount: number = tone.noteFilterCount | 0;
-        let initialFilterInput1: number = +tone.initialNoteFilterInput1;
-        let initialFilterInput2: number = +tone.initialNoteFilterInput2;
-        const applyFilters: Function = Synth.applyFilters;
-
-        // This is for a "legacy" style simplified 1st order lowpass filter with
-        // a cutoff frequency that is relative to the tone's fundamental frequency.
-        const pitchRelativefilter: number = Math.min(1.0, phaseDelta * instrumentState.noisePitchFilterMult);
-
-        const stopIndex: number = bufferIndex + runLength;
-        for (let sampleIndex: number = bufferIndex; sampleIndex < stopIndex; sampleIndex++) {
-            const waveSample: number = wave[phase & phaseMask];
-
-            noiseSample += (waveSample - noiseSample) * pitchRelativefilter;
-
-            const inputSample: number = noiseSample;
-            const sample: number = applyFilters(inputSample, initialFilterInput1, initialFilterInput2, filterCount, filters);
-            initialFilterInput2 = initialFilterInput1;
-            initialFilterInput1 = inputSample;
-
-            phase += phaseDelta;
-            phaseDelta *= phaseDeltaScale;
-
-            const output: number = sample * expression;
-            expression += expressionDelta;
-
-            data[sampleIndex] += output;
-        }
-
-        tone.phases[0] = phase / Config.chipNoiseLength;
-        tone.phaseDeltas[0] = phaseDelta;
-        tone.expression = expression;
-        tone.noiseSample = noiseSample;
-
-        synth.sanitizeFilters(filters);
-        tone.initialNoteFilterInput1 = initialFilterInput1;
-        tone.initialNoteFilterInput2 = initialFilterInput2;
-    }
 
     private static spectrumSynth(synth: Synth, bufferIndex: number, runLength: number, tone: Tone, instrumentState: InstrumentState): void {
         const data: Float32Array = synth.tempMonoInstrumentSampleBuffer!;
         const wave: Float32Array = instrumentState.wave!;
         const samplesInPeriod: number = (1 << 7);
-        let phaseDelta: number = tone.phaseDeltas[0] * samplesInPeriod;
-        const phaseDeltaScale: number = +tone.phaseDeltaScales[0];
+
+        const unisonSign: number = tone.specialIntervalExpressionMult * instrumentState.unisonSign;
+        if (instrumentState.unisonVoices == 1 && !instrumentState.chord!.customInterval) tone.phases[1] = tone.phases[0];
+        let phaseDeltaA: number = tone.phaseDeltas[0] * samplesInPeriod;
+		let phaseDeltaB: number = tone.phaseDeltas[1] * samplesInPeriod;
+        const phaseDeltaScaleA: number = +tone.phaseDeltaScales[0];
+		const phaseDeltaScaleB: number = +tone.phaseDeltaScales[1];
         let expression: number = +tone.expression;
         const expressionDelta: number = +tone.expressionDelta;
-        let noiseSample: number = +tone.noiseSample;
+        let noiseSampleA: number = +tone.noiseSampleA;
+		let noiseSampleB: number = +tone.noiseSampleB;
 
         const filters: DynamicBiquadFilter[] = tone.noteFilters;
         const filterCount: number = tone.noteFilterCount | 0;
@@ -12876,33 +12956,44 @@ export class Synth {
         let initialFilterInput2: number = +tone.initialNoteFilterInput2;
         const applyFilters: Function = Synth.applyFilters;
 
-        let phase: number = (tone.phases[0] % 1) * Config.spectrumNoiseLength;
+        let phaseA: number = (tone.phases[0] % 1) * Config.spectrumNoiseLength;
+		let phaseB: number = (tone.phases[1] % 1) * Config.spectrumNoiseLength;
         // Zero phase means the tone was reset, just give noise a random start phase instead.
-        if (tone.phases[0] == 0.0) phase = Synth.findRandomZeroCrossing(wave, Config.spectrumNoiseLength) + phaseDelta;
+        if (tone.phases[0] == 0.0) phaseA = Synth.findRandomZeroCrossing(wave, Config.spectrumNoiseLength) + phaseDeltaA;
+		if (tone.phases[1] == 0.0) phaseB = Synth.findRandomZeroCrossing(wave, Config.spectrumNoiseLength) + phaseDeltaB;
         const phaseMask: number = Config.spectrumNoiseLength - 1;
 
         // This is for a "legacy" style simplified 1st order lowpass filter with
         // a cutoff frequency that is relative to the tone's fundamental frequency.
-        const pitchRelativefilter: number = Math.min(1.0, phaseDelta);
+        const pitchRelativefilterA: number = Math.min(1.0, phaseDeltaA);
+        const pitchRelativefilterB: number = Math.min(1.0, phaseDeltaB);
 
         const stopIndex: number = bufferIndex + runLength;
         for (let sampleIndex: number = bufferIndex; sampleIndex < stopIndex; sampleIndex++) {
-            const phaseInt: number = phase | 0;
-            const index: number = phaseInt & phaseMask;
-            let waveSample: number = wave[index];
-            const phaseRatio: number = phase - phaseInt;
-            waveSample += (wave[index + 1] - waveSample) * phaseRatio;
+            const phaseAInt: number = phaseA | 0;
+			const phaseBInt: number = phaseB | 0;
+            const indexA: number = phaseAInt & phaseMask;
+			const indexB: number = phaseBInt & phaseMask;
+            let waveSampleA: number = wave[indexA];
+			let waveSampleB: number = wave[indexB];
+            const phaseRatioA: number = phaseA - phaseAInt;
+			const phaseRatioB: number = phaseB - phaseBInt;
+            waveSampleA += (wave[indexA + 1] - waveSampleA) * phaseRatioA;
+			waveSampleB += (wave[indexB + 1] - waveSampleB) * phaseRatioB;
 
-            noiseSample += (waveSample - noiseSample) * pitchRelativefilter;
+            noiseSampleA += (waveSampleA - noiseSampleA) * pitchRelativefilterA;
+			noiseSampleB += (waveSampleB - noiseSampleB) * pitchRelativefilterB;
 
 
-            const inputSample: number = noiseSample;
+            const inputSample: number = noiseSampleA + noiseSampleB * unisonSign;
             const sample: number = applyFilters(inputSample, initialFilterInput1, initialFilterInput2, filterCount, filters);
             initialFilterInput2 = initialFilterInput1;
             initialFilterInput1 = inputSample;
 
-            phase += phaseDelta;
-            phaseDelta *= phaseDeltaScale;
+            phaseA += phaseDeltaA;
+			phaseB += phaseDeltaB;
+            phaseDeltaA *= phaseDeltaScaleA;
+			phaseDeltaB *= phaseDeltaScaleB;
 
             const output: number = sample * expression;
             expression += expressionDelta;
@@ -12910,10 +13001,13 @@ export class Synth {
             data[sampleIndex] += output;
         }
 
-        tone.phases[0] = phase / Config.spectrumNoiseLength;
-        tone.phaseDeltas[0] = phaseDelta / samplesInPeriod;
+        tone.phases[0] = phaseA / Config.spectrumNoiseLength;
+        tone.phases[1] = phaseB / Config.spectrumNoiseLength;
+        tone.phaseDeltas[0] = phaseDeltaA / samplesInPeriod;
+        tone.phaseDeltas[1] = phaseDeltaB / samplesInPeriod;
         tone.expression = expression;
-        tone.noiseSample = noiseSample;
+        tone.noiseSampleA = noiseSampleA;
+        tone.noiseSampleB = noiseSampleB;
 
         synth.sanitizeFilters(filters);
         tone.initialNoteFilterInput1 = initialFilterInput1;

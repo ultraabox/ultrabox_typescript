@@ -1767,7 +1767,7 @@ export function getDrumWave(index: number, inverseRealFourierTransform: Function
 		} else if (index == 7) {
 			// "Metallic" drums from modbox!
 			var drumBuffer = 1;
-			for (var i = 0; i < 32768; i++) {
+			for (var i = 0; i < Config.chipNoiseLength; i++) {
 				wave[i] = (drumBuffer & 1) / 2.0 - 0.5;
 				var newBuffer = drumBuffer >> 1;
 				if (((drumBuffer + newBuffer) & 1) == 1) {
@@ -1787,57 +1787,57 @@ export function getDrumWave(index: number, inverseRealFourierTransform: Function
                 drumBuffer = newBuffer;
             }
 		}
-					else if (index == 9) {
-                for (let i = 0; i < Config.chipNoiseLength; i++) {
-                    wave[i] = Math.round(Math.random());
-                }
+        else if (index == 9) {
+            for (let i = 0; i < Config.chipNoiseLength; i++) {
+                wave[i] = Math.round(Math.random());
             }
-			 else if (index == 10) {
-                var drumBuffer = 1;
-                for (var i = 0; i < 32768; i++) {
-                    wave[i] = Math.round((drumBuffer & 1));
-                    var newBuffer = drumBuffer >> 1;
-                    if (((drumBuffer + newBuffer) & 1) == 1) {
-                        newBuffer -= 10 << 2;
-                    }
-                    drumBuffer = newBuffer;
+        }
+        else if (index == 10) {
+            var drumBuffer = 1;
+            for (var i = 0; i < Config.chipNoiseLength; i++) {
+                wave[i] = Math.round((drumBuffer & 1));
+                var newBuffer = drumBuffer >> 1;
+                if (((drumBuffer + newBuffer) & 1) == 1) {
+                    newBuffer -= 10 << 2;
                 }
+                drumBuffer = newBuffer;
             }
-			else if (index == 11) {
-                for (let i = 0; i < Config.chipNoiseLength; i++) {
-                   var ultraboxnewchipnoiserand = Math.random();
-				   wave[i] = Math.pow(ultraboxnewchipnoiserand, Math.clz32(ultraboxnewchipnoiserand));
-                }
+        }
+        else if (index == 11) {
+            for (let i = 0; i < Config.chipNoiseLength; i++) {
+                var ultraboxnewchipnoiserand = Math.random();
+                wave[i] = Math.pow(ultraboxnewchipnoiserand, Math.clz32(ultraboxnewchipnoiserand));
             }
-			else if (index == 12) {
-				var b0 = 0, b1 = 0, b2 = 0, b3, b4, b5, b6;
-				b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0;
-				
-				for (let i = 0; i < Config.chipNoiseLength; i++) {
-					var white = Math.random() * 2 - 1;
-					b0 = 0.99886 * b0 + white * 0.0555179;
-					b1 = 0.99332 * b1 + white * 0.0750759;
-					b2 = 0.96900 * b2 + white * 0.1538520;
-					b3 = 0.86650 * b3 + white * 0.3104856;
-					b4 = 0.55000 * b4 + white * 0.5329522;
-					b5 = -0.7616 * b5 - white * 0.0168980;
-					wave[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
-					wave[i] *= 0.44;
-					b6 = white * 0.115926;
-					// from https://github.com/zacharydenton/noise.js, MIT license soooo
-                }
+        }
+        else if (index == 12) {
+            var b0 = 0, b1 = 0, b2 = 0, b3, b4, b5, b6;
+            b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0;
+            
+            for (let i = 0; i < Config.chipNoiseLength; i++) {
+                var white = Math.random() * 2 - 1;
+                b0 = 0.99886 * b0 + white * 0.0555179;
+                b1 = 0.99332 * b1 + white * 0.0750759;
+                b2 = 0.96900 * b2 + white * 0.1538520;
+                b3 = 0.86650 * b3 + white * 0.3104856;
+                b4 = 0.55000 * b4 + white * 0.5329522;
+                b5 = -0.7616 * b5 - white * 0.0168980;
+                wave[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+                wave[i] *= 0.44;
+                b6 = white * 0.115926;
+                // from https://github.com/zacharydenton/noise.js, MIT license soooo
             }
-			else if (index == 13) {
-				var lastOut = 0.0;
-				
-                for (let i = 0; i < Config.chipNoiseLength; i++) {
-					var white = Math.random() * 2 - 1;
-					wave[i] = (lastOut + (0.02 * white)) / 1.02;
-					lastOut = wave[i];
-					wave[i] *= 14;
-					// this is also from noise.js
-                }
+        }
+        else if (index == 13) {
+            var lastOut = 0.0;
+            
+            for (let i = 0; i < Config.chipNoiseLength; i++) {
+                var white = Math.random() * 2 - 1;
+                wave[i] = (lastOut + (0.02 * white)) / 1.02;
+                lastOut = wave[i];
+                wave[i] *= 14;
+                // this is also from noise.js
             }
+        }
 		
 		else {
 			throw new Error("Unrecognized drum index: " + index);

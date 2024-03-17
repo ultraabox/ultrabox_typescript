@@ -6024,9 +6024,10 @@ export class ColorConfig {
 				#beepboxEditorContainer {
 						border-image-source: url("theme_resources/abyssbox_border.png");
 						border-image-slice: 4 fill; 
-					   border-image-width: 8px; 
-					border-image-repeat: stretch;
+						border-image-width: 8px; 
+						border-image-repeat: stretch;
 						padding: 12px;
+						padding-top: 0px;
 	
 						image-rendering: -moz-crisp-edges !important;         /* Firefox */
 						image-rendering: -webkit-optimize-contrast !important; /* Webkit (Chrome/Safari) */
@@ -6330,9 +6331,10 @@ export class ColorConfig {
 				#beepboxEditorContainer {
 						border-image-source: url("theme_resources/abyssbox_border_light.png");
 						border-image-slice: 4 fill; 
-					   border-image-width: 8px; 
-					border-image-repeat: stretch;
+						border-image-width: 8px; 
+						border-image-repeat: stretch;
 						padding: 12px;
+						padding-top: 0px;
 	
 						image-rendering: -moz-crisp-edges !important;         /* Firefox */
 						image-rendering: -webkit-optimize-contrast !important; /* Webkit (Chrome/Safari) */
