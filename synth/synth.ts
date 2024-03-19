@@ -82,6 +82,7 @@ function decode32BitNumber(compressed: string, charIndex: number): number {
 }
 
 function encodeUnisonSettings(buffer: number[], v: number, s: number, o: number, e: number, i: number): void {
+    // TODO: make these sign bits more efficient
     buffer.push(base64IntToCharCode[v]);
     
     // TODO: make these use bitshifts instead for consistency
@@ -245,7 +246,7 @@ const enum SongTagCode {
 //	                    = CharCode.K,
 	pan                 = CharCode.L, // added between 8 and 9, DEPRECATED
 	customChipWave      = CharCode.M, // added in JummBox URL version 1(?) for customChipWave
-	songTitle           = CharCode.N, // added in JummBox URL version 1(?) for songTitle
+	songDetails         = CharCode.N, // added in JummBox URL version 1(?) for songTitle
 	limiterSettings     = CharCode.O, // added in JummBox URL version 3(?) for limiterSettings
 	operatorAmplitudes  = CharCode.P, // added in BeepBox URL version 6
 	operatorFrequencies = CharCode.Q, // added in BeepBox URL version 6
@@ -2839,6 +2840,8 @@ export class Song {
     private static readonly _variant = 0x75; //"u" ~ ultrabox
 
     public title: string;
+    public author: string;
+    public description: string;
     public scale: number;
     public scaleCustom: boolean[] = [];
     public key: number;
@@ -2988,7 +2991,7 @@ export class Song {
     public initToDefault(andResetChannels: boolean = true): void {
         this.scale = 0;
         //this.scaleCustom = [true, false, true, true, false, false, false, true, true, false, true, true];
-	this.scaleCustom = [true, false, false, false, false, false, false, false, false, false, false, false];
+	    this.scaleCustom = [true, false, false, false, false, false, false, false, false, false, false, false];
         this.key = 0;
         this.octave = 0;
         this.loopStart = 0;
@@ -3003,7 +3006,9 @@ export class Song {
         this.patternInstruments = false;
 
         this.title = "Untitled";
-        document.title = EditorConfig.versionDisplayName;
+        this.author = "";
+        this.description = "";
+        document.title = this.title + " - " + EditorConfig.versionDisplayName;
 
         if (andResetChannels) {
             this.pitchChannelCount = 3;
@@ -3049,11 +3054,11 @@ export class Song {
         let buffer: number[] = [];
 
         buffer.push(Song._variant);
-                 //   buffer.push(base64IntToCharCode[Song._latestGoldBoxVersion]);
-		 buffer.push(base64IntToCharCode[Song._latestUltraBoxVersion]);
+		buffer.push(base64IntToCharCode[Song._latestUltraBoxVersion]);
 
+
+        buffer.push(SongTagCode.songDetails);
         // Length of the song name string
-        buffer.push(SongTagCode.songTitle);
         var encodedSongTitle: string = encodeURIComponent(this.title);
         buffer.push(base64IntToCharCode[encodedSongTitle.length >> 6], base64IntToCharCode[encodedSongTitle.length & 0x3f]);
 
@@ -3061,6 +3066,23 @@ export class Song {
         for (let i: number = 0; i < encodedSongTitle.length; i++) {
             buffer.push(encodedSongTitle.charCodeAt(i));
         }
+
+        // Length of the song author string
+        var encodedAuthorTitle: string = encodeURIComponent(this.author);
+        buffer.push(base64IntToCharCode[encodedAuthorTitle.length >> 6], base64IntToCharCode[encodedAuthorTitle.length & 0x3f]);
+
+        for (let i: number = 0; i < encodedAuthorTitle.length; i++) {
+            buffer.push(encodedAuthorTitle.charCodeAt(i));
+        }
+
+        // Length of the song description string
+        var encodedDescriptionTitle: string = encodeURIComponent(this.description);
+        buffer.push(base64IntToCharCode[encodedDescriptionTitle.length >> 6], base64IntToCharCode[encodedDescriptionTitle.length & 0x3f]);
+
+        for (let i: number = 0; i < encodedDescriptionTitle.length; i++) {
+            buffer.push(encodedDescriptionTitle.charCodeAt(i));
+        }
+
 
         buffer.push(SongTagCode.channelCount, base64IntToCharCode[this.pitchChannelCount], base64IntToCharCode[this.noiseChannelCount], base64IntToCharCode[this.modChannelCount]);
         buffer.push(SongTagCode.scale, base64IntToCharCode[this.scale]);
@@ -3866,13 +3888,27 @@ export class Song {
         let useSlowerArpSpeed: boolean = false;
         let useFastTwoNoteArp: boolean = false;
         while (charIndex < compressed.length) switch (command = compressed.charCodeAt(charIndex++)) {
-            case SongTagCode.songTitle: {
+            case SongTagCode.songDetails: {
                 // Length of song name string
                 var songNameLength = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                 this.title = decodeURIComponent(compressed.substring(charIndex, charIndex + songNameLength));
                 document.title = this.title + " - " + EditorConfig.versionDisplayName;
 
                 charIndex += songNameLength;
+
+                if (fromUltraBox && !beforeSix) {
+                    // Length of song author string
+                    var songAuthorLength = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                    this.author = decodeURIComponent(compressed.substring(charIndex, charIndex + songAuthorLength));
+
+                    charIndex += songAuthorLength;
+
+                    // Length of song description string
+                    var songDescriptionLength = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                    this.description = decodeURIComponent(compressed.substring(charIndex, charIndex + songDescriptionLength));
+
+                    charIndex += songDescriptionLength;
+                }
             } break;
             case SongTagCode.channelCount: {
                 this.pitchChannelCount = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
@@ -4782,7 +4818,7 @@ export class Song {
                             ) >>> 0;
                     } else {
                         // BeepBox currently uses two base64 characters at 6 bits each for a bitfield representing all the enabled effects.
-                        if (EffectType.length > 12) throw new Error();
+                        // if (EffectType.length > 12) throw new Error();
                         instrument.effects = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                     }
 
@@ -6117,6 +6153,8 @@ export class Song {
             "name": this.title,
             "format": Song._format,
             "version": Song._latestUltraBoxVersion,
+            "author": this.author,
+            "description": this.description,
             "scale": Config.scales[this.scale].name,
             "customScale": this.scaleCustom,
             "key": Config.keys[this.key].name,
@@ -6158,6 +6196,14 @@ export class Song {
 
         if (jsonObject["name"] != undefined) {
             this.title = jsonObject["name"];
+        }
+
+        if (jsonObject["author"] != undefined) {
+            this.author = jsonObject["author"];
+        }
+
+        if (jsonObject["description"] != undefined) {
+            this.description = jsonObject["description"];
         }
 
         if (jsonObject["customSamples"] != undefined) {
@@ -8880,15 +8926,6 @@ export class Synth {
     public setModValue(volumeStart: number, volumeEnd: number, channelIndex: number, instrumentIndex: number, setting: number): number {
         let val: number = volumeStart + Config.modulators[setting].convertRealFactor;
         let nextVal: number = volumeEnd + Config.modulators[setting].convertRealFactor;
-        // should these be turned into a function?
-        if (Config.modulators[setting].optionalModify == "invert-0to50") {
-            val = 50 - val;
-            nextVal = 50 - nextVal;
-        }
-        if (Config.modulators[setting].optionalModify == "invert-0to99") {
-            val = 99 - val;
-            nextVal = 99 - nextVal;
-        }
         if (Config.modulators[setting].forSong) {
             if (this.modValues[setting] == null || this.modValues[setting] != val || this.nextModValues[setting] != nextVal) {
                 this.modValues[setting] = val;
@@ -9645,7 +9682,8 @@ export class Synth {
             let toneCount: number = 0;
 
             const instrument: Instrument = channel.instruments[instrumentIndex];
-            const filteredPitches = pitches.filter(pitch => pitch >= instrument.lowerNoteLimit && pitch <= instrument.upperNoteLimit)
+            let filteredPitches = pitches;
+            if (effectsIncludeNoteRange(instrument.effects)) filteredPitches = pitches.filter(pitch => pitch >= instrument.lowerNoteLimit && pitch <= instrument.upperNoteLimit);
 
             if (this.liveInputDuration > 0 && (channelIndex == this.liveInputChannel) && pitches.length > 0 && this.liveInputInstruments.indexOf(instrumentIndex) != -1) {
                 const instrument: Instrument = channel.instruments[instrumentIndex];

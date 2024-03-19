@@ -53,6 +53,8 @@ import { oscilascopeCanvas } from "../global/Oscilascope";
 import { VisualLoopControlsPrompt } from "./VisualLoopControlsPrompt";
 import { SampleLoadingStatusPrompt } from "./SampleLoadingStatusPrompt";
 import { AddSamplesPrompt } from "./AddSamplesPrompt";
+import { ShortenerConfigPrompt } from "./ShortenerConfigPrompt";
+import { SongDetailsPrompt } from "./SongDetailsPrompt";
 
 const { button, div, input, select, span, optgroup, option, canvas } = HTML;
 
@@ -766,8 +768,8 @@ export class SongEditor {
         option({ value: "export" }, "↓ Export Song... (" + EditorConfig.ctrlSymbol + "S)"),
         option({ value: "copyUrl" }, "⎘ Copy Song URL"),
         option({ value: "shareUrl" }, "⤳ Share Song URL"),
+        option({ value: "configureShortener" }, "🛠 Customize Url Shortener..."),
         option({ value: "shortenUrl" }, "… Shorten Song URL"),
-        // option({ value: "configureShortener" }, "🛠 Customize Url Shortener..."),
         option({ value: "viewPlayer" }, "▶ View in Song Player (⇧P)"),
         option({ value: "copyEmbed" }, "⎘ Copy HTML Embed Code"),
         option({ value: "songRecovery" }, "⚠ Recover Recent Song... (`)"),
@@ -940,7 +942,7 @@ export class SongEditor {
         div({ style: `color: ${ColorConfig.secondaryText}; margin-top: -3px;` }, this._pwmSliderInputBox)
         ), this._pulseWidthDropdown, this._pulseWidthSlider.container);
     //private readonly _pulseWidthRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("pulseWidth") }, "Pulse Width:"), this._pulseWidthDropdown, this._pulseWidthSlider.container);
-    private readonly _decimalOffsetSlider: Slider = new Slider(input({ style: "margin: 0; transform: scaleX(-1);", type: "range", min: "0", max: "99", value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeDecimalOffset(this._doc, oldValue, newValue), false);
+    private readonly _decimalOffsetSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: "99", value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeDecimalOffset(this._doc, oldValue, 99 - newValue), false);
     private readonly _decimalOffsetRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", style: "margin-left:10px;", onclick: () => this._openPrompt("decimalOffset") }, "‣ Offset:"), this._decimalOffsetSlider.container);
     private readonly _pulseWidthDropdownGroup: HTMLElement = div({ class: "editor-controls", style: "display: none;" }, this._decimalOffsetRow);
 
@@ -2105,9 +2107,12 @@ export class SongEditor {
                 case "sampleLoadingStatus":
                     this.prompt = new SampleLoadingStatusPrompt(this._doc);
                     break;
-                // case "configureShortener":
-                //     this.prompt = new ShortenerConfigPrompt(this._doc);
-                //     break;
+                case "configureShortener":
+                    this.prompt = new ShortenerConfigPrompt(this._doc);
+                    break;
+                case "songDetails":
+                    this.prompt = new SongDetailsPrompt(this._doc);
+                    break;
                 default:
                     this.prompt = new TipPrompt(this._doc, promptName);
                     break;
@@ -2522,8 +2527,8 @@ export class SongEditor {
                 this._pulseWidthSlider.updateValue(instrument.pulseWidth);
 
                 // this._decimalOffsetRow.style.display = "";
-                this._decimalOffsetSlider.input.title = (Number(prettyNumber(instrument.decimalOffset)) / 100) <= 0 ? "none" : "-" + (Number(prettyNumber(instrument.decimalOffset)) / 100) + "%";
-                this._decimalOffsetSlider.updateValue(instrument.decimalOffset);
+                this._decimalOffsetSlider.input.title = instrument.decimalOffset / 100 <= 0 ? "none" : "-" + prettyNumber(instrument.decimalOffset / 100) + "%";
+                this._decimalOffsetSlider.updateValue(99 - instrument.decimalOffset);
 
                 // this._pulseWidthDropdownGroup.style.display = "";
                 this._pulseWidthDropdownGroup.style.display = (this._openPulseWidthDropdown ? "" : "none");
@@ -2610,8 +2615,8 @@ export class SongEditor {
                     this._transitionDropdownGroup.style.display = "";
                 setSelectedValue(this._transitionSelect, instrument.transition);
                 this._slideSpeedRow.style.display = (Config.transitions[instrument.transition].slides == true) ? "" : "none";
-                this._slideSpeedSlider.input.title = "x" + prettyNumber(instrument.slideTicks);
-                this._slideSpeedDisplay.textContent = "x" + prettyNumber(instrument.slideTicks);
+                this._slideSpeedSlider.input.title = "x" + prettyNumber(32 - instrument.slideTicks);
+                this._slideSpeedDisplay.textContent = "x" + prettyNumber(32 - instrument.slideTicks);
                 this._slideSpeedSlider.updateValue(instrument.slideTicks);
             } else {
                 this._transitionDropdownGroup.style.display = "none";
@@ -4033,8 +4038,12 @@ export class SongEditor {
             case 68: // d
                 if (canPlayNotes) break;
                 if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
-                    this._doc.selection.duplicatePatterns();
-                    event.preventDefault();
+                    if (event.shiftKey) {
+                        this._openPrompt("songDetails");
+                    } else {
+                        this._doc.selection.duplicatePatterns();
+                        event.preventDefault();
+                    }
                 }
                 break;
             case 69: // e (+shift: eq filter settings)
@@ -5017,11 +5026,16 @@ export class SongEditor {
                 (<any>navigator).share({ url: new URL("#" + this._doc.song.toBase64String(), location.href).href });
                 break;
             case "shortenUrl":
-                window.open("https://tinyurl.com/api-create.php?url=" + encodeURIComponent(new URL("#" + this._doc.song.toBase64String(), location.href).href));
+                let shortenerStrategy: string = "https://tinyurl.com/api-create.php?url=";
+                // const localShortenerStrategy: string | null = window.localStorage.getItem("shortenerStrategySelect");
+
+                // if (localShortenerStrategy == "beepboxnet") shortenerStrategy = "https://www.beepbox.net/api-create.php?url=";
+
+                window.open(shortenerStrategy + encodeURIComponent(new URL("#" + this._doc.song.toBase64String(), location.href).href));
                 break;
-            // case "configureShortener":
-            //     this._openPrompt("configureShortener");
-            //     break;
+            case "configureShortener":
+                this._openPrompt("configureShortener");
+                break;
             case "viewPlayer":
                 location.href = "player/index.html#song=" + this._doc.song.toBase64String();
                 break;
