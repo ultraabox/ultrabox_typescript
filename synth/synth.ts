@@ -4084,10 +4084,14 @@ export class Song {
 			let newRhythm = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];	
 			this.rhythm = clamp(0, Config.rhythms.length, newRhythm + 2);
 			if (fromJummBox && beforeThree || fromBeepBox) {
-				if (this.rhythm == 2 || this.rhythm == 3) {
+				if (this.rhythm == Config.rhythms.dictionary["÷3 (triplets)"].index || this.rhythm == Config.rhythms.dictionary["÷6 (sextuplets)"].index) {
 					useSlowerArpSpeed = true;
 				}
-				if (this.rhythm >= 2) {
+				if (this.rhythm >= Config.rhythms.dictionary["÷6 (sextuplets)"].index) {
+					// @TODO: This assumes that 6 and 8 are in that order, but
+					// if someone reorders Config.rhythms that may not be true,
+					// so this check probably should instead look for those
+					// specific rhythms.
 					useFastTwoNoteArp = true;
 				}
 			}
@@ -4153,7 +4157,7 @@ export class Song {
                 }
 
                 if (beforeSeven && fromBeepBox) {
-                    instrument.effects = 0;
+                    // instrument.effects = 0;
                     // Chip/noise instruments had arpeggio and FM had custom interval but neither
                     // explicitly saved the chorus setting beforeSeven so enable it here.
                     if (instrument.chord != Config.chords.dictionary["simultaneous"].index) {
@@ -4701,6 +4705,12 @@ export class Song {
                 if (beforeThree && fromBeepBox) {
                     const channelIndex: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                     this.channels[channelIndex].instruments[0].unison = clamp(0, Config.unisons.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                    const instrument = this.channels[channelIndex].instruments[0];
+                    instrument.unisonVoices = Config.unisons[instrument.unison].voices;
+                    instrument.unisonSpread = Config.unisons[instrument.unison].spread;
+                    instrument.unisonOffset = Config.unisons[instrument.unison].offset;
+                    instrument.unisonExpression = Config.unisons[instrument.unison].expression;
+                    instrument.unisonSign = Config.unisons[instrument.unison].sign;
                 } else if (beforeSix && fromBeepBox) {
                     for (let channelIndex: number = 0; channelIndex < this.getChannelCount(); channelIndex++) {
                         for (const instrument of this.channels[channelIndex].instruments) {
@@ -4712,6 +4722,11 @@ export class Song {
                                 instrument.chord = 3;
                             }
                             instrument.unison = unison;
+                            instrument.unisonVoices = Config.unisons[instrument.unison].voices;
+                            instrument.unisonSpread = Config.unisons[instrument.unison].spread;
+                            instrument.unisonOffset = Config.unisons[instrument.unison].offset;
+                            instrument.unisonExpression = Config.unisons[instrument.unison].expression;
+                            instrument.unisonSign = Config.unisons[instrument.unison].sign;
                         }
                     }
                 } else if (beforeSeven && fromBeepBox) {
@@ -4723,45 +4738,51 @@ export class Song {
                         this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator].chord = 3;
                     }
                     this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator].unison = unison;
-                } else {
-                    this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator].unison = clamp(0, Config.unisons.length + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                }
-                const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
-                
-                if ((fromUltraBox && !beforeFive) && (instrument.unison == Config.unisons.length))  {
-                // if (instrument.unison == Config.unisons.length) {
-                    instrument.unisonVoices = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-
-                    const unisonSpreadNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                    const unisonSpread: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + ((base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63)) * 63);
-
-                    const unisonOffsetNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                    const unisonOffset: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + ((base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63)) * 63);
-
-                    const unisonExpressionNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                    const unisonExpression: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63);
-                    
-                    const unisonSignNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                    const unisonSign: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63);
-
-
-                    instrument.unisonSpread = unisonSpread / 1000;
-                    if (unisonSpreadNegative == 0) instrument.unisonSpread *= -1;
-
-                    instrument.unisonOffset = unisonOffset / 1000;
-                    if (unisonOffsetNegative == 0) instrument.unisonOffset *= -1;
-
-                    instrument.unisonExpression = unisonExpression / 1000;
-                    if (unisonExpressionNegative == 0) instrument.unisonExpression *= -1;
-
-                    instrument.unisonSign = unisonSign / 1000;
-                    if (unisonSignNegative == 0) instrument.unisonSign *= -1;
-                } else {
+                    const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                     instrument.unisonVoices = Config.unisons[instrument.unison].voices;
                     instrument.unisonSpread = Config.unisons[instrument.unison].spread;
                     instrument.unisonOffset = Config.unisons[instrument.unison].offset;
                     instrument.unisonExpression = Config.unisons[instrument.unison].expression;
                     instrument.unisonSign = Config.unisons[instrument.unison].sign;
+                } else {
+                    this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator].unison = clamp(0, Config.unisons.length + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                    const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
+                    
+                    if ((fromUltraBox && !beforeFive) && (instrument.unison == Config.unisons.length))  {
+                    // if (instrument.unison == Config.unisons.length) {
+                        instrument.unisonVoices = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+
+                        const unisonSpreadNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                        const unisonSpread: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + ((base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63)) * 63);
+
+                        const unisonOffsetNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                        const unisonOffset: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + ((base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63)) * 63);
+
+                        const unisonExpressionNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                        const unisonExpression: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63);
+                        
+                        const unisonSignNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                        const unisonSign: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63);
+
+
+                        instrument.unisonSpread = unisonSpread / 1000;
+                        if (unisonSpreadNegative == 0) instrument.unisonSpread *= -1;
+
+                        instrument.unisonOffset = unisonOffset / 1000;
+                        if (unisonOffsetNegative == 0) instrument.unisonOffset *= -1;
+
+                        instrument.unisonExpression = unisonExpression / 1000;
+                        if (unisonExpressionNegative == 0) instrument.unisonExpression *= -1;
+
+                        instrument.unisonSign = unisonSign / 1000;
+                        if (unisonSignNegative == 0) instrument.unisonSign *= -1;
+                    } else {
+                        instrument.unisonVoices = Config.unisons[instrument.unison].voices;
+                        instrument.unisonSpread = Config.unisons[instrument.unison].spread;
+                        instrument.unisonOffset = Config.unisons[instrument.unison].offset;
+                        instrument.unisonExpression = Config.unisons[instrument.unison].expression;
+                        instrument.unisonSign = Config.unisons[instrument.unison].sign;
+                    }
                 }
             
             } break;
@@ -9684,6 +9705,8 @@ export class Synth {
             const instrument: Instrument = channel.instruments[instrumentIndex];
             let filteredPitches = pitches;
             if (effectsIncludeNoteRange(instrument.effects)) filteredPitches = pitches.filter(pitch => pitch >= instrument.lowerNoteLimit && pitch <= instrument.upperNoteLimit);
+            let filteredBassPitches: number[] = bassPitches;
+            if (effectsIncludeNoteRange(instrument.effects)) filteredBassPitches = bassPitches.filter(pitch => pitch >= instrument.lowerNoteLimit && pitch <= instrument.upperNoteLimit);
 
             if (this.liveInputDuration > 0 && (channelIndex == this.liveInputChannel) && pitches.length > 0 && this.liveInputInstruments.indexOf(instrumentIndex) != -1) {
                 const instrument: Instrument = channel.instruments[instrumentIndex];
@@ -9749,7 +9772,7 @@ export class Synth {
                 }
             }
 
-            if (this.liveBassInputDuration > 0 && (channelIndex == this.liveBassInputChannel) && bassPitches.length > 0 && this.liveBassInputInstruments.indexOf(instrumentIndex) != -1) {
+            if (this.liveBassInputDuration > 0 && (channelIndex == this.liveBassInputChannel) && filteredBassPitches.length > 0 && this.liveBassInputInstruments.indexOf(instrumentIndex) != -1) {
                 const instrument: Instrument = channel.instruments[instrumentIndex];
 
                 if (instrument.getChord().singleTone) {
@@ -9766,10 +9789,10 @@ export class Synth {
                     }
                     toneCount++;
 
-                    for (let i: number = 0; i < bassPitches.length; i++) {
-                        tone.pitches[i] = bassPitches[i];
+                    for (let i: number = 0; i < filteredBassPitches.length; i++) {
+                        tone.pitches[i] = filteredBassPitches[i];
                     }
-                    tone.pitchCount = bassPitches.length;
+                    tone.pitchCount = filteredBassPitches.length;
                     tone.chordSize = 1;
                     tone.instrumentIndex = instrumentIndex;
                     tone.note = tone.prevNote = tone.nextNote = null;
@@ -9780,16 +9803,16 @@ export class Synth {
                 } else {
                     //const transition: Transition = instrument.getTransition();
 
-                    this.moveTonesIntoOrderedTempMatchedList(toneList, bassPitches);
+                    this.moveTonesIntoOrderedTempMatchedList(toneList, filteredBassPitches);
 
-                    for (let i: number = 0; i < bassPitches.length; i++) {
+                    for (let i: number = 0; i < filteredBassPitches.length; i++) {
                         //const strumOffsetParts: number = i * instrument.getChord().strumParts;
 
                         let tone: Tone;
                         if (this.tempMatchedPitchTones[toneCount] != null) {
                             tone = this.tempMatchedPitchTones[toneCount]!;
                             this.tempMatchedPitchTones[toneCount] = null;
-                            if (tone.pitchCount != 1 || tone.pitches[0] != bassPitches[i]) {
+                            if (tone.pitchCount != 1 || tone.pitches[0] != filteredBassPitches[i]) {
                                 this.releaseTone(instrumentState, tone);
                                 tone = this.newTone();
                             }
@@ -9800,9 +9823,9 @@ export class Synth {
                         }
                         toneCount++;
 
-                        tone.pitches[0] = bassPitches[i];
+                        tone.pitches[0] = filteredBassPitches[i];
                         tone.pitchCount = 1;
-                        tone.chordSize = bassPitches.length;
+                        tone.chordSize = filteredBassPitches.length;
                         tone.instrumentIndex = instrumentIndex;
                         tone.note = tone.prevNote = tone.nextNote = null;
                         tone.atNoteStart = this.liveBassInputStarted;
@@ -10082,13 +10105,19 @@ export class Synth {
                                 const chordOfCompatibleInstrument: Chord | null = this.adjacentPatternHasCompatibleInstrumentTransition(song, channel, pattern!, prevPattern, instrumentIndex, transition, chord, note, lastNote, patternForcesContinueAtStart);
                                 if (chordOfCompatibleInstrument != null) {
                                     prevNoteForThisInstrument = lastNote;
-                                    tonesInPrevNote = chordOfCompatibleInstrument.singleTone ? 1 : prevNoteForThisInstrument.pitches.length
+                                    let prevPitchesForThisInstrument: number[] = prevNoteForThisInstrument.pitches;
+                                    // @TODO: This may or may not be needed, I'm not entirely sure yet...
+                                    // if (effectsIncludeNoteRange(instrument.effects)) prevPitchesForThisInstrument = prevPitchesForThisInstrument.filter(pitch => pitch >= instrument.lowerNoteLimit && pitch <= instrument.upperNoteLimit);
+                                    tonesInPrevNote = chordOfCompatibleInstrument.singleTone ? 1 : prevPitchesForThisInstrument.length;
                                     forceContinueAtStart = patternForcesContinueAtStart;
                                 }
                             }
                         }
                     } else if (prevNoteForThisInstrument != null) {
-                        tonesInPrevNote = chord.singleTone ? 1 : prevNoteForThisInstrument.pitches.length
+                        let prevPitchesForThisInstrument: number[] = prevNoteForThisInstrument.pitches;
+                        // @TODO: This may or may not be needed, I'm not entirely sure yet...
+                        // if (effectsIncludeNoteRange(instrument.effects)) prevPitchesForThisInstrument = prevPitchesForThisInstrument.filter(pitch => pitch >= instrument.lowerNoteLimit && pitch <= instrument.upperNoteLimit);
+                        tonesInPrevNote = chord.singleTone ? 1 : prevPitchesForThisInstrument.length
                     }
                     if (note.end == partsPerBar) {
                         // If the end of the note coincides with the end of the pattern, look for an
@@ -10101,16 +10130,23 @@ export class Synth {
                                 const chordOfCompatibleInstrument: Chord | null = this.adjacentPatternHasCompatibleInstrumentTransition(song, channel, pattern!, nextPattern, instrumentIndex, transition, chord, note, firstNote, nextPatternForcesContinueAtStart);
                                 if (chordOfCompatibleInstrument != null) {
                                     nextNoteForThisInstrument = firstNote;
-                                    tonesInNextNote = chordOfCompatibleInstrument.singleTone ? 1 : nextNoteForThisInstrument.pitches.length
+                                    let nextPitchesForThisInstrument: number[] = nextNoteForThisInstrument.pitches;
+                                    // @TODO: This may or may not be needed, I'm not entirely sure yet...
+                                    // if (effectsIncludeNoteRange(instrument.effects)) nextPitchesForThisInstrument = nextPitchesForThisInstrument.filter(pitch => pitch >= instrument.lowerNoteLimit && pitch <= instrument.upperNoteLimit);
+                                    tonesInNextNote = chordOfCompatibleInstrument.singleTone ? 1 : nextPitchesForThisInstrument.length;
                                     forceContinueAtEnd = nextPatternForcesContinueAtStart;
                                 }
                             }
                         }
                     } else if (nextNoteForThisInstrument != null) {
-                        tonesInNextNote = chord.singleTone ? 1 : nextNoteForThisInstrument.pitches.length
+                        let nextPitchesForThisInstrument: number[] = nextNoteForThisInstrument.pitches;
+                        // @TODO: This may or may not be needed, I'm not entirely sure yet...
+                        // if (effectsIncludeNoteRange(instrument.effects)) nextPitchesForThisInstrument = nextPitchesForThisInstrument.filter(pitch => pitch >= instrument.lowerNoteLimit && pitch <= instrument.upperNoteLimit);
+                        tonesInNextNote = chord.singleTone ? 1 : nextPitchesForThisInstrument.length;
                     }
 
-                    let filteredPitches: number[] = note.pitches.filter(pitch => pitch >= instrument.lowerNoteLimit && pitch <= instrument.upperNoteLimit)
+                    let filteredPitches: number[] = note.pitches;
+                    if (effectsIncludeNoteRange(instrument.effects)) filteredPitches = note.pitches.filter(pitch => pitch >= instrument.lowerNoteLimit && pitch <= instrument.upperNoteLimit);
                     if (chord.singleTone && !(filteredPitches.length <= 0)) {
                         const atNoteStart: boolean = (Config.ticksPerPart * note.start == currentTick);
                         let tone: Tone;
@@ -10161,6 +10197,7 @@ export class Synth {
 
                             let prevNoteForThisTone: Note | null = (tonesInPrevNote > i) ? prevNoteForThisInstrument : null;
                             let noteForThisTone: Note = note;
+                            let pitchesForThisTone: number[] = filteredPitches;
                             let nextNoteForThisTone: Note | null = (tonesInNextNote > i) ? nextNoteForThisInstrument : null;
                             let noteStartPart: number = noteForThisTone.start + strumOffsetParts;
                             let passedEndOfNote: boolean = false;
@@ -10174,6 +10211,8 @@ export class Synth {
                                     // Continue the previous note's chord until the current one takes over.
                                     nextNoteForThisTone = noteForThisTone;
                                     noteForThisTone = prevNoteForThisTone;
+                                    pitchesForThisTone = noteForThisTone.pitches;
+                                    if (effectsIncludeNoteRange(instrument.effects)) pitchesForThisTone = pitchesForThisTone.filter(pitch => pitch >= instrument.lowerNoteLimit && pitch <= instrument.upperNoteLimit);
                                     prevNoteForThisTone = null;
                                     noteStartPart = noteForThisTone.start + strumOffsetParts;
                                     passedEndOfNote = true;
@@ -10215,9 +10254,9 @@ export class Synth {
                             }
                             toneCount++;
 
-                            tone.pitches[0] = noteForThisTone.pitches[i];
+                            tone.pitches[0] = pitchesForThisTone[i];
                             tone.pitchCount = 1;
-                            tone.chordSize = noteForThisTone.pitches.length;
+                            tone.chordSize = pitchesForThisTone.length;
                             tone.instrumentIndex = instrumentIndex;
                             tone.note = noteForThisTone;
                             tone.noteStartPart = noteStartPart;

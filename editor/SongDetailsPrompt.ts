@@ -4,6 +4,7 @@ import { HTML } from "imperative-html/dist/esm/elements-strict";
 import { SongDocument } from "./SongDocument";
 import { Prompt } from "./Prompt";
 // import { Config } from "../synth/SynthConfig";
+import { ChangeGroup } from "./Change";
 import { ChangeSongAuthor, ChangeSongTitle, ChangeSongDescription } from "./changes";
 
 const {button, div, h2, input, br} = HTML;
@@ -74,11 +75,11 @@ export class SongDetailsPrompt implements Prompt {
 	// }
 		
 	private _saveChanges = (): void => {
+		const group: ChangeGroup = new ChangeGroup();
+		group.append(new ChangeSongTitle(this._doc, this._doc.song.author, this._songTitle.value));
+		group.append(new ChangeSongAuthor(this._doc, this._doc.song.author, this._songAuthor.value));
+		group.append(new ChangeSongDescription(this._doc, this._doc.song.author, this._songDescription.value));
 		this._doc.prompt = null;
-		// this._doc.undo();
-		this._doc.record(new ChangeSongTitle(this._doc, this._doc.song.author, this._songTitle.value));
-		this._doc.record(new ChangeSongAuthor(this._doc, this._doc.song.author, this._songAuthor.value));
-		this._doc.record(new ChangeSongDescription(this._doc, this._doc.song.author, this._songDescription.value), true);
-		this._close;
+		this._doc.record(group, true);
 	}
 }
