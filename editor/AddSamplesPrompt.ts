@@ -45,7 +45,7 @@ export class AddSamplesPrompt {
         this._addSampleButton,
         this._addMultipleSamplesButton
     );
-    private readonly _instructionsLink: HTMLAnchorElement = a({ href: "#", style:"color:red;"}, "> Click Here for instructions on adding samples <");
+    private readonly _instructionsLink: HTMLAnchorElement = a({ href: "#", style:"color:red;font-weight:bold;"}, "> Click Here for instructions on adding samples <");
     private readonly _description: HTMLDivElement = div(
         div({ style: "margin-bottom: 0.5em; -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; cursor: text;" },
             "In order to use the old UltraBox samples, you should add ",
@@ -61,7 +61,7 @@ export class AddSamplesPrompt {
         div({ style: "margin-bottom: 0.5em;" },
             "The order of these samples is important - if you change their order or remove them you'll break your song!"
         ),
-        div({ style: "margin-bottom: 0.5em; font-size: 18px;" },
+        div({ style: "margin-bottom: 0.5em; font-size: 17px;" },
             this._instructionsLink,
         )
     );
