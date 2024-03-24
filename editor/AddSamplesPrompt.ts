@@ -87,7 +87,10 @@ export class AddSamplesPrompt {
                 " This is always an issue with servers: it may run out of space,",
                 " stop working, and so on. With arbitrary URLs, you can always ",
                 " change them to different ones if they stop working."
-            )
+            ),
+            p({}),
+            "Simply go and upload your samples to a website we suggest down below, once you do that you can copy that URL and paste it into the text input you can find after pressing the 'Add Sample' button.",
+            "You know the sample works once you see the name of the sample appear above the text input! Then just press 'Okay' and your sample will appear! To use samples just change your instrument to a chip wave instrument type and scroll down until you find the samples.",
         ),
         div({ style: "margin-top: 0.5em; margin-bottom: 0.5em;" },
             "As for where to upload your samples, here are some suggestions:",
