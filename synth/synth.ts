@@ -4224,21 +4224,11 @@ export class Song {
                     }
                 } else {
                     const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
+                    
                     if (instrument.type == InstrumentType.noise) {
-                        instrument.chipNoise = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-
-                        // backcompat for removal of shine noise type
-                        if (fromUltraBox && beforeSix) {
-                            if (instrument.chipNoise == 5) {
-                                instrument.chipNoise = 3;
-                            } else if (instrument.chipNoise > 5) {
-                                instrument.chipNoise -= 1;
-                            }
-                        }
-                        instrument.chipNoise = clamp(0, Config.chipNoiseLength, instrument.chipNoise);
+                        instrument.chipWave = clamp(0, Config.chipWaves.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                     } else {
                         if (fromUltraBox) {
-                            const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                             if (beforeSix) {
                                 const chipWaveReal = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                 const chipWaveCounter = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
@@ -6214,6 +6204,11 @@ export class Song {
         //const version: number = jsonObject["version"] | 0;
         //if (version > Song._latestVersion) return; // Go ahead and try to parse something from the future I guess? JSON is pretty easy-going!
         const format: string = jsonFormat == "auto" ? jsonObject["format"] : jsonFormat;
+
+        // Code for auto-detect mode: if statements that are lower down have 'higher priority'
+        //if (format == "auto") {
+            
+        //}
 
         if (jsonObject["name"] != undefined) {
             this.title = jsonObject["name"];

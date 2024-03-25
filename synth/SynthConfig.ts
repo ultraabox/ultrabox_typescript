@@ -1055,6 +1055,7 @@ export class Config {
 		{ name: "clang", expression: 0.4, basePitch: 69, pitchFilterMult: 1024.0, isSoft: false, samples: null },
 		{ name: "buzz", expression: 0.3, basePitch: 69, pitchFilterMult: 1024.0, isSoft: false, samples: null },
 		{ name: "hollow", expression: 1.5, basePitch: 96, pitchFilterMult: 1.0, isSoft: true, samples: null },
+        { name: "shine", expression: 1.0, basePitch: 69, pitchFilterMult: 1024.0, isSoft: false, samples: null }, // Identical to buzz but louder. For now we're keeping it...
 		{ name: "deep", expression: 1.5, basePitch: 120, pitchFilterMult: 1024.0, isSoft: true, samples: null },
 		{ name: "cutter", expression: 0.005, basePitch: 96, pitchFilterMult: 1024.0, isSoft: false, samples: null },
         { name: "metallic", expression: 1.0, basePitch: 96, pitchFilterMult: 1024.0, isSoft: false, samples: null },
@@ -1747,12 +1748,23 @@ export function getDrumWave(index: number, inverseRealFourierTransform: Function
 			inverseRealFourierTransform!(wave, Config.chipNoiseLength);
 			scaleElementsByFactor!(wave, 1.0 / Math.sqrt(Config.chipNoiseLength));
 		} else if (index == 5) {
+			// "Shine" drums from modbox!
+			var drumBuffer = 1;
+			for (var i = 0; i < Config.chipNoiseLength; i++) {
+				wave[i] = (drumBuffer & 1) * 2.0 - 1.0;
+				var newBuffer = drumBuffer >> 1;
+				if (((drumBuffer + newBuffer) & 1) == 1) {
+					newBuffer += 10 << 2;
+				}
+				drumBuffer = newBuffer;
+			}
+		} else if (index == 6) {
 			// "Deep" drums from modbox!
 			drawNoiseSpectrum(wave, Config.chipNoiseLength, 1, 10, 1, 1, 0);
 			drawNoiseSpectrum(wave, Config.chipNoiseLength, 20, 14, -2, -2, 0);
 			inverseRealFourierTransform!(wave, Config.chipNoiseLength);
 			scaleElementsByFactor!(wave, 1.0 / Math.sqrt(Config.chipNoiseLength));
-		} else if (index == 6) {
+		} else if (index == 7) {
 			// "Cutter" drums from modbox!
 			var drumBuffer = 1;
 			for (var i = 0; i < Config.chipNoiseLength; i++) {
@@ -1763,7 +1775,7 @@ export function getDrumWave(index: number, inverseRealFourierTransform: Function
 				}
 				drumBuffer = newBuffer;
 			}
-		} else if (index == 7) {
+		} else if (index == 8) {
 			// "Metallic" drums from modbox!
 			var drumBuffer = 1;
 			for (var i = 0; i < Config.chipNoiseLength; i++) {
@@ -1774,7 +1786,7 @@ export function getDrumWave(index: number, inverseRealFourierTransform: Function
 				}
 				drumBuffer = newBuffer;
             }
-        } else if (index == 8) {
+        } else if (index == 9) {
             // a noise more like old static than white noise
             let drumBuffer: number = 1;
             for (let i: number = 0; i < Config.chipNoiseLength; i++) {
@@ -1786,12 +1798,12 @@ export function getDrumWave(index: number, inverseRealFourierTransform: Function
                 drumBuffer = newBuffer;
             }
 		}
-        else if (index == 9) {
+        else if (index == 10) {
             for (let i = 0; i < Config.chipNoiseLength; i++) {
                 wave[i] = Math.round(Math.random());
             }
         }
-        else if (index == 10) {
+        else if (index == 11) {
             var drumBuffer = 1;
             for (var i = 0; i < Config.chipNoiseLength; i++) {
                 wave[i] = Math.round((drumBuffer & 1));
@@ -1802,13 +1814,13 @@ export function getDrumWave(index: number, inverseRealFourierTransform: Function
                 drumBuffer = newBuffer;
             }
         }
-        else if (index == 11) {
+        else if (index == 12) {
             for (let i = 0; i < Config.chipNoiseLength; i++) {
                 var ultraboxnewchipnoiserand = Math.random();
                 wave[i] = Math.pow(ultraboxnewchipnoiserand, Math.clz32(ultraboxnewchipnoiserand));
             }
         }
-        else if (index == 12) {
+        else if (index == 13) {
             var b0 = 0, b1 = 0, b2 = 0, b3, b4, b5, b6;
             b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0;
             
@@ -1826,7 +1838,7 @@ export function getDrumWave(index: number, inverseRealFourierTransform: Function
                 // from https://github.com/zacharydenton/noise.js, MIT license soooo
             }
         }
-        else if (index == 13) {
+        else if (index == 14) {
             var lastOut = 0.0;
             
             for (let i = 0; i < Config.chipNoiseLength; i++) {
