@@ -2839,12 +2839,12 @@ export class SongEditor {
             this._upperNoteLimitRow.firstChild!.textContent = "Upper Note Limit [" + Piano.getPitchNameAlwaysOctave(
                 (instrument.upperNoteLimit + Config.keys[this._doc.song.key].basePitch) % Config.pitchesPerOctave,
                 instrument.upperNoteLimit,
-                0)
+                this._doc.song.octave)
                 + "]:"
             this._lowerNoteLimitRow.firstChild!.textContent = "Lower Note Limit [" + Piano.getPitchNameAlwaysOctave(
                 (instrument.lowerNoteLimit + Config.keys[this._doc.song.key].basePitch) % Config.pitchesPerOctave,
                 instrument.lowerNoteLimit,
-                0)
+                this._doc.song.octave)
                  + "]:"
             
             if (instrument.type == InstrumentType.customChipWave) {
@@ -3050,8 +3050,7 @@ export class SongEditor {
                             anyInstrumentChorus:       boolean = false,
                             anyInstrumentEchoes:       boolean = false,
                             anyInstrumentReverbs:      boolean = false,
-                            anyInstrumentHasEnvelopes: boolean = false,
-                            anyInstrumentNoteRanges:   boolean = false;
+                            anyInstrumentHasEnvelopes: boolean = false;
                         let allInstrumentPitchShifts:  boolean = true,
                             allInstrumentNoteFilters:  boolean = true,
                             allInstrumentDetunes:      boolean = true,
@@ -3061,8 +3060,7 @@ export class SongEditor {
                             allInstrumentPans:         boolean = true,
                             allInstrumentChorus:       boolean = true,
                             allInstrumentEchoes:       boolean = true,
-                            allInstrumentReverbs:      boolean = true,
-                            allInstrumentNoteRanges:  boolean = false;
+                            allInstrumentReverbs:      boolean = true;
                         let instrumentCandidates: number[] = [];
                         if (modInstrument >= channel.instruments.length) {
                             for (let i: number = 0; i < channel.instruments.length; i++) {
@@ -3147,13 +3145,6 @@ export class SongEditor {
                             if (channel.instruments[instrumentIndex].envelopes.length > 0) {
                                 anyInstrumentHasEnvelopes = true;
                             }
-                            if (effectsIncludeNoteRange(channel.instruments[instrumentIndex].effects)) {
-                                anyInstrumentNoteRanges = true;
-                            }
-                            else {
-                                allInstrumentNoteRanges = false;
-                            }
-
                         }
                         if (anyInstrumentAdvancedEQ) {
                             settingList.push("eq filter");
@@ -3274,13 +3265,6 @@ export class SongEditor {
 
                         if (anyInstrumentHasEnvelopes) {
                             settingList.push("envelope speed");
-                        }
-
-                        if (anyInstrumentNoteRanges) {
-                            settingList.push("note range");
-                        }
-                        if (!allInstrumentNoteRanges) {
-                            unusedSettingList.push("+ note range");
                         }
 
                     }
