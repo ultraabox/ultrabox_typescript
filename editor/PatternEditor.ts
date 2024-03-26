@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { getLocalStorageItem, Chord, Transition, Config } from "../synth/SynthConfig";
+import { getLocalStorageItem, Chord, Transition, Config, effectsIncludeNoteRange } from "../synth/SynthConfig";
 import { NotePin, Note, makeNotePin, FilterSettings, Channel, Pattern, Instrument, FilterControlPoint } from "../synth/synth";
 import { ColorConfig } from "./ColorConfig";
 import { SongDocument } from "./SongDocument";
@@ -15,6 +15,52 @@ function makeEmptyReplacementElement<T extends Node>(node: T): T {
     const clone: T = <T>node.cloneNode(false);
     node.parentNode!.replaceChild(clone, node);
     return clone;
+}
+
+// Assumptions for note ranges:
+// - They're inclusive on both ends.
+// - Their lower bounds are less than or equal to their upper bounds.
+//   If the lower bound is greater, no sound will be playable by the instrument
+//   at that point, so the range is considered empty, or even "invalid" in some
+//   contexts.
+// - If any of the bounds are equal to -1, the range is "invalid".
+
+function sortNoteRangesInAscendingOrder(a: [number, number], b: [number, number]): number {
+    const lowerA: number = a[0];
+    const lowerB: number = b[0];
+
+    if (lowerA == -1 && lowerB != -1) return 1; // a goes after b, if a is invalid.
+    else if (lowerA != -1 && lowerB == -1) return -1; // a goes before b, if b is invalid.
+
+    if (lowerA < lowerB) return -1; // a goes before b.
+    else if (lowerA > lowerB) return 1; // a goes after b.
+    else return 0; // a and b are equal.
+}
+
+function noteRangesOverlap(a: [number, number], b: [number, number]): boolean {
+    const lowerA: number = a[0];
+    const upperA: number = a[1];
+    const lowerB: number = b[0];
+    const upperB: number = b[1];
+    return (
+        (lowerB >= lowerA && lowerB <= upperA)
+        || (upperB >= lowerA && upperB <= upperB)
+    );
+}
+
+function noteRangesAreNextToEachOther(a: [number, number], b: [number, number]): boolean {
+    const lowerA: number = a[0];
+    const upperA: number = a[1];
+    const lowerB: number = b[0];
+    const upperB: number = b[1];
+    if (lowerA < lowerB) {
+        // a comes first
+        if (lowerB - upperA == 1) return true;
+    } else {
+        // b comes first
+        if (lowerA - upperB == 1) return true;
+    }
+    return false;
 }
 
 class PatternCursor {
@@ -44,6 +90,8 @@ export class PatternEditor {
     private readonly _svgPlayhead: SVGRectElement = SVG.rect({ x: "0", y: "0", width: "4", fill: ColorConfig.playhead, "pointer-events": "none" });
     private readonly _selectionRect: SVGRectElement = SVG.rect({ class: "dashed-line dash-move", fill: ColorConfig.boxSelectionFill, stroke: ColorConfig.hoverPreview, "stroke-width": 2, "stroke-dasharray": "5, 3", "fill-opacity": "0.4", "pointer-events": "none", visibility: "hidden" });
     private readonly _svgPreview: SVGPathElement = SVG.path({ fill: "none", stroke: ColorConfig.hoverPreview, "stroke-width": "2", "pointer-events": "none" });
+    // @TODO: Make this themeable?
+    private readonly _svgNoteRangeIndicatorOverlay: SVGPathElement = SVG.path({ fill: ColorConfig.editorBackground, "fill-opacity": "0.8", stroke: "none", "pointer-events": "none" });
     public modDragValueLabel: HTMLDivElement = HTML.div({ width: "90", "text-anchor": "start", contenteditable: "true", style: "display: flex, justify-content: center; align-items:center; position:absolute; pointer-events: none;", "dominant-baseline": "central", });
     public _svg: SVGSVGElement = SVG.svg({ id:'firstImage', style: `background-image: url(${getLocalStorageItem("customTheme", "")}); background-repeat: no-repeat; background-size: 100% 100%; background-color: ${ColorConfig.editorBackground}; touch-action: none; position: absolute;`, width: "100%", height: "100%" },
 	SVG.defs(
@@ -52,6 +100,7 @@ export class PatternEditor {
             this._svgModBackground,
         ),
         this._svgBackground,
+        this._svgNoteRangeIndicatorOverlay,
         this._selectionRect,
         this._svgNoteContainer,
         this._svgPreview,
@@ -63,6 +112,7 @@ export class PatternEditor {
     private readonly _backgroundPitchRows: SVGRectElement[] = [];
     private readonly _backgroundDrumRow: SVGRectElement = SVG.rect();
     private readonly _backgroundModRow: SVGRectElement = SVG.rect();
+    private readonly _maximumNoteRanges: number = Math.max(Config.layeredInstrumentCountMax, Config.patternInstrumentCountMax);
 
     private _editorWidth: number;
 
@@ -122,6 +172,14 @@ export class PatternEditor {
     private _renderedPitchChannelCount: number = -1;
     private _renderedNoiseChannelCount: number = -1;
     private _renderedModChannelCount: number = -1;
+    private _renderedNoteRangeLowestNoteVisible: number = -1;
+    private _renderedNoteRangeHighestNoteVisible: number = -1;
+    private _renderedNoteRanges: ([number, number])[] = [];
+    private _renderedNoteRangesSorted: ([number, number])[] = [];
+    private _renderedNoteRangesMerged: ([number, number])[] = [];
+    private _renderedNoteRangeMergedCount: number = 0;
+    private _renderedNoteRangeLowestNoteLimit: number = -1;
+    private _renderedNoteRangeHighestNoteLimit: number = -1;
     private _followPlayheadBar: number = -1;
 
     constructor(private _doc: SongDocument, private _interactive: boolean, private _barOffset: number) {
@@ -131,6 +189,15 @@ export class PatternEditor {
             rectangle.setAttribute("fill", (i == 0) ? ColorConfig.tonic : ColorConfig.pitchBackground);
             this._svgNoteBackground.appendChild(rectangle);
             this._backgroundPitchRows[i] = rectangle;
+        }
+
+        for (let i: number = 0; i < this._maximumNoteRanges; i++) {
+            // Initialize with invalid ranges.
+            // These arrays should never change size from this point onwards.
+            // This is so that we can avoid allocations during redraws.
+            this._renderedNoteRanges.push([-1, -1]);
+            this._renderedNoteRangesSorted.push([-1, -1]);
+            this._renderedNoteRangesMerged.push([-1, -1]);
         }
 
         this._backgroundDrumRow.setAttribute("x", "1");
@@ -2269,6 +2336,269 @@ export class PatternEditor {
         }
     }
 
+    private _redrawNoteRangeIndicator(forceRedraw: boolean): void {
+        if (this._interactive) {
+            // This draws transparent rectangles filled with the color of the
+            // editor background on top of the notes that will be silent due to
+            // the use of the note range effect.
+
+            const instruments: Instrument[] = this._doc.song.channels[this._doc.channel].instruments;
+            const pattern: Pattern | null = this._doc.getCurrentPattern(this._barOffset);
+
+            let anyNoteRangeIsDifferent: boolean = false;
+            let anyNoteRangeIsEnabled: boolean = false;
+            let allNoteRangesAreEmpty: boolean = true;
+
+            // Compare the current note ranges with the ones we already rendered.
+            for (let i: number = 0; i < this._maximumNoteRanges; i++) {
+                const renderedNoteRange: [number, number] = this._renderedNoteRanges[i];
+
+                const oldLowerNoteLimit: number = renderedNoteRange[0];
+                const oldUpperNoteLimit: number = renderedNoteRange[1];
+
+                let newLowerNoteLimit: number = -1;
+                let newUpperNoteLimit: number = -1;
+
+                if (i < instruments.length) {
+                    const instrument: Instrument = instruments[i];
+
+                    const instrumentIsActiveForThisPattern: boolean = (
+                        this._doc.song.patternInstruments
+                        ? (
+                            pattern == null
+                            // On 0 patterns we should use whatever the editor
+                            // has for active instruments.
+                            ? (this._doc.recentPatternInstruments[this._doc.channel].indexOf(i) != -1)
+                            : (pattern.instruments.indexOf(i) != -1)
+                        )
+                        : true
+                    );
+
+                    const noteRangeEnabled: boolean = effectsIncludeNoteRange(instrument.effects);
+                    const noteRangeIsEmpty: boolean = instrument.lowerNoteLimit > instrument.upperNoteLimit;
+
+                    if (noteRangeEnabled) {
+                        anyNoteRangeIsEnabled = true;
+
+                        if (!noteRangeIsEmpty) {
+                            allNoteRangesAreEmpty = false;
+                        }
+
+                        if (instrumentIsActiveForThisPattern) {
+                            newLowerNoteLimit = instrument.lowerNoteLimit;
+                            newUpperNoteLimit = instrument.upperNoteLimit;
+                        }
+                    } else {
+                        if (instrumentIsActiveForThisPattern) {
+                            // When note range is disabled for this instrument,
+                            // count it as if its range included all pitches
+                            // available.
+                            // Also, we can't use the note limits from the
+                            // instrument object, because they may be different
+                            // from this range, even if note range is off.
+                            newLowerNoteLimit = 0;
+                            newUpperNoteLimit = Config.maxPitch;
+                        }
+                    }
+
+                    if (newLowerNoteLimit > newUpperNoteLimit) {
+                        // Treat empty note range as invalid.
+                        newLowerNoteLimit = -1;
+                        newUpperNoteLimit = -1;
+                    }
+                }
+
+                if (newLowerNoteLimit != oldLowerNoteLimit || newUpperNoteLimit != oldUpperNoteLimit) {
+                    anyNoteRangeIsDifferent = true;
+
+                    renderedNoteRange[0] = newLowerNoteLimit;
+                    renderedNoteRange[1] = newUpperNoteLimit;
+                }
+            }
+
+            // Merge the note ranges we are going to render.
+            if (anyNoteRangeIsEnabled && anyNoteRangeIsDifferent) {
+                this._renderedNoteRangeLowestNoteLimit = Infinity;
+                this._renderedNoteRangeHighestNoteLimit = -Infinity;
+
+                for (let i: number = 0; i < this._maximumNoteRanges; i++) {
+                    this._renderedNoteRangesSorted[i][0] = this._renderedNoteRanges[i][0];
+                    this._renderedNoteRangesSorted[i][1] = this._renderedNoteRanges[i][1];
+
+                    this._renderedNoteRangesMerged[i][0] = -1;
+                    this._renderedNoteRangesMerged[i][1] = -1;
+                }
+
+                this._renderedNoteRangesSorted.sort(sortNoteRangesInAscendingOrder);
+
+                let indexOfRangeToMergeWith: number = 0;
+
+                this._renderedNoteRangesMerged[0][0] = this._renderedNoteRangesSorted[0][0];
+                this._renderedNoteRangesMerged[0][1] = this._renderedNoteRangesSorted[0][1];
+
+                this._renderedNoteRangeLowestNoteLimit = Math.min(this._renderedNoteRangeLowestNoteLimit, this._renderedNoteRangesMerged[0][0]);
+                this._renderedNoteRangeHighestNoteLimit = Math.max(this._renderedNoteRangeHighestNoteLimit, this._renderedNoteRangesMerged[0][1]);
+
+                for (let i: number = 1; i < this._maximumNoteRanges; i++) {
+                    const range: [number, number] = this._renderedNoteRangesSorted[i];
+                    const noteRangeToMergeWith: [number, number] = this._renderedNoteRangesMerged[indexOfRangeToMergeWith];
+
+                    const isValid: boolean = range[0] != -1;
+                    if (!isValid) {
+                        // The sorting done above should have moved all of the
+                        // invalid ranges to the end of this._renderedNoteRangesSorted
+                        // together, so we can stop here.
+                        break;
+                    }
+
+                    const shouldMerge: boolean = (
+                        noteRangesOverlap(range, noteRangeToMergeWith)
+                        || noteRangesAreNextToEachOther(range, noteRangeToMergeWith)
+                    );
+
+                    if (shouldMerge) {
+                        const newLowerNoteLimit: number = Math.min(range[0], noteRangeToMergeWith[0]);
+                        const newUpperNoteLimit: number = Math.max(range[1], noteRangeToMergeWith[1]);
+
+                        noteRangeToMergeWith[0] = newLowerNoteLimit;
+                        noteRangeToMergeWith[1] = newUpperNoteLimit;
+
+                        this._renderedNoteRangeLowestNoteLimit = Math.min(this._renderedNoteRangeLowestNoteLimit, noteRangeToMergeWith[0]);
+                        this._renderedNoteRangeHighestNoteLimit = Math.max(this._renderedNoteRangeHighestNoteLimit, noteRangeToMergeWith[1]);
+                    } else {
+                        indexOfRangeToMergeWith++;
+
+                        const appendedRange: [number, number] = this._renderedNoteRangesMerged[indexOfRangeToMergeWith];
+                        appendedRange[0] = range[0];
+                        appendedRange[1] = range[1];
+
+                        this._renderedNoteRangeLowestNoteLimit = Math.min(this._renderedNoteRangeLowestNoteLimit, appendedRange[0]);
+                        this._renderedNoteRangeHighestNoteLimit = Math.max(this._renderedNoteRangeHighestNoteLimit, appendedRange[1]);
+                    }
+                }
+
+                this._renderedNoteRangeMergedCount = indexOfRangeToMergeWith + 1;
+            }
+
+            const baseVisibleOctave: number = this._doc.getBaseVisibleOctave(this._doc.channel);
+            const pitchesPerOctave: number = Config.pitchesPerOctave;
+            const lowestNoteVisible: number = baseVisibleOctave * pitchesPerOctave;
+            const highestNoteVisible: number = lowestNoteVisible + (this._pitchCount - 1);
+
+            const changed: boolean = (
+                forceRedraw
+                || lowestNoteVisible != this._renderedNoteRangeLowestNoteVisible
+                || highestNoteVisible != this._renderedNoteRangeHighestNoteVisible
+                || anyNoteRangeIsDifferent
+            );
+
+            if (changed) {
+                this._renderedNoteRangeLowestNoteVisible = lowestNoteVisible;
+                this._renderedNoteRangeHighestNoteVisible = highestNoteVisible;
+
+                if (anyNoteRangeIsEnabled) {
+                    const width: number = this._editorWidth;
+                    const height: number = this._editorHeight;
+
+                    this._svgNoteRangeIndicatorOverlay.setAttribute("visibility", "visible");
+
+                    if (allNoteRangesAreEmpty) {
+                        // Cover the entire piano roll.
+                        const path: string = (
+                            "M 0 0"
+                            + " L " + width + " 0"
+                            + " L " + width + " " + height
+                            + " L 0 " + height
+                            + " z"
+                        );
+                        this._svgNoteRangeIndicatorOverlay.setAttribute("d", path);
+                    } else {
+                        let path: string = " ";
+
+                        // Draw inbetween rectangles.
+                        const inbetweenRectCount: number = this._renderedNoteRangeMergedCount - 1;
+                        for (let i: number = 0; i < inbetweenRectCount; i++) {
+                            const rangeA: [number, number] = this._renderedNoteRangesMerged[i];
+                            const rangeB: [number, number] = this._renderedNoteRangesMerged[i + 1];
+
+                            const lowerA: number = rangeA[0];
+                            const upperA: number = rangeA[1];
+
+                            const lowerB: number = rangeB[0];
+                            const upperB: number = rangeB[1];
+
+                            const rectY0: number = Math.min(height, Math.max(0, this._pitchToPixelHeight((lowerB - 1) - this._octaveOffset) - this._pitchHeight / 2));
+                            const rectY1: number = Math.min(height, Math.max(0, this._pitchToPixelHeight((upperA + 1) - this._octaveOffset) + this._pitchHeight / 2));
+
+                            const rectIsVisible: boolean = (
+                                (
+                                    (lowerA >= lowestNoteVisible && lowerA <= highestNoteVisible)
+                                    || (upperA >= lowestNoteVisible && upperA <= highestNoteVisible)
+                                    || (lowerB >= lowestNoteVisible && lowerB <= highestNoteVisible)
+                                    || (upperB >= lowestNoteVisible && upperB <= highestNoteVisible)
+                                )
+                                && rectY0 < rectY1
+                            );
+
+                            if (rectIsVisible) {
+                                path += (
+                                    " M 0 " + rectY0
+                                    + " L " + width + " " + rectY0
+                                    + " L " + width + " " + rectY1
+                                    + " L 0 " + rectY1
+                                    + " z"
+                                );
+                            }
+                        }
+
+                        // Draw rectangles at the edges.
+                        const topY0: number = 0;
+                        const topY1: number = Math.min(height, Math.max(0, this._pitchToPixelHeight(this._renderedNoteRangeHighestNoteLimit - this._octaveOffset) - this._pitchHeight / 2));
+
+                        const topIsVisible: boolean = (
+                            this._renderedNoteRangeHighestNoteLimit != -1
+                            && topY0 < topY1
+                        );
+
+                        if (topIsVisible) {
+                            path += (
+                                " M 0 " + topY0
+                                + " L " + width + " " + topY0
+                                + " L " + width + " " + topY1
+                                + " L 0 " + topY1
+                                + " z"
+                            );
+                        }
+
+                        const bottomY0: number = Math.min(height, Math.max(0, this._pitchToPixelHeight(this._renderedNoteRangeLowestNoteLimit - this._octaveOffset) + this._pitchHeight / 2));
+                        const bottomY1: number = height;
+
+                        const bottomIsVisible: boolean = (
+                            this._renderedNoteRangeLowestNoteLimit != -1
+                            && bottomY0 < bottomY1
+                        );
+
+                        if (bottomIsVisible) {
+                            path += (
+                                " M 0 " + bottomY0
+                                + " L " + width + " " + bottomY0
+                                + " L " + width + " " + bottomY1
+                                + " L 0 " + bottomY1
+                                + " z"
+                            );
+                        }
+
+                        this._svgNoteRangeIndicatorOverlay.setAttribute("d", path);
+                    }
+                } else {
+                    this._svgNoteRangeIndicatorOverlay.setAttribute("visibility", "hidden");
+                }
+            }
+        } else {
+            this._svgNoteRangeIndicatorOverlay.setAttribute("visibility", "hidden");
+        }
+    }
+
     public render(): void {
         const nextPattern: Pattern | null = this._doc.getCurrentPattern(this._barOffset);
 
@@ -2338,7 +2668,9 @@ export class PatternEditor {
 
         this._copiedPins = this._copiedPinChannels[this._doc.channel];
 
+        let wasResized: boolean = false;
         if (this._renderedWidth != this._editorWidth || this._renderedHeight != this._editorHeight) {
+            wasResized = true;
             this._renderedWidth = this._editorWidth;
             this._renderedHeight = this._editorHeight;
             this._svgBackground.setAttribute("width", "" + this._editorWidth);
@@ -2350,6 +2682,7 @@ export class PatternEditor {
 
         const beatWidth = this._editorWidth / this._doc.song.beatsPerBar;
         if (this._renderedBeatWidth != beatWidth || this._renderedPitchHeight != this._pitchHeight) {
+            wasResized = true;
             this._renderedBeatWidth = beatWidth;
             this._renderedPitchHeight = this._pitchHeight;
             this._svgNoteBackground.setAttribute("width", "" + beatWidth);
@@ -2415,6 +2748,7 @@ export class PatternEditor {
         }
 
         this._redrawNotePatterns();
+        this._redrawNoteRangeIndicator(wasResized);
     }
 
     private _redrawNotePatterns(): void {
