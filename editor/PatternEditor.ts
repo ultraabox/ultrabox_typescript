@@ -44,7 +44,9 @@ function noteRangesOverlap(a: [number, number], b: [number, number]): boolean {
     const upperB: number = b[1];
     return (
         (lowerB >= lowerA && lowerB <= upperA)
-        || (upperB >= lowerA && upperB <= upperB)
+        || (upperB >= lowerA && upperB <= upperA)
+        || (lowerA >= lowerB && lowerA <= upperB)
+        || (upperA >= lowerB && upperA <= upperB)
     );
 }
 
