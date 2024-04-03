@@ -58,6 +58,8 @@ import { SongDetailsPrompt } from "./SongDetailsPrompt";
 
 const { button, div, input, select, span, optgroup, option, canvas } = HTML;
 
+const beepboxEditorContainer: HTMLElement = document.getElementById("beepboxEditorContainer")!;
+
 function buildOptions(menu: HTMLSelectElement, items: ReadonlyArray<string | number>): HTMLSelectElement {
     for (let index: number = 0; index < items.length; index++) {
         menu.appendChild(option({ value: index }, items[index]));
@@ -2193,6 +2195,14 @@ export class SongEditor {
             const maxBeatWidth: number = this._patternEditorRow.clientWidth / (this._doc.song.beatsPerBar + 2);
             const beatWidth: number = Math.max(minBeatWidth, Math.min(maxBeatWidth, targetBeatWidth));
             const patternEditorWidth: number = beatWidth * this._doc.song.beatsPerBar;
+
+            if (this._doc.prefs.showDescription == false) {
+                beepboxEditorContainer.style.paddingBottom = "0";
+                beepboxEditorContainer.style.borderStyle = "none";
+            } else {
+                beepboxEditorContainer.style.paddingBottom = "";
+                beepboxEditorContainer.style.borderStyle = "";
+            }
 
             this._patternEditorPrev.container.style.width = patternEditorWidth + "px";
             this._patternEditor.container.style.width = patternEditorWidth + "px";

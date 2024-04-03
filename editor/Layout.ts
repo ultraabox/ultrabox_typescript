@@ -13,6 +13,7 @@ export class Layout {
 				#beepboxEditorContainer {
 					max-width: initial;
 					height: 100vh;
+					padding-top: 0px;
 				}
 				.beepboxEditor {
 					width: 100%;
@@ -102,6 +103,7 @@ export class Layout {
 				#beepboxEditorContainer {
 					max-width: initial;
 					height: 100vh;
+					padding-top: 0px;
 				}
 				.beepboxEditor {
 					width: 100%;
@@ -199,6 +201,7 @@ export class Layout {
 				#beepboxEditorContainer {
 					max-width: initial;
 					height: 100vh;
+					padding-top: 0px;
 				}
 				.beepboxEditor {
 					width: 100%;
@@ -281,6 +284,7 @@ export class Layout {
 				#beepboxEditorContainer {
 					max-width: initial;
 					height: 100vh;
+					padding-top: 0px;
 				}
 				.beepboxEditor {
 					width: 100%;
@@ -370,6 +374,7 @@ export class Layout {
 				#beepboxEditorContainer {
 					max-width: initial;
 					height: 100vh;
+					padding-top: 0px;
 				}
 				.beepboxEditor {
 					width: 100%;
@@ -455,6 +460,7 @@ export class Layout {
 				#beepboxEditorContainer {
 					max-width: initial;
 					height: 100vh;
+					padding-top: 0px;
 				}
 				.beepboxEditor {
 					width: 100%;
