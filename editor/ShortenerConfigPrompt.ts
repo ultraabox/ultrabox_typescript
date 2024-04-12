@@ -34,11 +34,11 @@ export class ShortenerConfigPrompt implements Prompt {
 		this._cancelButton.addEventListener("click", this._close);
 		this.container.addEventListener("keydown", this._whenKeyPressed);
 	}
-		
+
 		private _close = (): void => { 
 		this._doc.undo();
 	}
-		
+
 		public cleanUp = (): void => { 
 		this._okayButton.removeEventListener("click", this._saveChanges);
 		this._cancelButton.removeEventListener("click", this._close);
@@ -56,3 +56,4 @@ export class ShortenerConfigPrompt implements Prompt {
 		this._doc.prompt = null;
 		this._doc.undo();
 	}
+}

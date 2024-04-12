@@ -3157,6 +3157,7 @@ export class SongEditor {
                             if (channel.instruments[instrumentIndex].envelopes.length > 0) {
                                 anyInstrumentHasEnvelopes = true;
                             }
+
                         }
                         if (anyInstrumentAdvancedEQ) {
                             settingList.push("eq filter");
