@@ -58,8 +58,6 @@ import { SongDetailsPrompt } from "./SongDetailsPrompt";
 
 const { button, div, input, select, span, optgroup, option, canvas } = HTML;
 
-const beepboxEditorContainer: HTMLElement = document.getElementById("beepboxEditorContainer")!;
-
 function buildOptions(menu: HTMLSelectElement, items: ReadonlyArray<string | number>): HTMLSelectElement {
     for (let index: number = 0; index < items.length; index++) {
         menu.appendChild(option({ value: index }, items[index]));
@@ -474,7 +472,7 @@ class CustomAlgorythmCanvas {
                                 this.lookUpArray[i] = [this.drawArray.length - (testPos[0] + 1), testPos[1]];
                                 break;
                             }
-                            // console.log(testPos[1])
+                            //console.log(testPos[1])
                         }
                     } else {
                         this.drawArray[testPos[0] ][testPos[1]] = i + 1;
@@ -946,7 +944,6 @@ export class SongEditor {
     //private readonly _pulseWidthRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("pulseWidth") }, "Pulse Width:"), this._pulseWidthDropdown, this._pulseWidthSlider.container);
     private readonly _decimalOffsetSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: "99", value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeDecimalOffset(this._doc, oldValue, 99 - newValue), false);
     private readonly _decimalOffsetRow: HTMLDivElement = div({ class: "selectRow dropFader" }, span({ class: "tip", style: "margin-left:10px;", onclick: () => this._openPrompt("decimalOffset") }, "‣ Offset:"), this._decimalOffsetSlider.container);
-
     private readonly _pulseWidthDropdownGroup: HTMLElement = div({ class: "editor-controls", style: "display: none;" }, this._decimalOffsetRow);
 
     private readonly _pitchShiftSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.pitchShiftRange - 1, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangePitchShift(this._doc, oldValue, newValue), true);
@@ -2199,9 +2196,9 @@ export class SongEditor {
             const beatWidth: number = Math.max(minBeatWidth, Math.min(maxBeatWidth, targetBeatWidth));
             const patternEditorWidth: number = beatWidth * this._doc.song.beatsPerBar;
 
-
             const beepboxEditorContainer: HTMLElement = document.getElementById("beepboxEditorContainer")!;
-          
+
+
             if (this._doc.prefs.showDescription == false) {
                 beepboxEditorContainer.style.paddingBottom = "0";
                 beepboxEditorContainer.style.borderStyle = "none";

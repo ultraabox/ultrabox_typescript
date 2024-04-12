@@ -6026,10 +6026,9 @@ export class ColorConfig {
 				#beepboxEditorContainer {
 						border-image-source: url("theme_resources/abyssbox_border.png");
 						border-image-slice: 4 fill; 
-					  border-image-width: 8px; 
+					   	border-image-width: 8px; 
 						border-image-repeat: stretch;
 						padding: 12px;
-						padding-top: 0px;
 	
 						image-rendering: -moz-crisp-edges !important;         /* Firefox */
 						image-rendering: -webkit-optimize-contrast !important; /* Webkit (Chrome/Safari) */
@@ -6263,76 +6262,27 @@ export class ColorConfig {
 				--mod-secondary-channel-sat-scale: 0; 		
 				--mod-secondary-channel-lum: 30; 		
 				--mod-secondary-channel-lum-scale: 0; 
-
-					--pitch-secondary-note-hue: -34; 		
-					--pitch-secondary-note-hue-scale: 6.1; 		
-					--pitch-secondary-note-sat: 255; 		
-					--pitch-secondary-note-sat-scale: 0.1; 		
-					--pitch-secondary-note-lum: 30; 		
-					--pitch-secondary-note-lum-scale: 0.05; 
-				
-					--pitch-primary-note-hue: -53; 		
-					--pitch-primary-note-hue-scale: 6.1; 		
-					--pitch-primary-note-sat: 255; 		
-					--pitch-primary-note-sat-scale: 0.05; 		
-					--pitch-primary-note-lum: 60; 		
-					--pitch-primary-note-lum-scale: 0.025; 
-				
-					--noise-secondary-channel-hue: 0; 		
-					--noise-secondary-channel-hue-scale: 2; 		
-					--noise-secondary-channel-sat: 255; 		
-					--noise-secondary-channel-sat-scale: 0; 		
-					--noise-secondary-channel-lum: 30; 		
-					--noise-secondary-channel-lum-scale: 0; 
-				
-					--noise-primary-channel-hue: 0; 		
-					--noise-primary-channel-hue-scale: 1; 		
-					--noise-primary-channel-sat: 255; 		
-					--noise-primary-channel-sat-scale: 1; 		
-					--noise-primary-channel-lum: 60; 		
-					--noise-primary-channel-lum-scale: 0; 
-				
-					--noise-secondary-note-hue: 24; 		
-					--noise-secondary-note-hue-scale: 2; 		
-					--noise-secondary-note-sat: 255; 		
-					--noise-secondary-note-sat-scale: 0; 		
-					--noise-secondary-note-lum: 30; 		
-					--noise-secondary-note-lum-scale: 0; 	
 			
-					--noise-primary-note-hue: 24; 		
-					--noise-primary-note-hue-scale: 2; 		
-					--noise-primary-note-sat: 255; 		
-					--noise-primary-note-sat-scale: 1; 		
-					--noise-primary-note-lum: 60; 		
-					--noise-primary-note-lum-scale: 1; 	
+				--mod-primary-channel-hue: 55; 		
+				--mod-primary-channel-hue-scale: 1.5; 		
+				--mod-primary-channel-sat: 255; 		
+				--mod-primary-channel-sat-scale: 0; 		
+				--mod-primary-channel-lum: 60; 		
+				--mod-primary-channel-lum-scale: 0; 
 			
-					--mod-secondary-channel-hue: 55; 		
-					--mod-secondary-channel-hue-scale: 1.5; 		
-					--mod-secondary-channel-sat: 255; 		
-					--mod-secondary-channel-sat-scale: 0; 		
-					--mod-secondary-channel-lum: 30; 		
-					--mod-secondary-channel-lum-scale: 0; 
-				
-					--mod-primary-channel-hue: 55; 		
-					--mod-primary-channel-hue-scale: 1.5; 		
-					--mod-primary-channel-sat: 255; 		
-					--mod-primary-channel-sat-scale: 0; 		
-					--mod-primary-channel-lum: 60; 		
-					--mod-primary-channel-lum-scale: 0; 
-				
-					--mod-secondary-note-hue: 55; 		
-					--mod-secondary-note-hue-scale: 1.5; 		
-					--mod-secondary-note-sat: 255; 		
-					--mod-secondary-note-sat-scale: 0; 		
-					--mod-secondary-note-lum: 30; 		
-					--mod-secondary-note-lum-scale: 0; 
-				
-					--mod-primary-note-hue: 55; 		
-					--mod-primary-note-hue-scale: 1.5; 		
-					--mod-primary-note-sat: 255; 		
-					--mod-primary-note-sat-scale: 0; 		
-					--mod-primary-note-lum: 60; 		
-					--mod-primary-note-lum-scale: 0; 	
+				--mod-secondary-note-hue: 55; 		
+				--mod-secondary-note-hue-scale: 1.5; 		
+				--mod-secondary-note-sat: 255; 		
+				--mod-secondary-note-sat-scale: 0; 		
+				--mod-secondary-note-lum: 30; 		
+				--mod-secondary-note-lum-scale: 0; 
+			
+				--mod-primary-note-hue: 55; 		
+				--mod-primary-note-hue-scale: 1.5; 		
+				--mod-primary-note-sat: 255; 		
+				--mod-primary-note-sat-scale: 0; 		
+				--mod-primary-note-lum: 60; 		
+				--mod-primary-note-lum-scale: 0; 
 
 				--note-flash: #ffffff;
 				--note-flash-secondary: #ffffff77;
@@ -6383,10 +6333,9 @@ export class ColorConfig {
 				#beepboxEditorContainer {
 						border-image-source: url("theme_resources/abyssbox_border_light.png");
 						border-image-slice: 4 fill; 
-						border-image-width: 8px; 
-						border-image-repeat: stretch;
+					   border-image-width: 8px; 
+					border-image-repeat: stretch;
 						padding: 12px;
-						padding-top: 0px;
 	
 						image-rendering: -moz-crisp-edges !important;         /* Firefox */
 						image-rendering: -webkit-optimize-contrast !important; /* Webkit (Chrome/Safari) */
