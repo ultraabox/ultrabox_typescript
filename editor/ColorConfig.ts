@@ -5622,6 +5622,8 @@ export class ColorConfig {
 			--fifth-note: #3e2fb5;
 			--white-piano-key: #ebf3f4;
 			--black-piano-key: #253353;
+			--white-piano-key-text: black;
+			--black-piano-key-text: white;
 			--oscilloscope-line-L: #72dcfc;
 			--oscilloscope-line-R: #304eff;
 			--mod-title: #1b2fff;
@@ -5718,7 +5720,7 @@ export class ColorConfig {
 			--disabled-note-primary:    #53527b;
 			--disabled-note-secondary:  #1c1b30;
 		}
-						`,
+		`,
 		"dogebox2": `
 			:root {
 				--page-margin: #000015;
@@ -6024,7 +6026,7 @@ export class ColorConfig {
 				#beepboxEditorContainer {
 						border-image-source: url("theme_resources/abyssbox_border.png");
 						border-image-slice: 4 fill; 
-						border-image-width: 8px; 
+					  border-image-width: 8px; 
 						border-image-repeat: stretch;
 						padding: 12px;
 						padding-top: 0px;
@@ -6158,61 +6160,110 @@ export class ColorConfig {
 	
 				`,
 		"AbyssBox Light": `
-				:root { 		
-					--page-margin: #e0adbc; 		
-					--editor-background: #e0adbc; 		
-					--hover-preview: white; 		
-					--playhead: rgba(255, 255, 255, 0.9); 		
-					--primary-text: #6110d9; 		
-					--secondary-text: #cc1338;		
-					--inverted-text:  #e8bcc9;	 		
-					--text-selection: rgba(119,68,255,0.99); 		
-					--box-selection-fill: #bf2c5d; 		
-					--loop-accent: #8c346a; 		
-					--link-accent: #8c346a; 		
-					--ui-widget-background: #f5e9f0;		
-					--ui-widget-focus: #f5e9f0; 		
-					--pitch-background: #eddadf; 		
-					--tonic: #f5f0f1; 		
-					--fifth-note: #ffb5c9; 		
-					--white-piano-key: #cca5c7; 		
-					--black-piano-key: #402f2f;
-					--white-piano-key-text: #131200;		
-					--black-piano-key-text: #fff;	 		
-					--use-color-formula: true; 		
-					--track-editor-bg-pitch: #edbecc;	
-					--track-editor-bg-pitch-dim: #e0adbc; 		
-					--track-editor-bg-noise: #edbecc;		
-					--track-editor-bg-noise-dim: #e0adbc;		
-					--track-editor-bg-mod: #edbecc; 		
-					--track-editor-bg-mod-dim: #e0adbc;		
-					--multiplicative-mod-slider: #9f6082; 		
-					--overwriting-mod-slider: #9e3470; 		
-					--indicator-primary: #b3498f; 		
-					--indicator-secondary: #541d40; 		
-					--select2-opt-group: #4f191e; 		
-					--input-box-outline: #18041a; 		
-					--mute-button-normal: #dd5d94;	 		
-					--mute-button-mod: #ba364c; 		
-					--mod-label-primary: #541625; 		
-					--mod-label-secondary-text: rgb(120, 87, 86); 
-					--mod-label-primary-text: gray; 
-					--mod-title: #cc1338;
-				
-					--pitch-secondary-channel-hue: -80; 		
-					--pitch-secondary-channel-hue-scale 0; 		
-					--pitch-secondary-channel-sat: 255; 		
-					--pitch-secondary-channel-sat-scale: 0.1; 		
-					--pitch-secondary-channel-lum: 30; 		
-					--pitch-secondary-channel-lum-scale: 0.05; 
-				
-					--pitch-primary-channel-hue: -53; 		
-					--pitch-primary-channel-hue-scale: 6.1; 		
-					--pitch-primary-channel-sat: 255; 		
-					--pitch-primary-channel-sat-scale: 0.1; 		
-					--pitch-primary-channel-lum: 60; 		
-					--pitch-primary-channel-lum-scale: 0.05; 	
+			:root { 		
+				--page-margin: #e0adbc; 		
+				--editor-background: #e0adbc; 		
+				--hover-preview: white; 		
+				--playhead: rgba(255, 255, 255, 0.9); 		
+				--primary-text: #6110d9; 		
+				--secondary-text: #cc1338;	
+				--inverted-text:  #e8bcc9;	 		
+				--text-selection: rgba(119,68,255,0.99); 		
+				--box-selection-fill: #bf2c5d; 		
+				--loop-accent: #8c346a; 		
+				--link-accent: #8c346a; 		
+				--ui-widget-background: #f5e9f0;		
+				--ui-widget-focus: #f5e9f0; 		
+				--pitch-background: #eddadf; 		
+				--tonic: #f5f0f1; 		
+				--fifth-note: #ffb5c9; 		
+				--white-piano-key: #cca5c7; 		
+				--black-piano-key: #402f2f;
+				--white-piano-key-text: #131200;		
+				--black-piano-key-text: #fff;	 		
+				--use-color-formula: true; 		
+				--track-editor-bg-pitch: #edbecc; 		
+				--track-editor-bg-pitch-dim: #e0adbc; 		
+				--track-editor-bg-noise: #edbecc; 		
+				--track-editor-bg-noise-dim: #e0adbc; 		
+				--track-editor-bg-mod: #edbecc; 		
+				--track-editor-bg-mod-dim: #e0adbc; 		
+				--multiplicative-mod-slider: #9f6082; 		
+				--overwriting-mod-slider: #9e3470; 		
+				--indicator-primary: #b3498f; 		
+				--indicator-secondary: #541d40; 		
+				--select2-opt-group: #4f191e; 		
+				--input-box-outline: #18041a; 		
+				--mute-button-normal: #dd5d94;	 		
+				--mute-button-mod: #ba364c; 		
+				--mod-label-primary: #541625; 		
+				--mod-label-secondary-text: rgb(120, 87, 86); 
+				--mod-label-primary-text: gray;
+				--mod-title: #cc1338; 
 			
+				--pitch-secondary-channel-hue: -80; 		
+				--pitch-secondary-channel-hue-scale 0; 		
+				--pitch-secondary-channel-sat: 255; 		
+				--pitch-secondary-channel-sat-scale: 0.1; 		
+				--pitch-secondary-channel-lum: 30; 		
+				--pitch-secondary-channel-lum-scale: 0.05; 
+			
+				--pitch-primary-channel-hue: -53; 		
+				--pitch-primary-channel-hue-scale: 6.1; 		
+				--pitch-primary-channel-sat: 255; 		
+				--pitch-primary-channel-sat-scale: 0.1; 		
+				--pitch-primary-channel-lum: 60; 		
+				--pitch-primary-channel-lum-scale: 0.05; 	
+		
+				--pitch-secondary-note-hue: -34; 		
+				--pitch-secondary-note-hue-scale: 6.1; 		
+				--pitch-secondary-note-sat: 255; 		
+				--pitch-secondary-note-sat-scale: 0.1; 		
+				--pitch-secondary-note-lum: 30; 		
+				--pitch-secondary-note-lum-scale: 0.05; 
+			
+				--pitch-primary-note-hue: -53; 		
+				--pitch-primary-note-hue-scale: 6.1; 		
+				--pitch-primary-note-sat: 255; 		
+				--pitch-primary-note-sat-scale: 0.05; 		
+				--pitch-primary-note-lum: 60; 		
+				--pitch-primary-note-lum-scale: 0.025; 
+			
+				--noise-secondary-channel-hue: 0; 		
+				--noise-secondary-channel-hue-scale: 2; 		
+				--noise-secondary-channel-sat: 255; 		
+				--noise-secondary-channel-sat-scale: 0; 		
+				--noise-secondary-channel-lum: 30; 		
+				--noise-secondary-channel-lum-scale: 0; 
+			
+				--noise-primary-channel-hue: 0; 		
+				--noise-primary-channel-hue-scale: 1; 		
+				--noise-primary-channel-sat: 255; 		
+				--noise-primary-channel-sat-scale: 1; 		
+				--noise-primary-channel-lum: 60; 		
+				--noise-primary-channel-lum-scale: 0; 
+			
+				--noise-secondary-note-hue: 24; 		
+				--noise-secondary-note-hue-scale: 2; 		
+				--noise-secondary-note-sat: 255; 		
+				--noise-secondary-note-sat-scale: 0; 		
+				--noise-secondary-note-lum: 30; 		
+				--noise-secondary-note-lum-scale: 0; 	
+		
+				--noise-primary-note-hue: 24; 		
+				--noise-primary-note-hue-scale: 2; 		
+				--noise-primary-note-sat: 255; 		
+				--noise-primary-note-sat-scale: 1; 		
+				--noise-primary-note-lum: 60; 		
+				--noise-primary-note-lum-scale: 1; 	
+		
+				--mod-secondary-channel-hue: 55; 		
+				--mod-secondary-channel-hue-scale: 1.5; 		
+				--mod-secondary-channel-sat: 255; 		
+				--mod-secondary-channel-sat-scale: 0; 		
+				--mod-secondary-channel-lum: 30; 		
+				--mod-secondary-channel-lum-scale: 0; 
+
 					--pitch-secondary-note-hue: -34; 		
 					--pitch-secondary-note-hue-scale: 6.1; 		
 					--pitch-secondary-note-sat: 255; 		
@@ -6303,7 +6354,7 @@ export class ColorConfig {
 				--zoom-in-symbol: url("theme_resources/icon-zoomIn.png");
 				--zoom-out-symbol: url("theme_resources/icon-zoomOut.png");
 				--export-symbol: url("theme_resources/icon-export.png");
-					}
+			}
 					/* sets background image */
 					body {
 					background-image: url("theme_resources/stripesbg_light.gif") !important;

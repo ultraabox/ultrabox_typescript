@@ -82,7 +82,7 @@ function decode32BitNumber(compressed: string, charIndex: number): number {
 }
 
 function encodeUnisonSettings(buffer: number[], v: number, s: number, o: number, e: number, i: number): void {
-    // TODO: make these sign bits more efficient
+    // TODO: make these sign bits more efficient (bundle them together)
     buffer.push(base64IntToCharCode[v]);
     
     // TODO: make these use bitshifts instead for consistency
@@ -2990,8 +2990,8 @@ export class Song {
 
     public initToDefault(andResetChannels: boolean = true): void {
         this.scale = 0;
-        //this.scaleCustom = [true, false, true, true, false, false, false, true, true, false, true, true];
-	    this.scaleCustom = [true, false, false, false, false, false, false, false, false, false, false, false];
+        this.scaleCustom = [true, false, true, true, false, false, false, true, true, false, true, true];
+	    //this.scaleCustom = [true, false, false, false, false, false, false, false, false, false, false, false];
         this.key = 0;
         this.octave = 0;
         this.loopStart = 0;
@@ -3054,8 +3054,7 @@ export class Song {
         let buffer: number[] = [];
 
         buffer.push(Song._variant);
-		buffer.push(base64IntToCharCode[Song._latestUltraBoxVersion]);
-
+        buffer.push(base64IntToCharCode[Song._latestUltraBoxVersion]);
 
         buffer.push(SongTagCode.songDetails);
         // Length of the song name string
@@ -6207,7 +6206,7 @@ export class Song {
 
         // Code for auto-detect mode: if statements that are lower down have 'higher priority'
         //if (format == "auto") {
-            
+
         //}
 
         if (jsonObject["name"] != undefined) {
@@ -8131,6 +8130,12 @@ class InstrumentState {
                // advloop addition
 
                this.unisonVoices = instrument.unisonVoices;
+            this.unisonSpread = instrument.unisonSpread;
+            this.unisonOffset = instrument.unisonOffset;
+            this.unisonExpression = instrument.unisonExpression;
+            this.unisonSign = instrument.unisonSign;
+        } else if (instrument.type == InstrumentType.pwm) {
+            this.unisonVoices = instrument.unisonVoices;
             this.unisonSpread = instrument.unisonSpread;
             this.unisonOffset = instrument.unisonOffset;
             this.unisonExpression = instrument.unisonExpression;
@@ -11491,7 +11496,7 @@ export class Synth {
             const chipWaveLoopMode: number = instrumentState.chipWaveLoopMode;
             const chipWavePlayBackwards: boolean = instrumentState.chipWavePlayBackwards;
             const unisonSign: number = tone.specialIntervalExpressionMult * instrumentState.unisonSign;
-            if (instrumentState.unisonVoices == 1 && !instrumentState.chord!.customInterval)
+            if (instrumentState.unisonVoices == 1 && instrumentState.unisonSpread == 0 && !instrumentState.chord!.customInterval)
                 tone.phases[1] = tone.phases[0];
             let phaseDeltaA: number = tone.phaseDeltas[0] * waveLength;
             let phaseDeltaB: number = tone.phaseDeltas[1] * waveLength;
@@ -11803,7 +11808,7 @@ export class Synth {
         const waveLength = (aliases && instrumentState.type == 8) ? wave.length : wave.length - 1;
 
         const unisonSign: number = tone.specialIntervalExpressionMult * instrumentState.unisonSign;
-        if (instrumentState.unisonVoices == 1 && !instrumentState.chord!.customInterval) tone.phases[1] = tone.phases[0];
+        if (instrumentState.unisonVoices == 1 && instrumentState.unisonSpread == 0 && !instrumentState.chord!.customInterval) tone.phases[1] = tone.phases[0];
         let phaseDeltaA: number = tone.phaseDeltas[0] * waveLength;
         let phaseDeltaB: number = tone.phaseDeltas[1] * waveLength;
         const phaseDeltaScaleA: number = +tone.phaseDeltaScales[0];
@@ -11896,7 +11901,7 @@ export class Synth {
         const waveLength: number = wave.length - 1; // The first sample is duplicated at the end, don't double-count it.
 
         const unisonSign: number = tone.specialIntervalExpressionMult * instrumentState.unisonSign;
-        if (instrumentState.unisonVoices == 1 && !instrumentState.chord!.customInterval) tone.phases[1] = tone.phases[0];
+        if (instrumentState.unisonVoices == 1 && instrumentState.unisonSpread == 0 && !instrumentState.chord!.customInterval) tone.phases[1] = tone.phases[0];
         let phaseDeltaA: number = tone.phaseDeltas[0] * waveLength;
         let phaseDeltaB: number = tone.phaseDeltas[1] * waveLength;
         const phaseDeltaScaleA: number = +tone.phaseDeltaScales[0];
@@ -12714,7 +12719,8 @@ export class Synth {
         const data: Float32Array = synth.tempMonoInstrumentSampleBuffer!;
 
         const unisonSign: number = tone.specialIntervalExpressionMult * instrumentState.unisonSign;
-        if (instrumentState.unisonVoices == 1 && !instrumentState.chord!.customInterval) tone.phases[1] = tone.phases[0];
+
+        if (instrumentState.unisonVoices == 1 && instrumentState.unisonSpread == 0 && !instrumentState.chord!.customInterval) tone.phases[1] = tone.phases[0];
         let phaseDeltaA: number = tone.phaseDeltas[0];
         let phaseDeltaB: number = tone.phaseDeltas[1];
         const phaseDeltaScaleA: number = +tone.phaseDeltaScales[0];
@@ -12983,7 +12989,9 @@ export class Synth {
             const wave: Float32Array = instrumentState.wave!;
             
             const unisonSign: number = tone.specialIntervalExpressionMult * instrumentState.unisonSign;
-            if (instrumentState.unisonVoices == 1 && !instrumentState.chord!.customInterval) tone.phases[1] = tone.phases[0];
+
+            if (instrumentState.unisonVoices == 1 && instrumentState.unisonSpread == 0 && !instrumentState.chord!.customInterval) tone.phases[1] = tone.phases[0];
+
             let phaseDeltaA: number = tone.phaseDeltas[0];
             let phaseDeltaB: number = tone.phaseDeltas[1];
             const phaseDeltaScaleA: number = +tone.phaseDeltaScales[0];
@@ -12995,11 +13003,10 @@ export class Synth {
             if (tone.phases[0] == 0.0) {
                 // Zero phase means the tone was reset, just give noise a random start phase instead.
                 phaseA = Math.random() * Config.chipNoiseLength;
-                phaseB = Math.random() * Config.chipNoiseLength;
+                if (instrumentState.unisonVoices == 1 && instrumentState.unisonSpread == 0 && !instrumentState.chord!.customInterval) phaseB = phaseA;
             }
-            if (tone.phases[1] == 0.0) {
+            if (tone.phases[1] == 0.0 && !(instrumentState.unisonVoices == 1 && instrumentState.unisonSpread == 0 && !instrumentState.chord!.customInterval)) {
                 // Zero phase means the tone was reset, just give noise a random start phase instead.
-                phaseA = Math.random() * Config.chipNoiseLength;
                 phaseB = Math.random() * Config.chipNoiseLength;
             }
             const phaseMask: number = Config.chipNoiseLength - 1;
@@ -13060,7 +13067,7 @@ export class Synth {
         const samplesInPeriod: number = (1 << 7);
 
         const unisonSign: number = tone.specialIntervalExpressionMult * instrumentState.unisonSign;
-        if (instrumentState.unisonVoices == 1 && !instrumentState.chord!.customInterval) tone.phases[1] = tone.phases[0];
+        if (instrumentState.unisonVoices == 1 && instrumentState.unisonSpread == 0 && !instrumentState.chord!.customInterval) tone.phases[1] = tone.phases[0];
         let phaseDeltaA: number = tone.phaseDeltas[0] * samplesInPeriod;
 		let phaseDeltaB: number = tone.phaseDeltas[1] * samplesInPeriod;
         const phaseDeltaScaleA: number = +tone.phaseDeltaScales[0];
@@ -13077,10 +13084,16 @@ export class Synth {
         const applyFilters: Function = Synth.applyFilters;
 
         let phaseA: number = (tone.phases[0] % 1) * Config.spectrumNoiseLength;
-		let phaseB: number = (tone.phases[1] % 1) * Config.spectrumNoiseLength;
-        // Zero phase means the tone was reset, just give noise a random start phase instead.
-        if (tone.phases[0] == 0.0) phaseA = Synth.findRandomZeroCrossing(wave, Config.spectrumNoiseLength) + phaseDeltaA;
-		if (tone.phases[1] == 0.0) phaseB = Synth.findRandomZeroCrossing(wave, Config.spectrumNoiseLength) + phaseDeltaB;
+		    let phaseB: number = (tone.phases[1] % 1) * Config.spectrumNoiseLength;
+        if (tone.phases[0] == 0.0) {
+            // Zero phase means the tone was reset, just give noise a random start phase instead.
+            phaseA = Synth.findRandomZeroCrossing(wave, Config.spectrumNoiseLength) + phaseDeltaA;
+            if (instrumentState.unisonVoices == 1 && instrumentState.unisonSpread == 0 && !instrumentState.chord!.customInterval) phaseB = phaseA;
+        }
+        if (tone.phases[1] == 0.0 && !(instrumentState.unisonVoices == 1 && instrumentState.unisonSpread == 0 && !instrumentState.chord!.customInterval)) {
+            // Zero phase means the tone was reset, just give noise a random start phase instead.
+            phaseB = Synth.findRandomZeroCrossing(wave, Config.spectrumNoiseLength) + phaseDeltaB;
+        }
         const phaseMask: number = Config.spectrumNoiseLength - 1;
 
         // This is for a "legacy" style simplified 1st order lowpass filter with

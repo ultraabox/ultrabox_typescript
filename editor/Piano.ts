@@ -561,6 +561,10 @@ export class Piano {
 	public static getPitchName(pitchNameIndex: number, scaleIndex: number, baseVisibleOctave: number): string {
 		let text: string;
 
+		// May wanna adjust this a little bit so a key and both it's sharp/flat won't all 
+		// appear on the piano at once, which often happens when the song key is a sharp.
+		// E.g: Piano Labels: D♯ E F G♭ G "A♭ A A♯" B C "D♭ D D♯", Song Key: D♯
+		// "" = incorrect
 		if (Config.keys[pitchNameIndex].isWhiteKey) {
 			text = Config.keys[pitchNameIndex].name;
 		} else {

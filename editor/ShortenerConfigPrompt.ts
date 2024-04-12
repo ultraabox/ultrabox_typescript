@@ -1,5 +1,3 @@
-// Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
-
 import { HTML } from "imperative-html/dist/esm/elements-strict";
 import { SongDocument } from "./SongDocument";
 import { Prompt } from "./Prompt";
@@ -14,7 +12,7 @@ export class ShortenerConfigPrompt implements Prompt {
 	);
 	private readonly _cancelButton: HTMLButtonElement = button({class: "cancelButton"});
 	private readonly _okayButton: HTMLButtonElement = button({class: "okayButton", style: "width:45%;"}, "Okay");
-	
+
 	public readonly container: HTMLDivElement = div({class: "prompt noSelection", style: "width: 250px;"},
 		h2("Configure Shortener"),
 		div({style: "display: flex; flex-direction: row; align-items: center; height: 2em; justify-content: flex-end;"},
@@ -25,13 +23,13 @@ export class ShortenerConfigPrompt implements Prompt {
 		),
 		this._cancelButton,
 	);
-		
+
 	constructor(private _doc: SongDocument) {		
 		const lastStrategy: string | null = window.localStorage.getItem("shortenerStrategySelect");
 		if (lastStrategy != null) {
 			this._shortenerStrategySelect.value = lastStrategy;
 		}
-			
+
 		this._okayButton.addEventListener("click", this._saveChanges);
 		this._cancelButton.addEventListener("click", this._close);
 		this.container.addEventListener("keydown", this._whenKeyPressed);
@@ -46,16 +44,15 @@ export class ShortenerConfigPrompt implements Prompt {
 		this._cancelButton.removeEventListener("click", this._close);
 		this.container.removeEventListener("keydown", this._whenKeyPressed);
 	}
-		
+
 	private _whenKeyPressed = (event: KeyboardEvent): void => {
 			if ((<Element> event.target).tagName != "BUTTON" && event.keyCode == 13) { // Enter key
 			this._saveChanges();
 		}
 	}
-		
+
 	private _saveChanges = (): void => {
 		window.localStorage.setItem("shortenerStrategySelect", this._shortenerStrategySelect.value);
 		this._doc.prompt = null;
 		this._doc.undo();
 	}
-}

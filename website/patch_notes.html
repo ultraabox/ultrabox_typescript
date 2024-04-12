@@ -141,7 +141,7 @@
 <h2>Version 2.3</h2>
 	<h3> <ul>
 	<li>Added Slide and Strum speed</li>
-	<li>Added Unisons to the PWM, Spectrum, and Noise instrument types</li>
+  <!-- <li>Added .sf2 support</li> -->
 	<li>Added DB2's Note Range Effect</li>
 	<ul>
 		<li>You can use this for multisampling!</li>
@@ -149,22 +149,41 @@
 	<li>Added Song Details</li>
 	<ul>
 		<li>Access this through the <code>Shift+D</code> keybind! (unfinished)</li>
+  </ul>
+  <li>Removed the Zefbox Deep Square chip wave</li>
+	<ul>
+		<li>Backcompat for this has been added</li>
 	</ul>
+	</ul> </h3>
+  <p>5/?/2024</p>
+
+<h2>Version 2.2.6</h2>
+	<h3> <ul>
+	<li>Added an option to remove whitespace on .json export</li>
+	<li>Fixed Noise and Spectrum instrument types having a 'flam' with 1 unison voice</li>
+	<li>Fixed weird behavior involving unison spread when using a unison with 1 voice</li>
+	<li>Fixed the slider visual on decimal offset mods being flipped</li>
+	<!-- <li>Made some internal code cleaner: this will only help developers and will make no difference to the user (the thing involving optgroups)</li> -->
+	</ul> </h3>
+	<p>4/8/2024</p>
+
+<h2>Version 2.2.5</h2>
+	<h3> <ul>
+	<li>Added Unisons to the PWM, Spectrum, and Noise instrument types</li>
 	<li>Added the Shortener Config Prompt</li>
 	<ul>
 		<li>Currently the only options are <a href="https://tinyurl.com">tinyurl.com</a> and <a href="https://is.gd">is.gd</a>...</li>
 	</ul>
-	<li>Removed the Zefbox Deep Square chip wave</li>
-	<ul>
-		<li>Backcompat for this has been added</li>
-	</ul>
-	<li>Adjusted padding of Abyssbox themes</li>
+	<li>Adjusted padding of Abyssbox themes and certain layouts</li>
+	<li>Updated the Abyssbox Light theme</li>
+	<li>Allowed .gif uploading in custom themes</li>
 	<li>Fixed weird behavior involving decimal offset modulators</li>
 	<li>Fixed the song player not working on the offline version</li>
 	<li>Fixed a bug where 6-op envelopes would show up in 4-op instruments</li>
-	<!-- <li>Also fixed an inherited bug from GB involving channel counts in songs with version 1</li> -->
+	<!-- <li>Also fixed an inherited bug from GB involving channel counts in (non-beepbox and non-jummbox) songs with version 1</li> -->
+	<li>Fixed several bugs involving upconverted BeepBox songs</li>
 	</ul> </h3>
-	<p>4//2024</p>
+	<p>4/5/2024</p>
 
 <h2>Version 2.2.4</h2>
 	<h3> <ul>

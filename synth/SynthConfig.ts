@@ -226,6 +226,7 @@ export interface Modulator extends BeepBoxOption {
     readonly associatedEffect: EffectType; // effect that should be enabled for this modulator to work properly. If unused, set to EffectType.length.
     readonly promptName: string; // long-as-needed name that shows up in tip prompt
     readonly promptDesc: string[]; // paragraph(s) describing how to use this mod
+    invertSliderIndicator?: boolean; // for whether or not you want to invert the slider indicator
 
 }
 
@@ -1041,7 +1042,7 @@ export class Config {
         // based off an old mp3 in #modded-beepbox where someone tried to shorten the overdrive guitar into the size of other chip waves 
         // search "normie alert" in beepcord
         { name: "ultrabox shortened od guitar", expression: 0.5, samples: centerAndNormalizeWave([-0.82785,-0.67621,-0.40268,-0.43817,-0.45468,-0.22531,-0.18329,0.24750,0.71246,0.52155,0.56082,0.48395,0.33990,0.46957,0.27744,0.42313,0.47104,0.18796,0.12930,-0.13901,-0.07431,-0.16348,-0.74857,-0.73206,-0.35181,-0.26227,-0.41882,-0.27786,-0.19806,-0.19867,0.18643,0.24808,0.08847,-0.06964,0.06912,0.20474,-0.05304,0.29416,0.31967,0.14243,0.27521,-0.23932,-0.14752,0.12360,-0.26123,-0.26111,0.06616,0.26520,0.08090,0.15240,0.16254,-0.12061,0.04562,0.00131,0.04050,0.08182,-0.21729,-0.17041,-0.16312,-0.08563,0.06390,0.05099,0.05627,0.02728,0.00726,-0.13028,-0.05673,-0.14969,-0.17645,0.35492,0.16766,-0.00897,0.24326,-0.00461,-0.04456,0.01776,-0.04950,-0.01221,0.02039,0.07684,0.13397,0.39850,0.35962,0.13754,0.42310,0.27161,-0.17609,0.03659,0.10635,-0.21909,-0.22046,-0.20258,-0.40973,-0.40280,-0.40521,-0.66284]) },
-]); 
+]);
 	public static chipWaves: DictionaryArray<ChipWave> = rawChipToIntegrated(Config.rawChipWaves);
 	public static rawRawChipWaves: DictionaryArray<ChipWave> = Config.rawChipWaves;
 
@@ -1055,7 +1056,7 @@ export class Config {
 		{ name: "clang", expression: 0.4, basePitch: 69, pitchFilterMult: 1024.0, isSoft: false, samples: null },
 		{ name: "buzz", expression: 0.3, basePitch: 69, pitchFilterMult: 1024.0, isSoft: false, samples: null },
 		{ name: "hollow", expression: 1.5, basePitch: 96, pitchFilterMult: 1.0, isSoft: true, samples: null },
-        { name: "shine", expression: 1.0, basePitch: 69, pitchFilterMult: 1024.0, isSoft: false, samples: null }, // Identical to buzz but louder. For now we're keeping it...
+		{ name: "shine", expression: 1.0, basePitch: 69, pitchFilterMult: 1024.0, isSoft: false, samples: null }, // Identical to buzz but louder. For now we're keeping it...
 		{ name: "deep", expression: 1.5, basePitch: 120, pitchFilterMult: 1024.0, isSoft: true, samples: null },
 		{ name: "cutter", expression: 0.005, basePitch: 96, pitchFilterMult: 1024.0, isSoft: false, samples: null },
         { name: "metallic", expression: 1.0, basePitch: 96, pitchFilterMult: 1024.0, isSoft: false, samples: null },
@@ -1452,6 +1453,16 @@ export class Config {
     public static readonly detuneMin: number = 0;
     public static readonly songDetuneMin: number = 0;
     public static readonly songDetuneMax: number = 500;
+    public static readonly unisonVoicesMin: number = 1;
+    public static readonly unisonVoicesMax: number = 2;
+    public static readonly unisonSpreadMin: number = -96;
+    public static readonly unisonSpreadMax: number = 96; 
+    public static readonly unisonOffsetMin: number = -96;
+    public static readonly unisonOffsetMax: number = 96; 
+    public static readonly unisonExpressionMin: number = -2;
+    public static readonly unisonExpressionMax: number = 2; 
+    public static readonly unisonSignMin: number = -2;
+    public static readonly unisonSignMax: number = 2; 
     public static readonly sineWaveLength: number = 1 << 8; // 256
     public static readonly sineWaveMask: number = Config.sineWaveLength - 1;
     public static readonly sineWave: Float32Array = generateSineWave();
@@ -1479,7 +1490,7 @@ export class Config {
         { name: "noteVolume", computeIndex: EnvelopeComputeIndex.noteVolume, displayName: "note volume",      /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.volumeRange,             */    maxCount: 1, effect: null, compatibleInstruments: null },
         { name: "pulseWidth", computeIndex: EnvelopeComputeIndex.pulseWidth, displayName: "pulse width",      /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.pulseWidthRange,         */    maxCount: 1, effect: null, compatibleInstruments: [InstrumentType.pwm, InstrumentType.supersaw] },
         { name: "stringSustain", computeIndex: EnvelopeComputeIndex.stringSustain, displayName: "sustain",          /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.stringSustainRange,      */    maxCount: 1, effect: null, compatibleInstruments: [InstrumentType.pickedString] },
-        { name: "unison", computeIndex: EnvelopeComputeIndex.unison, displayName: "unison",           /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: 1, effect: null, compatibleInstruments: [InstrumentType.chip, InstrumentType.harmonics, InstrumentType.pickedString, InstrumentType.customChipWave] },
+        { name: "unison", computeIndex: EnvelopeComputeIndex.unison, displayName: "unison",           /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: 1, effect: null, compatibleInstruments: [InstrumentType.chip, InstrumentType.harmonics, InstrumentType.pickedString, InstrumentType.customChipWave, InstrumentType.pwm, InstrumentType.noise, InstrumentType.spectrum] },
         { name: "operatorFrequency", computeIndex: EnvelopeComputeIndex.operatorFrequency0, displayName: "fm# freq",         /*perNote:  true,*/ interleave: true, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: Config.operatorCount+2, effect: null, compatibleInstruments: [InstrumentType.fm, InstrumentType.fm6op] },
         { name: "operatorAmplitude", computeIndex: EnvelopeComputeIndex.operatorAmplitude0, displayName: "fm# volume",       /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.operatorAmplitudeMax + 1,*/    maxCount: Config.operatorCount+2, effect: null, compatibleInstruments: [InstrumentType.fm, InstrumentType.fm6op] },
         { name: "feedbackAmplitude", computeIndex: EnvelopeComputeIndex.feedbackAmplitude, displayName: "fm feedback",      /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.operatorAmplitudeMax + 1,*/    maxCount: 1, effect: null, compatibleInstruments: [InstrumentType.fm, InstrumentType.fm6op] },
@@ -1621,7 +1632,7 @@ export class Config {
             promptName: "FM Slider 5", promptDesc: ["This setting affects the strength of the fifth FM slider, just like the corresponding slider on your instrument.", "It works in a multiplicative way, so at $HI your slider will sound the same is its default value, and at $LO it will sound like it has been moved all the way to the left.", "For the full range of control with this mod, move your underlying slider all the way to the right.", "[MULTIPLICATIVE] [$LO - $HI] [%]"] },
         { name: "fm slider 6", pianoName: "FM 6", maxRawVol: 15, newNoteVol: 15, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length,
             promptName: "FM Slider 6", promptDesc: ["This setting affects the strength of the sixth FM slider, just like the corresponding slider on your instrument.", "It works in a multiplicative way, so at $HI your slider will sound the same is its default value, and at $LO it will sound like it has been moved all the way to the left.", "For the full range of control with this mod, move your underlying slider all the way to the right.", "[MULTIPLICATIVE] [$LO - $HI] [%]"] },
-        { name: "decimal offset", pianoName: "Decimal Offset", maxRawVol: 99, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length,
+        { name: "decimal offset", pianoName: "Decimal Offset", maxRawVol: 99, newNoteVol: 0, forSong: false, convertRealFactor: 0, invertSliderIndicator: true, associatedEffect: EffectType.length,
             promptName: "Decimal Offset", promptDesc: ["This setting controls the decimal offset that is subtracted from the pulse width; use this for creating values like 12.5 or 6.25.", "[$LO - $HI]"] },
         { name: "envelope speed", pianoName: "EnvelopeSpd", maxRawVol: 50, newNoteVol: 12, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length,
             promptName: "Envelope Speed", promptDesc: ["This setting controls how fast all of the envelopes for the instrument play.", "At $LO, your instrument's envelopes will be frozen, and at values near there they will change very slowly. At 12, the envelopes will work as usual, performing at normal speed. This increases up to $HI, where the envelopes will change very quickly. The speeds are given below:",
