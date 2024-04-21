@@ -583,4 +583,24 @@ export class Piano {
 
 		return text;
 	}
+
+	public static getPitchNameAlwaysOctave(pitchNameIndex: number, scaleIndex: number, baseVisibleOctave: number): string {
+		let text: string;
+
+		if (Config.keys[pitchNameIndex].isWhiteKey) {
+			text = Config.keys[pitchNameIndex].name;
+		} else {
+			const shiftDir: number = Config.blackKeyNameParents[scaleIndex % Config.pitchesPerOctave];
+			text = Config.keys[(pitchNameIndex + Config.pitchesPerOctave + shiftDir) % Config.pitchesPerOctave].name;
+			if (shiftDir == 1) {
+				text += "♭";
+			} else if (shiftDir == -1) {
+				text += "♯";
+			}
+		}
+
+		text += Math.floor(scaleIndex / 12) + baseVisibleOctave;
+
+		return text;
+	}
 }
