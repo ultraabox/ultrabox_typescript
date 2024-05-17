@@ -7,7 +7,7 @@
     <title>UltraBox Patch Notes</title>
     <meta name="application-name" content="UltraBox" />
     <meta name="apple-mobile-web-app-title" content="UltraBox">
-    <meta name="description" content="UltraBox is an online tool for sketching and sharing instrumental music." />
+	<meta name="description" content="UltraBox is a mod of BeepBox that aims to combine every other beepmod into one." />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -39,25 +39,6 @@
             align-content: center;
         }
 
-        #beepboxEditorContainer {
-            min-height: 645px;
-            overflow: auto;
-            background: var(--editor-background, black);
-            width: 100%;
-			max-width: 710px;
-            padding-left: 30px;
-            padding-right: 30px;
-        }
-
-        #text-content {
-            overflow: auto;
-            background: var(--editor-background, black);
-            width: 100%;
-			max-width: 710px;
-            padding-left: 30px;
-            padding-right: 30px;
-        }
-
         h1 {
             font-size: 1.7rem;
             text-align: center;
@@ -76,15 +57,10 @@
 
 		h3 {
             font-size: 1.2rem;
-			/* text-align: center; */
             margin-top: 0.5em;
             margin-bottom: 0.5em;
             -webkit-text-stroke-width: 0;
         }
-
-        .centerDiv {
-			margin: 0px auto;
-		}
 
         a {
             color: var(--link-accent, #98f);
@@ -99,21 +75,6 @@
             body {
                 width: 100%;
             }
-
-            .column-container {
-				width: 710px;
-                display: flex;
-				gap: 25px;
-            }
-
-            .instructions-column {
-				min-width: 0;
-            }
-
-            .twitter-column {
-                width: 300px;
-				flex-shrink: 0;
-            }
         }
 
         /* narrow screen */
@@ -122,14 +83,8 @@
                 width: 100%;
             }
 
-            p, .donation {
+            p {
                 margin: 1em 0.5em;
-            }
-
-            .column-container {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
             }
         }
     </style>
@@ -138,6 +93,76 @@
 <font color="#9c64f7">Patch Notes (in reverse chronological order);</font>
 </h1>
 
+<h2>Version 2.2.7</h2>
+	<h3> <ul>
+	<!-- <li>UB is now a Jummbox fork instead of a GoldBox fork!</li> -->
+	<li>Ported the "Frosted Glass" backdrop from Abyssbox!</li>
+	<li>Made changes to shift+r-ing Custom Chip, Drumsets, and envelopes</li>
+	<li>Changed some unison tip prompt text</li>
+	<li>Fixed mod channels being copy-pasteable into pitch channels, causing errors</li>
+	<li>Fixed unison not being a possible envelope option in PWM, Harmonics, and Spectrum</li>
+	<li>Fixed a bug where the pulse width input box couldn't be clicked</li>
+	</ul> </h3>
+	<p>4/28/2024</p>
+
+<h2>Version 2.2.6</h2>
+	<h3> <ul>
+	<li>Added an option to remove whitespace on .json export</li>
+	<li>Fixed Noise and Spectrum instrument types having a 'flam' with 1 unison voice</li>
+	<li>Fixed weird buzzing involving unison spread when using a unison with 1 voice</li>
+	<li>Fixed the slider visual on decimal offset mods being flipped</li>
+	<!-- <li>Made some internal code cleaner: this will only help developers and will make no difference to the user (the thing involving optgroups)</li> -->
+	</ul> </h3>
+	<p>4/8/2024</p>
+
+<h2>Version 2.2.5</h2>
+	<h3> <ul>
+	<li>Added Unisons to the PWM, Spectrum, and Noise instrument types</li>
+	<li>Added the Shortener Config Prompt</li>
+	<ul>
+		<li>Currently the only options are <a href="https://tinyurl.com">tinyurl.com</a> and <a href="https://is.gd">is.gd</a>...</li>
+	</ul>
+	<li>Adjusted padding of Abyssbox themes and certain layouts</li>
+	<li>Updated the Abyssbox Light theme</li>
+	<li>Allowed .gif uploading in custom themes</li>
+	<li>Fixed weird behavior involving decimal offset modulators</li>
+	<li>Fixed the song player not working on the offline version</li>
+	<li>Fixed a bug where 6-op envelopes would show up in 4-op instruments</li>
+	<!-- <li>Also fixed an inherited bug from GB involving channel counts in (non-beepbox and non-jummbox) songs with version 1</li> -->
+	<li>Fixed several bugs involving upconverted BeepBox songs</li>
+	</ul> </h3>
+	<p>4/5/2024</p>
+
+<h2>Version 2.2.4</h2>
+	<h3> <ul>
+	<li>UltraBox now has an offline version!</li>
+	<ul>
+		<li>You can download it <a href="https://github.com/ultraabox/ultrabox_typescript/releases">here</a></li>
+		<li>Both local and online sample importing are supported</li>
+	</ul>
+	<li>Made some changes to the default preferences</li>
+	<li>Certain options in the "File" menu now list keybinds</li>
+	<li>Added Copy/Paste buttons to the custom chip prompt</li>
+	<li>Added more unisons to the randomization pool</li>
+	<li>Imported midis now default to the "Free" scale and the "÷8" rhythm</li>
+	<li>Rewrote text in the Custom Theme prompt and embed thingy</li>
+	<li>Added text to the custom scale prompt</li>
+	<!-- <li>updated the embed description text thing a second time</li> -->
+	<li>Added the Abyssbox Dark and Light themes</li>
+	<li>Adjusted the Brucebox and Shitbox 1.0/3.0 themes to be more accurate</li>
+	<li>Fixed the "E" keybind still activating with caps lock</li>
+	<li>Fixed a bug involving exporting songs with broken presets to midi</li>
+	<li>Fixed the piano key labels being broken in certain scenarios</li>
+	<li>Fixed the player favicon not loading correctly</li>
+	</ul> </h3>
+	<p>3/11/2024</p>
+
+<!-- <li>Added three colorblind-friendly themes</li>
+		<ul>
+		<li>The colorblind themes were made and suggested by Nep and Choptop, neither of whom are colorblind...</li>
+		<li>...so if you're  and have feedback to give on those three themes, that would be much appreciated!</li>
+		</ul>  -->
+
 <h2>Version 2.2.3</h2>
 	<h3> <ul>
 	<li>Added the supersaw lead preset and reordered the FM sine preset</li>
@@ -145,29 +170,29 @@
 	<li>Panning is now enabled by default again</li>
 	<li>Reworked the Preference menu!</li>
 	<ul>
-		<!-- <li>It's now called "View"</li> -->
-		<li>There's now an "Appearence" category for ease of use</li>
-		<li>Instrument Copy/paste and Import/Export buttons are now disabled by default</li>
+		<li>There's now "Appearence" and "Technical" categories for ease of use</li>
+		<li>The Instrument Copy/Paste and Import/Export buttons are now disabled by default</li>
+		<li>Added three new preferences for controlling the Instrument buttons</li>
+	</ul>
+	<li>Added "Import Modes" for better mod support when importing .jsons!</li>
+	<ul>
+		<li>Added support for instrument volumes from Beepbox-based mods</li>
+		<li>Added support for Modbox's pitch shift and (lack of) anti-aliasing</li>
+		<li>Added support for Synthbox FM</li>
+		<li>Added support for Todbox's error unison</li>
 	</ul>
 	<li>Ported the latest Jummbox bugfixes:</li>
 	<ul>
 		<li><a href="https://github.com/jummbus/jummbox/commit/d180b96ebef2289d669334d9b921acf2f0237ccd">https://github.com/jummbus/jummbox/commit/d180b96ebef2289d669334d9b921acf2f0237ccd</a></li>
 		<li><a href="https://github.com/jummbus/jummbox/commit/9df59e639c5f8b72eadb2c986d2c32c753bac90a">https://github.com/jummbus/jummbox/commit/9df59e639c5f8b72eadb2c986d2c32c753bac90a</a></li>
+		<li>Also fixed a css error involving long instrument names</li>
 	</ul>
 	<li>The text in the instrument import prompt now hides itself when not relevant</li>
-	<!-- <li>Instrument names will no longer  go too long   how do I write this help (style.ts)</li> -->
 	<li>Tweaked the Shitbox 1.0/3.0 and Shitbox 2.0 themes</li>
 	<!-- <li>updated the embed description text thing</li> -->
 	<li>Removed the frivolous 2_3 folder</li>
 	</ul> </h3>
-	<p>2//2024</p>
-
-<!-- <li>UltraBox now has an offline version! </li> -->
-<!-- <li>Added three colorblind-friendly themes</li>
-		<ul>
-		<li>The colorblind themes were made and suggested by Nep and Choptop, neither of whom are colorblind...</li>
-		<li>...so if you're  and have feedback to give on those three themes, that would be much appreciated!</li>
-		</ul>  -->
+	<p>2/21/2024</p>
 
 <h2>Version 2.2.2</h2>
 	<h3> <ul>

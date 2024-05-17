@@ -2,7 +2,7 @@
 
 UltraBox is an online tool for sketching and sharing instrumental music.
 You can find it [here](https://ultraabox.github.io).
-It is a modification of Goldbox, which itself is a modification of JummBox, which inturn is a modification of the [original BeepBox](https://beepbox.co).
+It is a modification of [JummBox](https://github.com/jummbus/jummbox), which inturn is a modification of the [original BeepBox](https://beepbox.co).
 
 The goal of UltraBox is to combine every single beepbox mod into one. Feel free to contribute!
 
@@ -12,9 +12,8 @@ changes to the song, the URL is updated to reflect your changes. When you are
 satisfied with your song, just copy and paste the URL to save and share your
 song!
 
-UltraBox, as well as GoldBox, Jummbox, and Beepbox which it's based on, are free projects. If you ever feel so inclined, please support the original creator, [John Nesky](http://www.johnnesky.com/), via
+UltraBox, as well as the beepmods which it's based on, are free projects. If you ever feel so inclined, please support the original creator, [John Nesky](http://www.johnnesky.com/), via
 [PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=QZJTX9GRYEV9N&currency_code=USD)!
-JummBox is developed by [Jummbus](http://www.twitter.com/jummbus).
 
 ## Compiling
 
@@ -75,43 +74,33 @@ npm run build-player
 The [website/](website) folder contains index.html files to view the interfaces.
 The build process outputs JavaScript files into this folder.
 
-
-Finally, the [app/](app) folder contains several files for the offline version of UltraBox. Building the app version outputs JavaScript files into this folder.
-The [app_editor/](app_editor) folder contains a seperate version of the [editor/](editor) files specific to the offline version.
-
 ## Dependencies
 
 Most of the dependencies are listed in [package.json](package.json), although
 I'd like to note that UltraBox also has an indirect, optional dependency on
 [lamejs](https://www.npmjs.com/package/lamejs) via
 [jsdelivr](https://www.jsdelivr.com/) for exporting .mp3 files. If the user
-attempts to export an .mp3 file, JummBox will direct the browser to download
+attempts to export an .mp3 file, UltraBox will direct the browser to download
 that dependency on demand.
 
-## App Version
 
-### Run without packaging (for debugging)
-If you'd like to run the app version without packaging, run the following:
+## Offline version
+
+If you'd like to BUILD the offline version, enter the following into the command line of your choice:
 ```
-npm install
-npm run build-app
-npm run build-player
-cd app
-npm install electron
+npm run build-offline
 ```
 
-You'll need to manually move some extra files from the [website/](website) folder into the [app/](app) folder (such as the player files and the hotdog). To start the program, run:
+
+After building, you can then enter the following to run it for testing purposes:
 ```
+cd offline
 npm run start
 ```
 
-### Packaging (for distribution)
-In order to package the program, first run the commands in the "Run without packaging" section, and then run the following:
+And to package, run (do ```npm run package-host``` for your host platform; you may need to run git bash as an administrator for non-host platforms):
 ```
-npm install electron-packager
+cd offline
 npm run package
 ```
-
-Alternatively you can run ```npm run package-host``` if you'd like to package for only your host platform.
-
-In order to package for Mac on a platform other than Mac, you'll have to run Git Bash as an administrator. 
+<!-- also something about installing electron and electron-packager as well -->

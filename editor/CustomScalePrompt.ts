@@ -8,7 +8,7 @@ import { ChangeCustomScale } from "./changes";
 
 
 //namespace beepbox {
-const { button, div, h2, input } = HTML;
+const { button, div, h2, input, p } = HTML;
 
 export class CustomScalePrompt implements Prompt {
     private readonly _flags: boolean[] = [];
@@ -25,7 +25,7 @@ export class CustomScalePrompt implements Prompt {
         for (var i = 1; i < Config.pitchesPerOctave; i++) {
             this._scaleFlags[i] = input({ type: "checkbox", style: "width: 1em; padding: 0; margin-right: 4em;", "checked": this._flags[i], "value": i });
             this._scaleRows[i] = div({ style: "text-align: right; height: 2em;" },
-                "note " + i + ":",
+                "Note " + i + ":",
                 this._scaleFlags[i]
             );
             scaleHolder.appendChild(this._scaleRows[i])
@@ -36,6 +36,7 @@ export class CustomScalePrompt implements Prompt {
 
         this.container = div({ class: "prompt noSelection", style: "width: 250px;" },
             h2("Custom Scale"),
+            p("Here, you can make your own scale to use in your song. Press the checkboxes below to toggle which notes of an octave are in the scale. For this to work, you'll need to have the \"Custom\" scale selected."),
             div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: flex-end;" },
                 scaleHolder,
             ),

@@ -20,5 +20,6 @@ npx terser \
 	--source-map "content='website/beepbox_synth.js.map',url=beepbox_synth.min.js.map" \
 	-o website/beepbox_synth.min.js \
 	--compress \
+	--define OFFLINE=false \
 	--mangle \
 	--mangle-props regex="/^_.+/;"

@@ -20,5 +20,6 @@ npx terser \
 	--source-map "content='website/player/beepbox_player.js.map',url=beepbox_player.min.js.map" \
 	-o website/player/beepbox_player.min.js \
 	--compress \
+	--define OFFLINE=false \
 	--mangle \
 	--mangle-props regex="/^_.+/;"

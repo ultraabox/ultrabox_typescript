@@ -81,7 +81,7 @@ export class CustomChipPromptCanvas {
 
 	}
 
-	private _storeChange = (): void => {
+	public _storeChange = (): void => {
 		// Check if change is unique compared to the current history state
 		var sameCheck = true;
 		if (this._changeQueue.length > 0) {
@@ -253,6 +253,23 @@ export class CustomChipPrompt implements Prompt {
 	private readonly _cancelButton: HTMLButtonElement = button({ class: "cancelButton" });
 	private readonly _okayButton: HTMLButtonElement = button({ class: "okayButton", style: "width:45%;" }, "Okay");
 
+	private readonly copyButton: HTMLButtonElement = button({ style: "width:86px; margin-right: 5px;", class: "copyButton" }, [
+		"Copy",
+		// Copy icon:
+		SVG.svg({ style: "flex-shrink: 0; position: absolute; left: 0; top: 50%; margin-top: -1em; pointer-events: none;", width: "2em", height: "2em", viewBox: "-5 -21 26 26" }, [
+			SVG.path({ d: "M 0 -15 L 1 -15 L 1 0 L 13 0 L 13 1 L 0 1 L 0 -15 z M 2 -1 L 2 -17 L 10 -17 L 14 -13 L 14 -1 z M 3 -2 L 13 -2 L 13 -12 L 9 -12 L 9 -16 L 3 -16 z", fill: "currentColor" }),
+		]),
+	]);
+	private readonly pasteButton: HTMLButtonElement = button({ style: "width:86px;", class: "pasteButton" }, [
+		"Paste",
+		// Paste icon:
+		SVG.svg({ style: "flex-shrink: 0; position: absolute; left: 0; top: 50%; margin-top: -1em; pointer-events: none;", width: "2em", height: "2em", viewBox: "0 0 26 26" }, [
+			SVG.path({ d: "M 8 18 L 6 18 L 6 5 L 17 5 L 17 7 M 9 8 L 16 8 L 20 12 L 20 22 L 9 22 z", stroke: "currentColor", fill: "none" }),
+			SVG.path({ d: "M 9 3 L 14 3 L 14 6 L 9 6 L 9 3 z M 16 8 L 20 12 L 16 12 L 16 8 z", fill: "currentColor", }),
+		]),
+	]);
+	private readonly copyPasteContainer: HTMLDivElement = div({ style: "width: 185px;" }, this.copyButton, this.pasteButton);
+
 	public readonly container: HTMLDivElement = div({ class: "prompt noSelection", style: "width: 600px;" },
 		h2("Edit Custom Chip Instrument"),
 		div({ style: "display: flex; width: 55%; align-self: center; flex-direction: row; align-items: center; justify-content: center;" },
@@ -263,6 +280,7 @@ export class CustomChipPrompt implements Prompt {
 		),
 		div({ style: "display: flex; flex-direction: row-reverse; justify-content: space-between;" },
 			this._okayButton,
+			this.copyPasteContainer,
 		),
 		this._cancelButton,
 	);
@@ -272,6 +290,8 @@ export class CustomChipPrompt implements Prompt {
 		this._okayButton.addEventListener("click", this._saveChanges);
 		this._cancelButton.addEventListener("click", this._close);
 		this.container.addEventListener("keydown", this.whenKeyPressed);
+		this.copyButton.addEventListener("click", this._copySettings);
+		this.pasteButton.addEventListener("click", this._pasteSettings);
 		this._playButton.addEventListener("click", this._togglePlay);
 		this.updatePlayButton();
 
@@ -312,6 +332,20 @@ export class CustomChipPrompt implements Prompt {
 
 		this._playButton.removeEventListener("click", this._togglePlay);
 	}
+
+	private _copySettings = (): void => {
+		const chipCopy: Float32Array = this.customChipCanvas.chipData;
+		window.localStorage.setItem("chipCopy", JSON.stringify(Array.from(chipCopy)));
+	}
+
+	private _pasteSettings = (): void => {
+		const storedChipWave: any = JSON.parse(String(window.localStorage.getItem("chipCopy")));
+		for (let i: number = 0; i < 64; i++) {
+    	this.customChipCanvas.chipData[i] = storedChipWave[i];
+		}
+		this.customChipCanvas._storeChange();
+		new ChangeCustomWave(this._doc, this.customChipCanvas.chipData);
+    }
 
 	public whenKeyPressed = (event: KeyboardEvent): void => {
 		if ((<Element>event.target).tagName != "BUTTON" && event.keyCode == 13) { // Enter key

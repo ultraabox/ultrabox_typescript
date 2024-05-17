@@ -8,11 +8,11 @@ import { PatternEditor } from "./PatternEditor";
 // import { ColorConfig } from "./ColorConfig";
 
 //namespace beepbox {
-const { button, div, h2, input, p} = HTML;
+const { button, div, h2, input, p, a} = HTML;
 let doReload = false;
 export class CustomPrompt implements Prompt {
-	private readonly _fileInput: HTMLInputElement = input({ type: "file", accept: ".png,.jpg,.jpeg", text: "choose editor background image"});
-	private readonly _fileInput2: HTMLInputElement = input({ type: "file", accept: ".png,.jpg,.jpeg", text: "choose website background image" });
+	private readonly _fileInput: HTMLInputElement = input({ type: "file", accept: ".png,.jpg,.jpeg,.gif", text: "choose editor background image"});
+	private readonly _fileInput2: HTMLInputElement = input({ type: "file", accept: ".png,.jpg,.jpeg,.gif", text: "choose website background image" });
 	private readonly _colorInput: HTMLInputElement = input({ type: "text", value: localStorage.getItem("customColors") || `:root {
 		--page-margin: #040410;
 		--editor-background: #040410;
@@ -134,11 +134,15 @@ export class CustomPrompt implements Prompt {
 	public readonly container: HTMLDivElement = div({ class: "prompt noSelection", style: "width: 300px;" },
 		h2("Import"),
 		p({ style: "text-align: left; margin: 0.5em 0;" },
-			"You can upload images to create a custom theme.",
+			"You can upload images to create a custom theme. The first image will become the editor background, and the second image will be tiled across the webpage.",
 		),
-		p({ style: "text-align: left; margin: 0.5em 0;" },
-			"The first image will become the editor background, and the second image will be tiled across the webpage.",
-		),
+		// p({ style: "text-align: left; margin: 0.5em 0;" },
+		// 	"The first image will become the editor background, and the second image will be tiled across the webpage.",
+		// ),
+		div({ style: "text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;" },
+			"You can find a list of custom themes made by other users on the ",
+			a({ target: "_blank", href: "https://docs.google.com/spreadsheets/d/1dGjEcLgJrPwzBExPmwA9pbE_KVQ3jNrnTBrd46d2IKo/edit" }, "custom theme sheet."),
+        ),
 		div(),
 		p({ style: "text-align: left; margin: 0;" },
 			"Editor Background Image:",
@@ -150,7 +154,7 @@ export class CustomPrompt implements Prompt {
 		),
 		div(),
 		p({ style: "text-align: left; margin: 0;"},
-			"If you want to mess with custom color schemes, mess with the hexcodes yourself, I dare you:",
+			"Replace the text below with your custom theme data to load it:",
 		),
 		this._colorInput,
 		div({ style: "display: flex; flex-direction: row-reverse; justify-content: space-between;" },

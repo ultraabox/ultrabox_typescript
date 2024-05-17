@@ -305,7 +305,7 @@ export class Piano {
 			if (this._renderedPitchCount != this._pitchCount) {
 				this._pianoContainer.innerHTML = "";
 				for (let i: number = 0; i < this._pitchCount; i++) {
-					const pianoLabel: HTMLDivElement = HTML.div({class: "piano-label", style: "font-weight: bold; -webkit-text-stroke-width: 0; font-size: 11px; font-family: sans-serif; position: absolute; padding-left: 15px;"});
+					const pianoLabel: HTMLDivElement = HTML.div({class: "piano-label", style: "font-weight: bold; -webkit-text-stroke-width: 0; font-size: 11px; font-family: sans-serif; position: absolute; padding-left: 15px; white-space: nowrap;"});
 					const pianoKey: HTMLDivElement = HTML.div({class: "piano-button", style: "background: gray;"}, pianoLabel);
 					this._pianoContainer.appendChild(pianoKey);
 					this._pianoLabels[i] = pianoLabel;
@@ -561,6 +561,10 @@ export class Piano {
 	public static getPitchName(pitchNameIndex: number, scaleIndex: number, baseVisibleOctave: number): string {
 		let text: string;
 
+		// May wanna adjust this a little bit so a key and both it's sharp/flat won't all 
+		// appear on the piano at once, which often happens when the song key is a sharp.
+		// E.g: Piano Labels: D♯ E F G♭ G "A♭ A A♯" B C "D♭ D D♯", Song Key: D♯
+		// "" = incorrect
 		if (Config.keys[pitchNameIndex].isWhiteKey) {
 			text = Config.keys[pitchNameIndex].name;
 		} else {

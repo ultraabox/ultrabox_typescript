@@ -60,6 +60,8 @@ export class ThemePrompt implements Prompt {
 			option({ value: "foxbox" }, "FoxBox"),
 			option({ value: "midbox" }, "Midbox"),
 			option({ value: "dogebox2" }, "Dogebox2"),
+			option({ value: "AbyssBox Classic"}, "AbyssBox Classic"),
+			option({ value: "AbyssBox Light"}, "AbyssBox Light"),
 			option({ value: "nepbox" }, "Nepbox"),
 			option({ value: "custom" }, "Custom")
 	);

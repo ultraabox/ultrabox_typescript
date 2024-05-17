@@ -23,7 +23,7 @@ export function prettyNumber(value: number): string {
 }
 
 export class EditorConfig {
-    public static readonly version: string = "2.2.3"; // Using patch versions in display right now, maybe TODAY.
+    public static readonly version: string = "2.2.7"; // Using patch versions in display right now, maybe TODAY.
     public static readonly versionDisplayName: string = "UltraBox " + EditorConfig.version;
 
     public static readonly releaseNotesURL: string = "./patch_notes.html";
@@ -339,7 +339,7 @@ export class EditorConfig {
     public static valueToPreset(presetValue: number): Preset | null {
         const categoryIndex: number = presetValue >> 6;
         const presetIndex: number = presetValue & 0x3F;
-        return EditorConfig.presetCategories[categoryIndex].presets[presetIndex];
+        return EditorConfig.presetCategories[categoryIndex]?.presets[presetIndex];
     }
 
     public static midiProgramToPresetValue(program: number): number | null {

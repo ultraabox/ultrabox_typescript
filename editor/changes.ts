@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
 import { Algorithm, Dictionary, FilterType, SustainType, InstrumentType, EffectType, AutomationTarget, Config, effectsIncludeDistortion } from "../synth/SynthConfig";
-import { NotePin, Note, makeNotePin, Pattern, FilterSettings, FilterControlPoint, SpectrumWave, HarmonicsWave, Instrument, Channel, Song, Synth } from "../synth/synth";
+import { NotePin, Note, makeNotePin, Pattern, FilterSettings, FilterControlPoint, SpectrumWave, HarmonicsWave, Instrument, Channel, Song, Synth, clamp } from "../synth/synth";
 import { Preset, PresetCategory, EditorConfig } from "./EditorConfig";
 import { Change, ChangeGroup, ChangeSequence, UndoableChange } from "./Change";
 import { SongDocument } from "./SongDocument";
@@ -217,6 +217,183 @@ function projectNoteIntoBar(oldNote: Note, timeOffset: number, noteStartPart: nu
     }
     if (!joinedWithPrevNote) {
         newNotes.push(newNote);
+    }
+}
+
+function mod(a: number, b: number): number {
+    return (a % b + b) % b;
+}
+
+function sigma(a: number, b: (i: number) => number, c: number): number {
+    let result = 0;
+    for (let i = c; i <= a; i++) {
+        result += b(i);
+    }
+/*
+    The variables here look like this:
+    A
+    Σ  (i) => B
+    C
+*/
+    return result;
+}
+
+// Custom chip generation functions.
+function randomSineWave(wave: Float32Array): void {
+    // Random sine waves refer to stuff similar in shape to sine/curvy waves. Imagine hills.
+    let randomRoundWave: Float32Array = new Float32Array(64);
+    let waveLength: number = 64;
+    let foundNonZero = false;
+    const roundedWaveType: number = (Math.random() * 2 + 1) | 0;
+    if (roundedWaveType == 1 || roundedWaveType == 3) {
+        // https://www.desmos.com/calculator/hji1istsat
+        // "Phased"
+        let randomNumber1 = Math.random() * 2 + 0.5;
+        let randomNumber2 = Math.random() * 13 + 3;
+        let randomNumber3 = Math.random() * 48 - 24;
+        for (let i = 0; i < waveLength; i++) {
+            randomRoundWave[i] = clamp(-24, 24+1, Math.round(mod(randomNumber3 + ((Math.sin((i + randomNumber3) / randomNumber2) * 24) + i * randomNumber1), 48) - 24));
+        }
+    } else if (roundedWaveType == 2) {
+        // https://www.desmos.com/calculator/0bxjhiwhwq
+        // "Bouncy"
+        let randomNumber1 = Math.random() * 0.19 + 0.06;
+        let randomNumber2 = Math.random() * 2 + 1;
+        let randomNumber3 = Math.random() * 48 - 24;
+        let randomNumber4 = Math.random() * 2 - 1;
+        for (let i = 0; i < waveLength; i++) {
+            randomRoundWave[i] = clamp(-24, 24+1, Math.round(randomNumber4 * Math.abs(2 * Math.floor((Math.sin((i / randomNumber2) * randomNumber1 + randomNumber3) * Math.cos((i * randomNumber2) * (randomNumber1 / 2)) * 24))) - randomNumber4 * 24));
+        }
+    }
+    for (let i = 0; i < waveLength; i++) {
+        wave[i] = randomRoundWave[i];
+        let minimum = Infinity;
+        let maximum = -Infinity;
+        for (let i = 0; i < waveLength; i++) {
+            minimum = Math.min(minimum, wave[i]);
+            maximum = Math.max(maximum, wave[i]);
+        }
+        const distance = maximum - minimum;
+        if (distance >= 7) {
+            foundNonZero = true;
+        }
+    }
+    // If the waveform is too quiet/all waves are the same, reroll.
+    if (!foundNonZero) randomSineWave(wave);
+}
+function randomPulses(wave: Float32Array): void {
+    // Random pulses refers to pulse widths. This one chooses two values and alternates between them
+    // in a repeated pattern.
+    let randomPulse: Float32Array = new Float32Array(64);
+    let waveLength: number = 64;
+    let foundNonZero = false;
+    // Weird math for building random pulses but this is what we are going with.
+    let randomNumber2 = Math.round(Math.random() * 15 + 15);
+    let randomNumber3 = Math.round(Math.random() * 3 + 1);
+    let randomNumber4 = Math.round(Math.random() * 13 + 2);
+    for (let i = 0; i < waveLength; i++) {
+        let randomNumber1 = sigma(mod(i, randomNumber2), (i) => 1, randomNumber4);
+        randomPulse[i] = clamp(-24, 24+1, Math.round(mod(24 * (sigma(i, (i) => randomNumber1, Math.round(randomNumber2 / randomNumber3))), 24.0000000000001)));
+    }
+    for (let i = 0; i < waveLength; i++) {
+        wave[i] = randomPulse[i];
+        let minimum = Infinity;
+        let maximum = -Infinity;
+        for (let i = 0; i < waveLength; i++) {
+            minimum = Math.min(minimum, wave[i]);
+            maximum = Math.max(maximum, wave[i]);
+        }
+        const distance = maximum - minimum;
+        if (distance >= 7) {
+            foundNonZero = true;
+        }
+    }
+    // If the waveform is too quiet/all waves are the same, reroll.
+    if (!foundNonZero) randomPulses(wave);
+}
+function randomChipWave(wave: Float32Array): void {
+    // Random chip is meant to mimic chipwaves in how they are made. Picture the shapes
+    // of JummBox's chipwaves in the custom chip.
+    let randomChip: Float32Array = new Float32Array(64);
+    let waveLength: number = 64;
+    let foundNonZero = false;
+    const chipType: number = (Math.random() * 2 + 1) | 0;
+    if (chipType == 1) {
+        // https://www.desmos.com/calculator/udpkkpxqaj
+        // "Sawscape"
+        let randomNumber1 = Math.random() * 3;
+        let randomNumber2 = Math.random() * 0.99 - 1;
+        let randomNumber3 = Math.random() * 9 + 2;
+        let randomNumber4 = Math.random() * 2 - 1;
+        for (let i = 0; i < waveLength; i++) {
+            randomChip[i] = clamp(-24, 24+1, (Math.round(Math.abs(randomNumber4 * mod(((randomNumber2 / randomNumber3) * randomNumber3) + (sigma(i / (randomNumber1 * randomNumber1), (i) => randomNumber3, randomNumber1 * -randomNumber2)) * randomNumber4, 24)))) * 2 - 24);
+        }
+    } else if (chipType == 2) {
+        // https://www.desmos.com/calculator/bmogge156f
+        // "Fake Chip"
+        let randomNumber1 = Math.random() * 3;
+        let randomNumber2 = Math.random() * 2 - 1;
+        let randomNumber3 = Math.random() * 100;
+        for (let i = 0; i < waveLength; i++) {
+            randomChip[i] = clamp(-24, 24+1, mod(Math.round(mod((sigma(i / randomNumber1, (i) => (randomNumber1 * randomNumber3), 0)), 25 + randomNumber2) * 24), 48) - 24);
+        }
+    }
+    for (let i = 0; i < waveLength; i++) {
+        wave[i] = randomChip[i];
+        let minimum = Infinity;
+        let maximum = -Infinity;
+        for (let i = 0; i < waveLength; i++) {
+            minimum = Math.min(minimum, wave[i]);
+            maximum = Math.max(maximum, wave[i]);
+        }
+        const distance = maximum - minimum;
+        if (distance >= 7) {
+            foundNonZero = true;
+        }
+    }
+    // If the waveform is too quiet/all waves are the same, reroll.
+    if (!foundNonZero) randomChipWave(wave);
+}
+function biasedFullyRandom(wave: Float32Array): void {
+    // Biased-fully random means that the wave will be completely randomized, but the way it's 
+    // randomized will be biased towards a certain point; in this case, that is the center.
+    let fullyRandomWave: Float32Array = new Float32Array(64);
+    let waveLength: number = 64;
+    let foundNonZero = false;
+    // Math for a fully random custom chip but the higher/lower parts 
+    // of the waveform (in height) will contain less samples.
+    for (let i: number = 0; i < waveLength; i++) {
+        const v = Math.random() * 2 - 1;
+        const bias = 6;
+        const biased = v > 0 ? Math.pow(v, bias) : -Math.pow(-v, bias);
+        fullyRandomWave[i] = clamp(-24, 24 + 1, Math.floor(biased * 24));
+    }
+    for (let i = 0; i < waveLength; i++) {
+        wave[i] = fullyRandomWave[i];
+        let minimum = Infinity;
+        let maximum = -Infinity;
+        for (let i = 0; i < waveLength; i++) {
+            minimum = Math.min(minimum, wave[i]);
+            maximum = Math.max(maximum, wave[i]);
+        }
+        const distance = maximum - minimum;
+        if (distance >= 7) {
+            foundNonZero = true;
+        }
+    }
+    // If the waveform is too quiet/all waves are the same, reroll.
+    if (!foundNonZero) biasedFullyRandom(wave);
+}
+function fullyRandom(wave: Float32Array): void {
+    // A completely randomized waveform.
+    let fullyRandomWave: Float32Array = new Float32Array(64);
+    let waveLength: number = 64;
+    // Randomize whatever is inside of the start-end parameter.
+    for (let i: number = 0; i < waveLength; i++) {
+        fullyRandomWave[i] = clamp(-24, 24 + 1, ((Math.random() * 48) | 0) - 24);
+    }
+    for (let i = 0; i < waveLength; i++) {
+        wave[i] = fullyRandomWave[i];
     }
 }
 
@@ -608,13 +785,16 @@ export class ChangeRandomGeneratedInstrument extends Change {
 
 		if (isNoise) {
 			const type: InstrumentType = selectWeightedRandom([
-				{ item: InstrumentType.noise, weight: 1 },
+				{ item: InstrumentType.noise, weight: 3 },
 				{ item: InstrumentType.spectrum, weight: 3 },
+                { item: InstrumentType.drumset, weight: 1 },
 			]);
 			instrument.preset = instrument.type = type;
 
-            instrument.fadeIn = (Math.random() < 0.8) ? 0 : selectCurvedDistribution(0, Config.fadeInRange - 1, 0, 2);
-            instrument.fadeOut = selectCurvedDistribution(0, Config.fadeOutTicks.length - 1, Config.fadeOutNeutral, 2);
+            if (type != InstrumentType.drumset) { // Drumset doesn't use fade.
+                instrument.fadeIn = (Math.random() < 0.8) ? 0 : selectCurvedDistribution(0, Config.fadeInRange - 1, 0, 2);
+                instrument.fadeOut = selectCurvedDistribution(0, Config.fadeOutTicks.length - 1, Config.fadeOutNeutral, 2);
+            }
 
             if (Math.random() < 0.1) {
                 instrument.effects |= 1 << EffectType.transition;
@@ -720,6 +900,54 @@ export class ChangeRandomGeneratedInstrument extends Change {
                 instrument.reverb = selectCurvedDistribution(1, Config.reverbRange - 1, 1, 1);
             }
 
+            // Configure this to whatever you'd like.
+            if (type == InstrumentType.noise || type == InstrumentType.spectrum) {
+                instrument.unison = Config.unisons.dictionary[selectWeightedRandom([
+                    { item: "none", weight: 100 },
+                    { item: "shimmer", weight: 10 },
+                    { item: "hum", weight: 8 },
+                    { item: "honky tonk", weight: 6 },
+                    { item: "dissonant", weight: 2 },
+                    { item: "fifth", weight: 4 },
+                    { item: "octave", weight: 5 },
+                    { item: "bowed", weight: 4 },
+                    { item: "piano", weight: 10 },
+                    { item: "warbled", weight: 5 },
+                    { item: "hecking gosh", weight: 3 },
+                    { item: "spinner", weight: 6 },
+                    { item: "detune", weight: 4 },
+                    { item: "rising", weight: 2 },
+                    { item: "vibrate", weight: 3 },
+                    { item: "bass", weight: 2 },
+                    { item: "recurve", weight: 3 },
+                    { item: "inject", weight: 2 },
+                    { item: "FART", weight: 1 },
+                    // { item: "custom", weight: 10 },
+                ])].index;
+
+                if (instrument.unison != Config.unisons.dictionary["none"].index && Math.random() > 0.4)
+                instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["unison"].index, 0, Config.envelopes.dictionary[selectWeightedRandom([
+                    { item: "twang -1", weight: 3 },
+                    { item: "twang 1", weight: 3 },
+                    { item: "twang 2", weight: 2 },
+                    { item: "swell 1", weight: 1 },
+                    { item: "decay -1", weight: 3 },
+                    { item: "decay 1", weight: 3 },
+                    { item: "decay 2", weight: 2 },
+                    { item: "wibble-1", weight: 2 },
+                    { item: "wibble 1", weight: 2 },
+                    { item: "wibble 2", weight: 1 },
+                    { item: "wibble 3", weight: 1 },
+                    { item: "linear-2", weight: 2 },
+                    { item: "linear-1", weight: 2 },
+                    { item: "linear 1", weight: 2 },
+                    { item: "linear 2", weight: 1 },
+                    { item: "linear 3", weight: 1 },
+                    { item: "rise 1", weight: 1 },
+                    { item: "rise 2", weight: 1 },
+                ])].index);
+            }
+
 			function normalize(harmonics: number[]): void {
 				let max: number = 0;
 				for (const value of harmonics) {
@@ -769,55 +997,85 @@ export class ChangeRandomGeneratedInstrument extends Change {
 					}
 					instrument.spectrumWave.markCustomWaveDirty();
 				} break;
+                case InstrumentType.drumset: {
+                    for (let i: number = 0; i < Config.drumCount; i++) {
+                        // Might wanna do this Random*Config.____.length thing for all envelope/unison randomization?
+                        instrument.drumsetEnvelopes[i] = Math.floor(Math.random() * Config.envelopes.length);
+                        const spectrum: number[] = [];
+                        let randomFactor: number = Math.floor(Math.random() * 3)
+                        for (let j = 0; j < Config.spectrumControlPoints; j++) {
+                            if (randomFactor == 0 || randomFactor == 3) spectrum[j] = Math.pow(Math.random(), 3) * 0.25;
+                            else if (randomFactor == 1) spectrum[j] = Math.pow(Math.random(), ((i / 8) + 1));
+                            else if (randomFactor == 2) spectrum[j] = (Math.pow(Math.random(), 2)) * ((i / 3) + 1);
+                            else spectrum[j] = Math.pow(Math.random(), 3) * 0.25;
+                        }
+                        normalize(spectrum);
+                        for (let j: number = 0; j < Config.spectrumControlPoints; j++) {
+                            instrument.drumsetSpectrumWaves[i].spectrum[j] = Math.round(spectrum[j]);
+                        }
+                        instrument.drumsetSpectrumWaves[i].markCustomWaveDirty();
+                    }
+                } break;
 				default: throw new Error("Unhandled noise instrument type in random generator.");
 			}
 		} else {
 			const type: InstrumentType = selectWeightedRandom([
-                { item: InstrumentType.chip, weight: 4 },
-                { item: InstrumentType.pwm, weight: 4 },
-                { item: InstrumentType.supersaw, weight: 5 },
-                // { item: InstrumentType.customChipWave, weight: 3 },
-                { item: InstrumentType.harmonics, weight: 5 },
-                { item: InstrumentType.pickedString, weight: 5 },
-                { item: InstrumentType.spectrum, weight: 1 },
-                { item: InstrumentType.fm, weight: 5 },
-				{ item: InstrumentType.fm6op, weight: 3 },
+                { item: InstrumentType.chip, weight: 2 },
+                // { item: InstrumentType.noise, weight: 1 },
+                { item: InstrumentType.pwm, weight: 2 },
+                { item: InstrumentType.supersaw, weight: 2 },
+                { item: InstrumentType.customChipWave, weight: 2 },
+                { item: InstrumentType.harmonics, weight: 2 },
+                { item: InstrumentType.pickedString, weight: 2 },
+                { item: InstrumentType.spectrum, weight: 2 },
+                { item: InstrumentType.fm, weight: 2 },
+				{ item: InstrumentType.fm6op, weight: 2 },
 			]);
 			instrument.preset = instrument.type = type;
 			
             instrument.fadeIn = (Math.random() < 0.5) ? 0 : selectCurvedDistribution(0, Config.fadeInRange - 1, 0, 2);
             instrument.fadeOut = selectCurvedDistribution(0, Config.fadeOutTicks.length - 1, Config.fadeOutNeutral, 2);
-            if (type == InstrumentType.chip || type == InstrumentType.harmonics || type == InstrumentType.pickedString) {
+            if (type == InstrumentType.chip || type == InstrumentType.harmonics || type == InstrumentType.pickedString || type == InstrumentType.customChipWave || type == InstrumentType.pwm || type == InstrumentType.spectrum) { // TODO: add noise
                 instrument.unison = Config.unisons.dictionary[selectWeightedRandom([
-                    { item: "none", weight: 10 },
-                    { item: "shimmer", weight: 5 },
-                    { item: "hum", weight: 4 },
-                    { item: "honky tonk", weight: 3 },
-                    { item: "dissonant", weight: 1 },
-                    { item: "fifth", weight: 1 },
-                    { item: "octave", weight: 2 },
-                    { item: "bowed", weight: 2 },
-                    { item: "piano", weight: 5 },
-                    { item: "warbled", weight: 3 },
-                    { item: "hecking gosh", weight: 2 },
-                    // { item: "custom", weight: 55 },
+                    { item: "none", weight: 25 },
+                    { item: "shimmer", weight: 10 },
+                    { item: "hum", weight: 8 },
+                    { item: "honky tonk", weight: 6 },
+                    { item: "dissonant", weight: 2 },
+                    { item: "fifth", weight: 4 },
+                    { item: "octave", weight: 5 },
+                    { item: "bowed", weight: 4 },
+                    { item: "piano", weight: 10 },
+                    { item: "warbled", weight: 5 },
+                    { item: "hecking gosh", weight: 3 },
+                    { item: "spinner", weight: 6 },
+                    { item: "detune", weight: 4 },
+                    { item: "rising", weight: 2 },
+                    { item: "vibrate", weight: 3 },
+                    { item: "bass", weight: 2 },
+                    { item: "recurve", weight: 3 },
+                    { item: "inject", weight: 2 },
+                    { item: "FART", weight: 1 },
+                    // { item: "custom", weight: 10 },
                 ])].index;
-                // randomly generated unisons don't work correctly - instead of trying to fix them, just ignore it
+                /* randomly generated unisons don't work correctly - instead of trying to fix them, just ignore it
+                   it's likely that for randomly generated custom unisons, they'd need to be heavily biased/follow
+                   algorithms to sound somewhat useful on most cases, otherwise its useless to include.
 
-                // if (instrument.unison == Config.unisons.length) {
-                //     instrument.unisonVoices = 2;
-                //     instrument.unisonSpread = Math.floor(Math.random() * 12000 - 6000) / 1000;
-                //     instrument.unisonOffset = Math.floor(Math.random() * 12000 - 6000) / 1000;
-                //     instrument.unisonExpression = 1;
-                //     instrument.unisonSign = Math.floor(Math.random() * 2000 - 1000) / 1000;
-                //     // console.log(instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
-                // } else {
+                if (instrument.unison == Config.unisons.length) {
+                    instrument.unisonVoices = 2;
+                    instrument.unisonSpread = Math.floor(Math.random() * 12000 - 6000) / 1000;
+                    instrument.unisonOffset = Math.floor(Math.random() * 12000 - 6000) / 1000;
+                    instrument.unisonExpression = 1;
+                    instrument.unisonSign = Math.floor(Math.random() * 2000 - 1000) / 1000;
+                    console.log(instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
+                } else {  */
                     instrument.unisonVoices = Config.unisons[instrument.unison].voices;
                     instrument.unisonSpread = Config.unisons[instrument.unison].spread;
                     instrument.unisonOffset = Config.unisons[instrument.unison].offset;
                     instrument.unisonExpression = Config.unisons[instrument.unison].expression;
                     instrument.unisonSign = Config.unisons[instrument.unison].sign;
-                // } 
+            //  } 
             }
 
             if (Math.random() < 0.1) {
@@ -952,7 +1210,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
 			switch (type) {
 				case InstrumentType.chip: {
 					instrument.chipWave = (Math.random() * Config.chipWaves.length) | 0;
-												 // advloop addition
+							// advloop addition
                             instrument.isUsingAdvancedLoopControls = false;
                             instrument.chipWaveLoopStart = 0;
                             instrument.chipWaveLoopEnd = Config.rawRawChipWaves[instrument.chipWave].samples.length - 1;
@@ -1094,7 +1352,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                             { item: "sawtooth", weight: 3 },
                             { item: "ramp", weight: 3 },
                             { item: "trapezoid", weight: 4 },
-				{ item: "rounded", weight: 1 },
+				            { item: "rounded", weight: 2 },
                         ])].index;
 						if (instrument.operators[i].waveform == 2/*"pulse width"*/) {
 							instrument.operators[i].pulseWidth = selectWeightedRandom([
@@ -1164,7 +1422,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                             { item: "sawtooth", weight: 3 },
                             { item: "ramp", weight: 3 },
                             { item: "trapezoid", weight: 4 },
-				{ item: "rounded", weight: 1 },
+				            { item: "rounded", weight: 2 },
                         ])].index;
 						if (instrument.operators[i].waveform == 2) {
 							instrument.operators[i].pulseWidth = selectWeightedRandom([
@@ -1185,7 +1443,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
 					instrument.feedbackAmplitude = (Math.pow(Math.random(), 3) * Config.operatorAmplitudeMax) | 0;
                     if (instrument.envelopeCount < Config.maxEnvelopeCount && Math.random() < 0.4) {
                         instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["feedbackAmplitude"].index, 0, Config.envelopes.dictionary[selectWeightedRandom([
-                        { item: "steady", weight: 4 },
+                        { item: "none", weight: 4 },
                         { item: "punch", weight: 2 },
                         { item: "flare -1", weight: 1 },
                         { item: "flare 1", weight: 2 },
@@ -1227,10 +1485,55 @@ export class ChangeRandomGeneratedInstrument extends Change {
 					])].index);
 					}
 				} break;
+                case InstrumentType.customChipWave: {
+                    // The custom chip randomizing is a little different. It uses a random algorithm
+                    // (seen as the functions below) to give the waveform unique shapes other than messy
+                    // custom chip sounds. 
+                    let randomGeneratedArray: Float32Array = new Float32Array(64);
+                    let randomGeneratedArrayIntegral: Float32Array = new Float32Array(65);
+                    const algorithmFunction: (wave: Float32Array) => void = selectWeightedRandom([
+                        { item: randomSineWave, weight: 4},
+                        { item: randomPulses, weight: 4},
+                        { item: randomChipWave, weight: 3},
+                        { item: biasedFullyRandom, weight: 2},
+                        { item: fullyRandom, weight: 1},
+                    ]);
+                    algorithmFunction(randomGeneratedArray);
+
+                    let sum: number = 0.0;
+                    for (let i: number = 0; i < randomGeneratedArray.length; i++) sum += randomGeneratedArray[i];
+                    const average: number = sum / randomGeneratedArray.length;
+                    let cumulative: number = 0;
+                    let wavePrev: number = 0;
+                    for (let i: number = 0; i < randomGeneratedArray.length; i++) {
+                        cumulative += wavePrev;
+                        wavePrev = randomGeneratedArray[i] - average;
+                        randomGeneratedArrayIntegral[i] = cumulative;
+                    }
+                    randomGeneratedArrayIntegral[64] = 0.0;
+
+                    instrument.customChipWave = randomGeneratedArray;
+                    instrument.customChipWaveIntegral = randomGeneratedArrayIntegral;
+                } break;
+                /* Commented out for now as well as the unison part- you guys decide what to do with this.
+                case InstrumentType.customChipWave: {
+                    instrument.chipNoise = selectWeightedRandom([
+						{ item: 0, weight: 1 }, // retro
+						{ item: 1, weight: 1 }, // white
+						{ item: 2, weight: 6 }, // clang
+						{ item: 3, weight: 6 }, // buzz
+						{ item: 4, weight: 1 }, // hollow
+						{ item: 7, weight: 4 }, // cutter
+						{ item: 8, weight: 4 }, // metallic
+						{ item: 9, weight: 1 }, // static
+						{ item: 10, weight: 1 }, // 1-bit white
+						{ item: 11, weight: 5 }, // 1-bit metallic
+                    ]);
+                } break;
+                */
                 default: throw new Error("Unhandled pitched instrument type in random generator.");
             }
         }
-
         doc.notifier.changed();
         this._didSomething();
     }
@@ -1660,6 +1963,7 @@ export class ChangeUnisonVoices extends Change {
         if (oldValue != newValue || prevUnison != Config.unisons.length) {            
             instrument.unisonVoices = newValue;
             instrument.unison = Config.unisons.length; // Custom
+            instrument.preset = instrument.type;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -1674,6 +1978,7 @@ export class ChangeUnisonSpread extends Change {
         if (oldValue != newValue || prevUnison != Config.unisons.length) {
             instrument.unisonSpread = newValue;
             instrument.unison = Config.unisons.length; // Custom
+            instrument.preset = instrument.type;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -1688,6 +1993,7 @@ export class ChangeUnisonOffset extends Change {
         if (oldValue != newValue || prevUnison != Config.unisons.length) {
             instrument.unisonOffset = newValue;
             instrument.unison = Config.unisons.length; // Custom
+            instrument.preset = instrument.type;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -1702,6 +2008,7 @@ export class ChangeUnisonExpression extends Change {
         if (oldValue != newValue || prevUnison != Config.unisons.length) {
             instrument.unisonExpression = newValue;
             instrument.unison = Config.unisons.length; // Custom
+            instrument.preset = instrument.type;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -1716,6 +2023,7 @@ export class ChangeUnisonSign extends Change {
         if (oldValue != newValue || prevUnison != Config.unisons.length) {
             instrument.unisonSign = newValue;
             instrument.unison = Config.unisons.length; // Custom
+            instrument.preset = instrument.type;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -1765,6 +2073,7 @@ export class ChangeVibratoDepth extends Change {
         if (oldValue != newValue || prevVibrato != Config.vibratos.length) {
             instrument.vibratoDepth = newValue / 25;
             instrument.vibrato = Config.vibratos.length; // Custom
+            instrument.preset = instrument.type;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -1780,6 +2089,7 @@ export class ChangeEnvelopeSpeed extends Change {
         doc.notifier.changed();
         if (oldValue != newValue) {
             instrument.envelopeSpeed = newValue;
+            instrument.preset = instrument.type;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -1797,6 +2107,7 @@ export class ChangeVibratoSpeed extends Change {
         if (oldValue != newValue || prevVibrato != Config.vibratos.length) {
             instrument.vibratoSpeed = newValue;
             instrument.vibrato = Config.vibratos.length; // Custom
+            instrument.preset = instrument.type;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -1814,6 +2125,7 @@ export class ChangeVibratoDelay extends Change {
         if (oldValue != newValue || prevVibrato != Config.vibratos.length) {
             instrument.vibratoDelay = newValue;
             instrument.vibrato = Config.vibratos.length; // Custom
+            instrument.preset = instrument.type;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -1831,6 +2143,7 @@ export class ChangeVibratoType extends Change {
         if (oldValue != newValue || prevVibrato != Config.vibratos.length) {
             instrument.vibratoType = newValue;
             instrument.vibrato = Config.vibratos.length; // Custom
+            instrument.preset = instrument.type;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -1845,7 +2158,10 @@ export class ChangeArpeggioSpeed extends Change {
         doc.synth.unsetMod(Config.modulators.dictionary["arp speed"].index, doc.channel, doc.getCurrentInstrument());
 
         doc.notifier.changed();
-        if (oldValue != newValue) this._didSomething();
+        if (oldValue != newValue) {
+            instrument.preset = instrument.type;
+            this._didSomething();
+        }
     }
 }
 
@@ -1858,6 +2174,7 @@ export class ChangeFastTwoNoteArp extends Change {
         doc.notifier.changed();
         if (oldValue != newValue) {
             instrument.fastTwoNoteArp = newValue;
+            instrument.preset = instrument.type;
             this._didSomething();
         }
     }
@@ -1872,6 +2189,7 @@ export class ChangeClicklessTransition extends Change {
         doc.notifier.changed();
         if (oldValue != newValue) {
             instrument.clicklessTransition = newValue;
+            instrument.preset = instrument.type;
             this._didSomething();
         }
     }
@@ -1886,6 +2204,7 @@ export class ChangeAliasing extends Change {
         doc.notifier.changed();
         if (oldValue != newValue) {
             instrument.aliases = newValue;
+            instrument.preset = instrument.type;
             this._didSomething();
         }
     }
@@ -1900,6 +2219,7 @@ export class ChangeDiscreteEnvelope extends Change {
         doc.notifier.changed();
         if (oldValue != newValue) {
             instrument.discreteEnvelope = newValue;
+            instrument.preset = instrument.type;
             this._didSomething();
         }
     }
@@ -2091,6 +2411,7 @@ export class ChangeEQFilterType extends Change {
             instrument.tmpEqFilterEnd = null;
         }
         instrument.clearInvalidEnvelopeTargets();
+        instrument.preset = instrument.type;
         doc.notifier.changed();
         this._didSomething();
     }
@@ -2112,6 +2433,7 @@ export class ChangeNoteFilterType extends Change {
             instrument.tmpNoteFilterEnd = null;
         }
         instrument.clearInvalidEnvelopeTargets();
+        instrument.preset = instrument.type;
         doc.notifier.changed();
         this._didSomething();
     }
@@ -2500,9 +2822,9 @@ export class ChangeOperatorPulseWidth extends Change {
         super();
         const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
         instrument.operators[operatorIndex].pulseWidth = newValue;
-        instrument.preset = instrument.type;
         doc.notifier.changed();
         if (oldValue != newValue) {
+            instrument.preset = instrument.type;
             this._didSomething();
         }
     }
@@ -3489,12 +3811,12 @@ export function setDefaultInstruments(song: Song): void {
 }
 
 export class ChangeSong extends ChangeGroup {
-    constructor(doc: SongDocument, newHash: string) {
+    constructor(doc: SongDocument, newHash: string, jsonFormat: string = "auto") {
         super();
         let pitchChannelCount = doc.song.pitchChannelCount;
         let noiseChannelCount = doc.song.noiseChannelCount;
         let modChannelCount = doc.song.modChannelCount;
-        doc.song.fromBase64String(newHash);
+        doc.song.fromBase64String(newHash, jsonFormat);
         if (pitchChannelCount != doc.song.pitchChannelCount || noiseChannelCount != doc.song.noiseChannelCount || modChannelCount != doc.song.modChannelCount) {
             ColorConfig.resetColors();
         }

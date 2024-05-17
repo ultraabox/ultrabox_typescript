@@ -20,6 +20,7 @@ export class Preferences {
 	public displayVolumeBar: boolean;
 	public instrumentCopyPaste: boolean;
 	public instrumentImportExport: boolean;
+	public instrumentButtonsAtTop: boolean;
 	public enableChannelMuting: boolean;
 	public colorTheme: string;
 	public layout: string;
@@ -40,6 +41,7 @@ export class Preferences {
 	public showSampleLoadingStatus: boolean;
 	public showDescription: boolean;
 	public closePromptByClickoff: boolean;
+	public frostedGlassBackground: boolean;
 	
 	constructor() {
 		this.reload();
@@ -53,11 +55,12 @@ export class Preferences {
 		this.notesOutsideScale = window.localStorage.getItem("notesOutsideScale") == "true";
 		this.showLetters = window.localStorage.getItem("showLetters") == "true";
 		this.showChannels = window.localStorage.getItem("showChannels") == "true";
-		this.showScrollBar = window.localStorage.getItem("showScrollBar") == "true";
+		this.showScrollBar = window.localStorage.getItem("showScrollBar") != "false";
 		this.alwaysFineNoteVol = window.localStorage.getItem("alwaysFineNoteVol") == "true";
 		this.displayVolumeBar = window.localStorage.getItem("displayVolumeBar") == "true";
-		this.instrumentCopyPaste = window.localStorage.getItem("instrumentCopyPaste") == "true";
+		this.instrumentCopyPaste = window.localStorage.getItem("instrumentCopyPaste") != "false";
 		this.instrumentImportExport = window.localStorage.getItem("instrumentImportExport") == "true";
+		this.instrumentButtonsAtTop = window.localStorage.getItem("instrumentButtonsAtTop") == "true"
 		this.enableChannelMuting = window.localStorage.getItem("enableChannelMuting") == "true";
 		this.displayBrowserUrl = window.localStorage.getItem("displayBrowserUrl") != "false";
 		this.pressControlForShortcuts = window.localStorage.getItem("pressControlForShortcuts") == "true";
@@ -71,7 +74,8 @@ export class Preferences {
 		this.showOscilloscope = window.localStorage.getItem("showOscilloscope") != "false";
 		this.showSampleLoadingStatus = window.localStorage.getItem("showSampleLoadingStatus") != "false";
 		this.showDescription = window.localStorage.getItem("showDescription") != "false";
-		this.closePromptByClickoff = window.localStorage.getItem("closePromptByClickoff") != "false";
+		this.closePromptByClickoff = window.localStorage.getItem("closePromptByClickoff") == "true";
+		this.frostedGlassBackground = window.localStorage.getItem("frostedGlassBackground") == "true";
 		this.keyboardLayout = window.localStorage.getItem("keyboardLayout") || "wickiHayden";
 		this.bassOffset = (+(<any>window.localStorage.getItem("bassOffset"))) || 0;
 		this.layout = window.localStorage.getItem("layout") || "small";
@@ -91,6 +95,7 @@ export class Preferences {
 			if (window.localStorage.getItem("fullScreen") == "true") this.layout = "long";
 			window.localStorage.removeItem("fullScreen");
 		}
+		
 	}
 	
 	public save(): void {
@@ -108,6 +113,7 @@ export class Preferences {
 		window.localStorage.setItem("enableChannelMuting", this.enableChannelMuting ? "true" : "false");
 		window.localStorage.setItem("instrumentCopyPaste", this.instrumentCopyPaste ? "true" : "false");
 		window.localStorage.setItem("instrumentImportExport", this.instrumentImportExport ? "true" : "false");
+		window.localStorage.setItem("instrumentButtonsAtTop", this.instrumentButtonsAtTop ? "true" : "false");
 		window.localStorage.setItem("displayBrowserUrl", this.displayBrowserUrl ? "true" : "false");
 		window.localStorage.setItem("pressControlForShortcuts", this.pressControlForShortcuts ? "true" : "false");
 		window.localStorage.setItem("enableMidi", this.enableMidi ? "true" : "false");
@@ -121,6 +127,7 @@ export class Preferences {
 		window.localStorage.setItem("showSampleLoadingStatus", this.showSampleLoadingStatus ? "true" : "false");
 		window.localStorage.setItem("showDescription", this.showDescription ? "true" : "false");
 		window.localStorage.setItem("closePromptByClickoff", this.closePromptByClickoff ? "true" : "false");
+		window.localStorage.setItem("frostedGlassBackground", this.frostedGlassBackground ? "true" : "false");
 		window.localStorage.setItem("keyboardLayout", this.keyboardLayout);
 		window.localStorage.setItem("bassOffset", String(this.bassOffset));
 		window.localStorage.setItem("layout", this.layout);
@@ -129,5 +136,6 @@ export class Preferences {
                 window.localStorage.setItem("customTheme2", this.customTheme2!);
 		window.localStorage.setItem("volume", String(this.volume));
 		window.localStorage.setItem("visibleOctaves", String(this.visibleOctaves));
+		
 	}
 }

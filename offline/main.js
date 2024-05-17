@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron/main'); //, Menu
+const { app, BrowserWindow, ipcMain } = require('electron/main'); //, Menu
 // const { mainMenu } = require("./menu");
 const path = require('path');
 
@@ -7,12 +7,18 @@ const createWindow = () => {
 		width: 800,
 		height: 600,
 		// fullscreen: true,
-		icon: path.join(__dirname, 'icon.png')
+		icon: path.join(__dirname, 'icon.png'),
 		// autoHideMenuBar: true
+		webPreferences: {
+			preload: path.join(__dirname, 'preload.js')
+		}
 	})
 
 	win.loadFile('index.html');
 	win.removeMenu();
+	win.maximize();
+	// The line below opens the dev tools
+	if (!app.isPackaged) win.webContents.openDevTools();
 }
 
 // Menu.setApplicationMenu(mainMenu);
@@ -32,3 +38,7 @@ app.on('window-all-closed', () => {
 		app.quit()
 	}
 })
+
+// ipcMain.handle("getDirname", () => path.dirname(process.execPath));
+ipcMain.handle("getDirname", () => app.isPackaged ? path.dirname(process.execPath) : app.getAppPath());
+ipcMain.handle("pathJoin", (event, ...args) => path.join(...args));
