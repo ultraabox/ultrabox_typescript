@@ -6786,6 +6786,7 @@ export class ColorConfig {
 	// public static readonly oscilloscopeLineR: string = "var(--oscilloscope-line-R)";
 	// modTitle can stay uncommented until it's used somwhere that's not index.html
 	// public static readonly modTitle: string = "var(--mod-title)";
+	public static readonly songPlayerMargin: string = "var(--song-player-margin)";
     public static readonly useColorFormula: string = "var(--use-color-formula)";
 	// public static readonly pitchLimit: string = "var(--pitch-channel-limit)";
 	// public static readonly noiseLimit: string = "var(--noise-channel-limit)";
