@@ -694,7 +694,46 @@ function onKeyPressed(event: KeyboardEvent): void {
 			renderPlayhead();
 			event.preventDefault();
 			break;
+		case 69: // e
+		case 80: // p
+			hashUpdatedExternally();
+			location.href = "../index.html#" + synth.song!.toBase64String();
+			event.preventDefault();
+			break;
+		case 90: // z
+		case 187: // +
+		case 61: // Firefox +
+		case 171: // Some users have this as +? Hmm.
+		case 189: // -
+		case 173: // Firefox -
+			onToggleZoom();
+			break;
+		case 76: // l
+			onToggleLoop();
+			break;
+		case 83: // s
+			if (event.ctrlKey) {
+				shortenUrl();
+				event.preventDefault();
+			} else {
+				onShareClicked();
+			}
+			break;
+		case 67: // c
+			onCopyClicked();
+			break;
 	}
+}
+
+function shortenUrl() {
+	hashUpdatedExternally();
+	let shortenerStrategy: string = "https://tinyurl.com/api-create.php?url=";
+	const localShortenerStrategy: string | null = window.localStorage.getItem("shortenerStrategySelect");
+
+	// if (localShortenerStrategy == "beepboxnet") shortenerStrategy = "https://www.beepbox.net/api-create.php?url=";
+	if (localShortenerStrategy == "isgd") shortenerStrategy = "https://is.gd/create.php?format=simple&url=";
+
+	window.open(shortenerStrategy + encodeURIComponent(new URL("#" + synth.song!.toBase64String(), location.href).href));
 }
 
 function onCopyClicked(): void {
