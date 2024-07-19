@@ -10,11 +10,11 @@ export class PresetBrowserPrompt implements Prompt {
 		private readonly _cancelButton: HTMLButtonElement = button({class: "cancelButton"});
 
 		private readonly _searchBar: HTMLInputElement = input({type: "search", autocorrect:"off", autocomplete:"off", autocapitalize:"none", spellcheck:"false", role:"textbox", placeholder:"Search..."});
+		private readonly _addCategoryButton: HTMLButtonElement = button({}, "+ Category");
 		private readonly _presetsContainer: HTMLDivElement = div({style: "padding: 0.6em; margin: 0.4em; border: 1px solid var(--ui-widget-background); border-radius: 4px;"});
 		private readonly _importButton: HTMLButtonElement = button({}, "Import");
 		private readonly _renameButton: HTMLButtonElement = button({}, "Rename");
 		private readonly _deleteButton: HTMLButtonElement = button({}, "Delete");
-		private readonly _addCategoryButton: HTMLButtonElement = button({}, "+ Category");
 		private readonly _useButton: HTMLButtonElement = button({}, "Use");
 		private readonly _operatorButtonsContainer: HTMLDivElement = div({}, this._importButton, this._renameButton, this._deleteButton, this._addCategoryButton, this._useButton);
 
@@ -29,6 +29,11 @@ export class PresetBrowserPrompt implements Prompt {
 
 	constructor(private _doc: SongDocument) {
 		this._cancelButton.addEventListener("click", this._close);
+		this._render();
+	}
+
+		private _render = (): void => {
+		
 	}
 
 		private _close = (): void => {
