@@ -41,6 +41,7 @@ export class Preferences {
 	public showSampleLoadingStatus: boolean;
 	public showDescription: boolean;
 	public closePromptByClickoff: boolean;
+	public promptSongDetails: boolean;
 	
 	constructor() {
 		this.reload();
@@ -74,6 +75,7 @@ export class Preferences {
 		this.showSampleLoadingStatus = window.localStorage.getItem("showSampleLoadingStatus") != "false";
 		this.showDescription = window.localStorage.getItem("showDescription") != "false";
 		this.closePromptByClickoff = window.localStorage.getItem("closePromptByClickoff") == "true";
+		this.promptSongDetails = window.localStorage.getItem("promptSongDetails") == "true";
 		this.keyboardLayout = window.localStorage.getItem("keyboardLayout") || "wickiHayden";
 		this.bassOffset = (+(<any>window.localStorage.getItem("bassOffset"))) || 0;
 		this.layout = window.localStorage.getItem("layout") || "small";
@@ -124,6 +126,7 @@ export class Preferences {
 		window.localStorage.setItem("showSampleLoadingStatus", this.showSampleLoadingStatus ? "true" : "false");
 		window.localStorage.setItem("showDescription", this.showDescription ? "true" : "false");
 		window.localStorage.setItem("closePromptByClickoff", this.closePromptByClickoff ? "true" : "false");
+		window.localStorage.setItem("promptSongDetails", this.promptSongDetails ? "true" : "false");
 		window.localStorage.setItem("keyboardLayout", this.keyboardLayout);
 		window.localStorage.setItem("bassOffset", String(this.bassOffset));
 		window.localStorage.setItem("layout", this.layout);

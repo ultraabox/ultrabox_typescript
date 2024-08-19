@@ -3,7 +3,7 @@ import { SongDocument } from "./SongDocument";
 import { Prompt } from "./Prompt";
 // import { Config } from "../synth/SynthConfig";
 import { ChangeGroup } from "./Change";
-import { ChangeSongAuthor, ChangeSongTitle, ChangeSongDescription } from "./changes";
+import { ChangeSongAuthor, ChangeSongTitle, ChangeSongDescription, ChangeShowSongDetails } from "./changes";
 
 const {button, div, h2, input, br, textarea} = HTML;
 
@@ -12,9 +12,9 @@ export class SongDetailsPrompt implements Prompt {
 	private readonly _okayButton: HTMLButtonElement = button({class: "okayButton", style: "width:45%;"}, "Okay");
 	private readonly _songTitle: HTMLInputElement = input({ type: "text", style: "width: 100%;", value: this._doc.song.title, maxlength: 30, "autofocus": "autofocus" });
 	private readonly _songAuthor: HTMLInputElement = input({ type: "text", style: "width: 100%;", value: this._doc.song.author, maxlength: 30 });
-	// this is an input because textarea doesn't support value
 	private readonly _songDescription: HTMLTextAreaElement = textarea({ style: "width: 100%; resize: none;background: black; color: white; height: 64px; border: 0.5px solid rgb(51, 51, 51); font-family: roboto; font-size: 14px;", maxlength: 120 }, this._doc.song.description);
 	// private readonly _songWebLink: HTMLInputElement = input({ type: "text", style: "width: 13em;", value: "https://example.com", maxlength: 30 });
+	private readonly _showSongDetailsBox: HTMLInputElement = input({style: "width: 3em; margin-left: 1em;", type: "checkbox"});
 	private readonly _computedSamplesLabel: HTMLDivElement = div({ style: "width: 10em;" }, new Text("0:00"));
 	
 	public readonly container: HTMLDivElement = div({class: "prompt noSelection", style: "width: 250px;"},
@@ -32,6 +32,10 @@ export class SongDetailsPrompt implements Prompt {
             "Description: ",
             this._songDescription,
             ),
+		div({style: "vertical-align: middle; align-items: center; justify-content: space-between;"},
+			"Show info on load: ",
+			this._showSongDetailsBox,
+		),
 		div({ style: "text-align: left;" },
 			div({style:"display:flex; gap: 3px; margin-bottom: 1em;"},"Song Length: ", this._computedSamplesLabel,),
 		// br(),
@@ -53,6 +57,8 @@ export class SongDetailsPrompt implements Prompt {
 	);
 		
 	constructor(private _doc: SongDocument) {	
+		this._showSongDetailsBox.checked = this._doc.song.showSongDetails;
+
 		(this._computedSamplesLabel.firstChild as Text).textContent = this._doc.samplesToTime(this._doc.synth.getTotalSamples(true, true, 0));
 
 		this._okayButton.addEventListener("click", this._saveChanges);
@@ -76,9 +82,10 @@ export class SongDetailsPrompt implements Prompt {
 		
 	private _saveChanges = (): void => {
 		const group: ChangeGroup = new ChangeGroup();
-		group.append(new ChangeSongTitle(this._doc, this._doc.song.author, this._songTitle.value));
+		group.append(new ChangeSongTitle(this._doc, this._doc.song.title, this._songTitle.value));
 		group.append(new ChangeSongAuthor(this._doc, this._doc.song.author, this._songAuthor.value));
-		group.append(new ChangeSongDescription(this._doc, this._doc.song.author, this._songDescription.value)); 
+		group.append(new ChangeSongDescription(this._doc, this._doc.song.description, this._songDescription.value));
+		group.append(new ChangeShowSongDetails(this._doc, this._doc.song.showSongDetails, this._showSongDetailsBox.checked));
 		this._doc.prompt = null;
 		this._doc.record(group, true);
 	}

@@ -2842,6 +2842,7 @@ export class Song {
     public title: string;
     public author: string;
     public description: string;
+    public showSongDetails: boolean;
     public scale: number;
     public scaleCustom: boolean[] = [];
     public key: number;
@@ -3008,6 +3009,7 @@ export class Song {
         this.title = "Untitled";
         this.author = "";
         this.description = "";
+        this.showSongDetails = false;
         document.title = this.title + " - " + EditorConfig.versionDisplayName;
 
         if (andResetChannels) {
@@ -3081,6 +3083,8 @@ export class Song {
         for (let i: number = 0; i < encodedDescriptionTitle.length; i++) {
             buffer.push(encodedDescriptionTitle.charCodeAt(i));
         }
+
+        buffer.push(base64IntToCharCode[this.showSongDetails?1:0]);
 
 
         buffer.push(SongTagCode.channelCount, base64IntToCharCode[this.pitchChannelCount], base64IntToCharCode[this.noiseChannelCount], base64IntToCharCode[this.modChannelCount]);
@@ -3907,6 +3911,8 @@ export class Song {
                     this.description = decodeURIComponent(compressed.substring(charIndex, charIndex + songDescriptionLength));
 
                     charIndex += songDescriptionLength;
+
+                    this.showSongDetails = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] == 1;
                 }
             } break;
             case SongTagCode.channelCount: {
@@ -6165,6 +6171,7 @@ export class Song {
             "version": Song._latestUltraBoxVersion,
             "author": this.author,
             "description": this.description,
+            "showSongDetails": this.showSongDetails,
             "scale": Config.scales[this.scale].name,
             "customScale": this.scaleCustom,
             "key": Config.keys[this.key].name,
@@ -6219,6 +6226,10 @@ export class Song {
 
         if (jsonObject["description"] != undefined) {
             this.description = jsonObject["description"];
+        }
+
+        if (jsonObject["showSongDetails"] != undefined) {
+            this.showSongDetails = jsonObject["showSongDetails"];
         }
 
         if (jsonObject["customSamples"] != undefined) {

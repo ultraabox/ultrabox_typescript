@@ -33,6 +33,8 @@ export class EditorConfig {
     public static readonly ctrlName: string = EditorConfig.isOnMac ? "command" : "control";
 
     public static customSamples: string[] | null;
+
+    public static showSongDetailsAlert: boolean = true;
 	
     public static readonly presetCategories: DictionaryArray<PresetCategory> = toNameMap([
         {

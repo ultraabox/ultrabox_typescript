@@ -818,6 +818,7 @@ export class SongEditor {
         option({ value: "showFifth" }, 'Highlight "Fifth" Note'),
         option({ value: "notesFlashWhenPlayed" }, "Notes Flash When Played"),
         option({ value: "instrumentButtonsAtTop" }, "Instrument Buttons at Top"),
+        option({ value: "promptSongDetails" }, "Prompt Song Details on Load"),
         option({ value: "showChannels" }, "Show All Channels"),
         option({ value: "showScrollBar" }, "Show Octave Scroll Bar"),
         option({ value: "showLetters" }, "Show Piano Keys"),
@@ -2262,6 +2263,7 @@ export class SongEditor {
             (prefs.showFifth ? textOnIcon : textOffIcon) + 'Highlight "Fifth" Note',
             (prefs.notesFlashWhenPlayed ? textOnIcon : textOffIcon) + "Notes Flash When Played",
             (prefs.instrumentButtonsAtTop ? textOnIcon : textOffIcon) + "Instrument Buttons at Top",
+            (prefs.promptSongDetails ? textOnIcon : textOffIcon) + "Prompt Song Details on Load",
             (prefs.showChannels ? textOnIcon : textOffIcon) + "Show All Channels",
             (prefs.showScrollBar ? textOnIcon : textOffIcon) + "Show Octave Scroll Bar",
             (prefs.showLetters ? textOnIcon : textOffIcon) + "Show Piano Keys",
@@ -3518,6 +3520,16 @@ export class SongEditor {
                 // A dummy change that pushes history state.
                 this._doc.record(new ChangeHoldingModRecording(this._doc, null, null, null));
             }
+
+        if (this._doc.song.showSongDetails && EditorConfig.showSongDetailsAlert && this._doc.prefs.promptSongDetails) {
+            alert(
+            (this._doc.song.title != "" ? this._doc.song.title : "Untitled") +
+            (this._doc.song.author != "" ? "\n\nBy " + this._doc.song.author : "") +
+            (this._doc.song.description != "" ? "\n\n\n" + this._doc.song.description : "")
+            );
+        }
+        // always set showSongDetailsAlert to false, as if you set it to false in the if block it'll pop up when you change the "Prompt Song Details on Load" preference
+        EditorConfig.showSongDetailsAlert = false;
     }
 
     private _renderInstrumentBar(channel: Channel, instrumentIndex: number, colors: ChannelColors) {
@@ -5193,6 +5205,9 @@ export class SongEditor {
                 break;
             case "closePromptByClickoff":
                 this._doc.prefs.closePromptByClickoff = !this._doc.prefs.closePromptByClickoff;
+                break;
+            case "promptSongDetails":
+                this._doc.prefs.promptSongDetails = !this._doc.prefs.promptSongDetails;
                 break;
             case "instrumentCopyPaste":
                 this._doc.prefs.instrumentCopyPaste = !this._doc.prefs.instrumentCopyPaste;

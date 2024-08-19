@@ -4680,6 +4680,16 @@ export class ChangeSongDescription extends Change {
     }
 }
 
+export class ChangeShowSongDetails extends Change {
+    constructor(doc: SongDocument, oldValue: boolean, newValue: boolean) {
+        super();
+
+        doc.song.showSongDetails = newValue;
+        doc.notifier.changed();
+        if (oldValue != newValue) this._didSomething();
+    }
+}
+
 export class ChangeChannelName extends Change {
     constructor(doc: SongDocument, oldValue: string, newValue: string) {
         super();
