@@ -8,6 +8,7 @@ const {button, div, h2, input } = HTML;
 
 export class PresetBrowserPrompt implements Prompt {
 		private readonly _cancelButton: HTMLButtonElement = button({class: "cancelButton"});
+		//test
 
 		private readonly _searchBar: HTMLInputElement = input({type: "search", autocorrect:"off", autocomplete:"off", autocapitalize:"none", spellcheck:"false", role:"textbox", placeholder:"Search..."});
 		private readonly _addCategoryButton: HTMLButtonElement = button({}, "+ Category");
