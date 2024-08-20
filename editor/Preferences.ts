@@ -75,7 +75,7 @@ export class Preferences {
 		this.showSampleLoadingStatus = window.localStorage.getItem("showSampleLoadingStatus") != "false";
 		this.showDescription = window.localStorage.getItem("showDescription") != "false";
 		this.closePromptByClickoff = window.localStorage.getItem("closePromptByClickoff") == "true";
-		this.promptSongDetails = window.localStorage.getItem("promptSongDetails") == "true";
+		this.promptSongDetails = window.localStorage.getItem("promptSongDetails") != "false";
 		this.keyboardLayout = window.localStorage.getItem("keyboardLayout") || "wickiHayden";
 		this.bassOffset = (+(<any>window.localStorage.getItem("bassOffset"))) || 0;
 		this.layout = window.localStorage.getItem("layout") || "small";
