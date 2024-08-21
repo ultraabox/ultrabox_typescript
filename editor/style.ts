@@ -1459,6 +1459,11 @@ document.head.appendChild(HTML.style({ type: "text/css" }, `
 	border-radius: 3px;
 }
 
+.textarea {
+	background: ${ColorConfig.editorBackground};
+	border: 0.5px solid ${ColorConfig.inputBoxOutline};
+}
+
 .beepboxEditor input[type=text], .beepboxEditor input[type=number] {
 	font-size: inherit;
 	font-weight: inherit;
