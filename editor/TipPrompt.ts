@@ -546,6 +546,12 @@ export class TipPrompt implements Prompt {
 					p("This setting is a volume multiplier applied to the second voice. This setting will only work correctly with two voices."),
 				);
 			} break;
+			case "unisonBuzzes": {
+				message = div(
+					h2("Unison Buzzing"),
+					p("This setting controls whether or not there's a buzzing noise when there's only 1 unison voice, and the spread is set to something other than 0."),
+				);
+			} break;
 			case "slideSpeedSlider": {
 				message = div(
 					h2("Slide Speed"),
