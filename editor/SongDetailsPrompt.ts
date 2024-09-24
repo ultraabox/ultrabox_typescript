@@ -12,7 +12,7 @@ export class SongDetailsPrompt implements Prompt {
 	private readonly _okayButton: HTMLButtonElement = button({class: "okayButton", style: "width:45%;"}, "Okay");
 	private readonly _songTitle: HTMLInputElement = input({ type: "text", style: "width: 100%;", value: this._doc.song.title, maxlength: 30, "autofocus": "autofocus" });
 	private readonly _songAuthor: HTMLInputElement = input({ type: "text", style: "width: 100%;", value: this._doc.song.author, maxlength: 30 });
-	private readonly _songDescription: HTMLTextAreaElement = textarea({ style: "width: 100%; resize: none; background: var(--editor-background); color: white; height: 64px; border: 0.5px solid var(--input-box-outline); font-size: 14px;", maxlength: 120 }, this._doc.song.description);
+	private readonly _songDescription: HTMLTextAreaElement = textarea({ style: "width: 100%; resize: none; background: var(--editor-background); color: white; height: 64px; border: 0.5px solid var(--input-box-outline); font-size: 14px;", maxlength: 1200 }, this._doc.song.description);
 	// private readonly _songWebLink: HTMLInputElement = input({ type: "text", style: "width: 13em;", value: "https://example.com", maxlength: 30 });
 	private readonly _showSongDetailsBox: HTMLInputElement = input({style: "width: 3em; margin-left: 1em;", type: "checkbox"});
 	private readonly _computedSamplesLabel: HTMLDivElement = div({ style: "width: 10em;" }, new Text("0:00"));

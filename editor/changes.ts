@@ -4687,8 +4687,8 @@ export class ChangeSongAuthor extends Change {
 export class ChangeSongDescription extends Change {
     constructor(doc: SongDocument, oldValue: string, newValue: string) {
         super();
-        if (newValue.length > 120) {
-            newValue = newValue.substring(0, 120);
+        if (newValue.length > 1200) {
+            newValue = newValue.substring(0, 1200);
         }
 
         doc.song.description = newValue;
