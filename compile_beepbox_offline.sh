@@ -56,8 +56,6 @@ cp website/wario_samples.js offline/
 cp website/mario_paintbox_samples.js offline/
 cp website/nintaribox_samples.js offline/
 
-cp website/hotdog.png offline/
-
 # cp website/404.html offline/
 # cp website/credits.html offline/
 

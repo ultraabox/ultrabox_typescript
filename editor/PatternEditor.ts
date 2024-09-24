@@ -1410,9 +1410,15 @@ export class PatternEditor {
                                 }
                                 else {
                                     instrument.modChannels[mod] = this._doc.channel;
-                                    // Set these new ones to "active" modulation for the most flexibility, if there's more one instrument in the channel.
-                                    if (this._doc.song.channels[this._doc.channel].instruments.length > 1)
-                                        instrument.modInstruments[mod] = this._doc.song.channels[this._doc.channel].instruments.length + 1;
+                                    
+                                    if (this._doc.song.channels[this._doc.channel].instruments.length > 1) {
+                                        // Ctrl key or Shift key: set the new mod target to "active" modulation for the most flexibility, if there's more than one instrument in the channel.
+                                        if (!this.controlMode || !this.shiftMode)
+                                            instrument.modInstruments[mod] = this._doc.song.channels[this._doc.channel].instruments.length + 1;
+                                        // Control+Shift key: Set the new mod target to the currently viewed instrument only.
+                                        else
+                                            instrument.modInstruments[mod] = this._doc.getCurrentInstrument();
+                                    }
                                     else
                                         instrument.modInstruments[mod] = 0;
 
@@ -2818,6 +2824,7 @@ export class PatternEditor {
                     let colorSecondary: string = (disabled ? ColorConfig.disabledNoteSecondary : ColorConfig.getChannelColor(this._doc.song, this._doc.channel).secondaryNote);
                     notePath.setAttribute("fill", colorSecondary);
                     notePath.setAttribute("pointer-events", "none");
+                    notePath.setAttribute("class","note-secondary"); // for theming
                     this._drawNote(notePath, pitch, note.start, note.pins, (this._pitchHeight - this._pitchBorder) / 2 + 1, false, this._octaveOffset);
                     this._svgNoteContainer.appendChild(notePath);
                     notePath = SVG.path();
@@ -2825,6 +2832,7 @@ export class PatternEditor {
                     notePath.setAttribute("pointer-events", "none");
                     this._drawNote(notePath, pitch, note.start, note.pins, (this._pitchHeight - this._pitchBorder) / 2 + 1, true, this._octaveOffset);
                     this._svgNoteContainer.appendChild(notePath);
+                    notePath.setAttribute("class","note-primary"); // for theming
 
                     if (this._doc.prefs.notesFlashWhenPlayed&&!disabled) {
                         notePath = SVG.path();

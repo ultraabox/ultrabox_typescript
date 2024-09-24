@@ -2,7 +2,7 @@
 
 UltraBox is an online tool for sketching and sharing instrumental music.
 You can find it [here](https://ultraabox.github.io).
-It is a modification of Goldbox, which itself is a modification of JummBox, which inturn is a modification of the [original BeepBox](https://beepbox.co).
+It is a modification of [JummBox](https://github.com/jummbus/jummbox), which inturn is a modification of the [original BeepBox](https://beepbox.co).
 
 The goal of UltraBox is to combine every single beepbox mod into one. Feel free to contribute!
 
@@ -12,9 +12,8 @@ changes to the song, the URL is updated to reflect your changes. When you are
 satisfied with your song, just copy and paste the URL to save and share your
 song!
 
-UltraBox, as well as GoldBox, Jummbox, and Beepbox which it's based on, are free projects. If you ever feel so inclined, please support the original creator, [John Nesky](http://www.johnnesky.com/), via
+UltraBox, as well as the beepmods which it's based on, are free projects. If you ever feel so inclined, please support the original creator, [John Nesky](http://www.johnnesky.com/), via
 [PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=QZJTX9GRYEV9N&currency_code=USD)!
-JummBox is developed by [Jummbus](http://www.twitter.com/jummbus).
 
 ## Compiling
 

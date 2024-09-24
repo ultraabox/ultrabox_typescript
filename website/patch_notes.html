@@ -4,21 +4,10 @@
     <link rel='shortcut icon' type='image/x-icon' href='./favicon.ico' /> 
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>UltraBox Patch Notes</title>
-    <meta name="application-name" content="UltraBox" />
-    <meta name="apple-mobile-web-app-title" content="UltraBox">
+	<meta name="theme-color" content="#FF08FF"/>
+	<meta property="og:image" content="/icon_maskable_192.png" />
 	<meta name="description" content="UltraBox is a mod of BeepBox that aims to combine every other beepmod into one." />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="theme-color" content="#444" />
-    <meta name="msapplication-TileColor" content="#dba600" />
-    <meta name="msapplication-config" content="/browserconfig.xml" />
-    <meta name="format-detection" content="telephone=no" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/icon_32.png" />
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link href="https://fonts.googleapis.com/css?family=B612" rel="stylesheet" media="none" onload="if (this.media != 'all') this.media='all';" /> <!-- this is a trick to load CSS asynchronously. -->
+    <title>UltraBox Patch Notes</title>
     <style type="text/css">
 
         html {
@@ -39,25 +28,6 @@
             align-content: center;
         }
 
-        #beepboxEditorContainer {
-            min-height: 645px;
-            overflow: auto;
-            background: var(--editor-background, black);
-            width: 100%;
-			max-width: 710px;
-            padding-left: 30px;
-            padding-right: 30px;
-        }
-
-        #text-content {
-            overflow: auto;
-            background: var(--editor-background, black);
-            width: 100%;
-			max-width: 710px;
-            padding-left: 30px;
-            padding-right: 30px;
-        }
-
         h1 {
             font-size: 1.7rem;
             text-align: center;
@@ -76,15 +46,10 @@
 
 		h3 {
             font-size: 1.2rem;
-			/* text-align: center; */
             margin-top: 0.5em;
             margin-bottom: 0.5em;
             -webkit-text-stroke-width: 0;
         }
-
-        .centerDiv {
-			margin: 0px auto;
-		}
 
         a {
             color: var(--link-accent, #98f);
@@ -99,21 +64,6 @@
             body {
                 width: 100%;
             }
-
-            .column-container {
-				width: 710px;
-                display: flex;
-				gap: 25px;
-            }
-
-            .instructions-column {
-				min-width: 0;
-            }
-
-            .twitter-column {
-                width: 300px;
-				flex-shrink: 0;
-            }
         }
 
         /* narrow screen */
@@ -122,14 +72,8 @@
                 width: 100%;
             }
 
-            p, .donation {
+            p {
                 margin: 1em 0.5em;
-            }
-
-            .column-container {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
             }
         }
     </style>
@@ -157,13 +101,82 @@
 		<li>Backcompat for this has been added</li>
 		</ul>
 </ul> </h3>
-<p>6/?/2024</p>
+<p>10/?/2024</p>
+
+<h2>Version 2.2.11</h2>
+	<h3> <ul>
+	<li>Fixed a bug with the tempo mod fix</li>
+	<!-- <li>Updated the sample extractor's documentation</li> -->
+	<!-- <li>Organized the credits</li> -->
+	</ul> </h3>
+	<p>8/17/2024</p>
+
+<h2>Version 2.2.10</h2>
+	<h3> <ul>
+	<li>Several changes to import modes:</li>
+		<ul>
+		<li>Improved the Auto-Detect, Modbox, and Synthbox import modes</li>
+		<li>Added the Paandorasbox and Goldbox import modes</li>
+		<li>Fixed incorrect tempo modulation when importing from a non-UB mod</li>
+		</ul>
+	<li>The Shift+P keybind can now be used in the song player</li>
+	<!-- <li>Going to the song player and back no longer adds "index.html" so the song URL (only when not in the offline version)</li> -->
+	<li>Fixed the song recovery in the offline mode</li>
+	<li>Improved the unison dropdown's spacing</li>
+	<li>Fixed incorrect pattern indicator colors in the MicroBox theme</li>
+		<ul>
+		<li>This is inaccurate to the original mod</li>
+		</ul>
+	<li>Relegated the hotdog to the Wackybox/Abyssbox themes</li>
+	<li>Renamed the ÷8 and ÷12 rhythms to "32nd notes" and "doudectuplets" respectively</li>
+	</ul> </h3>
+	<p>8/11/2024</p>
+
+<h2>Version 2.2.9</h2>
+	<h3> <ul>
+	<li>Added a preference for instrument scrollbars instead of outright removing them</li>
+	<li>Actually ported the Jummbox bugfix for song data not saving properly</li>
+	<li>Ported the <a href="https://github.com/jummbus/jummbox/commit/b0efe3b47392f19b2b9ac2c78d0b90f4e32e24d3#diff-4325f2ebdd213554faab7f9ddf2349a1c845d9d8e05f11eddb35c61f5150f1bf">latest bugfixes</a> from Jummbox</li>
+	<li>Removed excessive code for the bugfix regarding drumset spectrums from 2.2.8</li>
+	</ul> </h3>
+	<p>6/3/2024</p>
+
+<h2>Version 2.2.8</h2>
+	<h3> <ul>
+	<li>Ported Unbox's Shift+F keybind and Voxbox's Shift+Enter keybind</li>
+		<ul>
+		<li>The former moves the playhead to the start of the loop bar instead of the start of the song</li>
+		<li>...and the latter enters a bar behind the selection instead of ahead</li>
+		</ul>
+	<li>Added the <code>--text-spacing-icon </code> and <code>--scrollbar-color</code> theme variables</li>
+		<ul>
+		<li>Because of this, scrollbars will look different on Firefox</li>
+		</ul>
+	<li>Updated the Abyssbox Light and Abyssbox Dark themes</li>
+	<li>Removed scrollbars from the instrument settings</li>
+	<li>Fixed unisons not saving in .jsons when using PWM, Harmonics, or Spectrum</li>
+	<li>Fixed synth weirdness related to drumset spectrums not being reset</li>
+	<li>Fixed the importing of Modbox's "-2 octaves" offset setting</li>
+	</ul> </h3>
+	<p>5/25/2024</p>
+
+<h2>Version 2.2.7</h2>
+	<h3> <ul>
+	<!-- <li>UB is now a Jummbox fork instead of a GoldBox fork!</li> -->
+	<li>Ported the "Frosted Glass" backdrop from Abyssbox!</li>
+	<li>Made changes to shift+r-ing Custom Chip, Drumsets, and envelopes</li>
+	<li>Changed some unison tip prompt text</li>
+	<li>Fixed mod channels being copy-pasteable into pitch channels, causing errors</li>
+	<li>Fixed unison not being a possible envelope option in PWM, Harmonics, and Spectrum</li>
+	<li>Fixed a bug where the pulse width input box couldn't be clicked</li>
+	</ul> </h3>
+	<p>4/28/2024</p>
 
 <h2>Version 2.2.6</h2>
 	<h3> <ul>
 	<li>Added an option to remove whitespace on .json export</li>
 	<li>Fixed Noise and Spectrum instrument types having a 'flam' with 1 unison voice</li>
-	<li>Fixed weird behavior involving unison spread when using a unison with 1 voice</li>
+	<li>Fixed weird buzzing involving unison spread when using a unison with 1 voice</li>
 	<li>Fixed the slider visual on decimal offset mods being flipped</li>
 	<!-- <li>Made some internal code cleaner: this will only help developers and will make no difference to the user (the thing involving optgroups)</li> -->
 	</ul> </h3>
@@ -174,7 +187,7 @@
 	<li>Added Unisons to the PWM, Spectrum, and Noise instrument types</li>
 	<li>Added the Shortener Config Prompt</li>
 	<ul>
-		<li>Currently the only options are <a href="https://tinyurl.com">tinyurl.com</a> and <a href="https://is.gd">is.gd</a>...</li>
+		<li>This currently only supports <a href="https://tinyurl.com">tinyurl.com</a> and <a href="https://is.gd">is.gd</a>...</li>
 	</ul>
 	<li>Adjusted padding of Abyssbox themes and certain layouts</li>
 	<li>Updated the Abyssbox Light theme</li>
@@ -210,12 +223,6 @@
 	<li>Fixed the player favicon not loading correctly</li>
 	</ul> </h3>
 	<p>3/11/2024</p>
-
-<!-- <li>Added three colorblind-friendly themes</li>
-		<ul>
-		<li>The colorblind themes were made and suggested by Nep and Choptop, neither of whom are colorblind...</li>
-		<li>...so if you're  and have feedback to give on those three themes, that would be much appreciated!</li>
-		</ul>  -->
 
 <h2>Version 2.2.3</h2>
 	<h3> <ul>
@@ -520,12 +527,12 @@
 	<h2>Version 1.1.1</h2>
 	<h3><ul><li>Improved the Mainbox and Todbox Dark Mode themes</li>
 		<li>Removed the unneccessary standarddrumsamples.js and plok_samples.js files, which should slightly improved load times</li>
-		<li>Basically just an extension of the last update</li>
+		<!-- <li>Basically just an extension of the last update</li> -->
 	</ul></h3>
 	<p>06/08/2023</p>	
 <h2>Version 1.1</h2>
 	<h3><ul><li>Added the slushie, 69420, nerdbox, zefbox, and foxbox themes, and fixed the cardboardbox theme</li>
-		<li>Don't ask why I changed the version to 1.1 when it should have been 1.0.1, idk why</li>
+		<!-- <li>Don't ask why I changed the version to 1.1 when it should have been 1.0.1, idk why</li> -->
 	</ul></h3>
 	<p>06/08/2023</p>
 <!--a few bug patch updates happened between version 1.0 and 1.1 but they aren't very important	-->

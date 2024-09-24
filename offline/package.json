@@ -1,7 +1,15 @@
 {
   "name": "UltraBox Offline",
-  "version": "2.2.4",
+  "version": "2.2.11",
   "description": "An offline version of UltraBox",
+  "author": "Main",
+  "contributors": [
+    "Neputendo",
+    "LeoV",
+    "Mid",
+    "Choptop84",
+    "Slarmoo"
+  ],
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -9,7 +17,6 @@
     "package-host": "electron-packager . --asar --overwrite"
   },
   "icon": "path.join(__dirname, 'icon.ico')",
-  "author": "Main",
   "license": "MIT",
   "devDependencies": {
     "electron": "^28.2.6"

@@ -39,25 +39,6 @@
             align-content: center;
         }
 
-        #beepboxEditorContainer {
-            min-height: 645px;
-            overflow: auto;
-            background: var(--editor-background, black);
-            width: 100%;
-			max-width: 710px;
-            padding-left: 30px;
-            padding-right: 30px;
-        }
-
-        #text-content {
-            overflow: auto;
-            background: var(--editor-background, black);
-            width: 100%;
-			max-width: 710px;
-            padding-left: 30px;
-            padding-right: 30px;
-        }
-
         h1 {
             font-size: 1.7rem;
             text-align: center;
@@ -74,10 +55,6 @@
             -webkit-text-stroke-width: 0;
         }
 
-        .centerDiv {
-			margin: 0px auto;
-		}
-
         a {
             color: var(--link-accent, #98f);
         }
@@ -91,21 +68,6 @@
             body {
                 width: 100%;
             }
-
-            .column-container {
-				width: 710px;
-                display: flex;
-				gap: 25px;
-            }
-
-            .instructions-column {
-				min-width: 0;
-            }
-
-            .twitter-column {
-                width: 300px;
-				flex-shrink: 0;
-            }
         }
 
         /* narrow screen */
@@ -114,14 +76,8 @@
                 width: 100%;
             }
 
-            p, .donation {
+            p {
                 margin: 1em 0.5em;
-            }
-
-            .column-container {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
             }
         }
     </style>

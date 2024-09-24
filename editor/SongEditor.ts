@@ -819,8 +819,10 @@ export class SongEditor {
         option({ value: "notesFlashWhenPlayed" }, "Notes Flash When Played"),
         option({ value: "instrumentButtonsAtTop" }, "Instrument Buttons at Top"),
         option({ value: "promptSongDetails" }, "Prompt Song Details on Load"),
+        option({ value: "frostedGlassBackground" }, "Frosted Glass Prompt Backdrop"),
         option({ value: "showChannels" }, "Show All Channels"),
         option({ value: "showScrollBar" }, "Show Octave Scroll Bar"),
+        option({ value: "showInstrumentScrollbars" }, "Show Intsrument Scrollbars"),
         option({ value: "showLetters" }, "Show Piano Keys"),
         option({ value: "displayVolumeBar" }, "Show Playback Volume"),
         option({ value: "showOscilloscope" }, "Show Oscilloscope"),
@@ -1003,7 +1005,7 @@ export class SongEditor {
     ));
     private readonly _unisonBuzzesBox = input({ type: "checkbox", style: "width: 1em; padding: 0; margin-left: 0.4em; margin-right: 4em;" });
     private readonly _unisonBuzzesBoxRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", style: "flex-shrink: 0;", onclick: () => this._openPrompt("unisonBuzzes") }, "Buzzes: "), this._unisonBuzzesBox);
-    private readonly _unisonDropdownGroup: HTMLElement = div({ class: "editor-controls", style: "display: none;" }, this._unisonVoicesRow, this._unisonSpreadRow, this._unisonOffsetRow, this._unisonExpressionRow, this._unisonSignRow, this._unisonBuzzesBoxRow);
+    private readonly _unisonDropdownGroup: HTMLElement = div({ class: "editor-controls", style: "display: none; gap: 3px; margin-bottom: 0.5em;" }, this._unisonVoicesRow, this._unisonSpreadRow, this._unisonOffsetRow, this._unisonExpressionRow, this._unisonSignRow, this._unisonBuzzesBoxRow);
    
     private readonly _chordSelect: HTMLSelectElement = buildOptions(select(), Config.chords.map(chord => chord.name));
     private readonly _chordDropdown: HTMLButtonElement = button({ style: "margin-left:0em; height:1.5em; width: 10px; padding: 0px; font-size: 8px;", onclick: () => this._toggleDropdownMenu(DropdownID.Chord) }, "▼");
@@ -1246,6 +1248,7 @@ export class SongEditor {
         SVG.path({ d: "M150 65 c0 -8 -7 -15 -15 -15 -8 0 -15 -4 -15 -10 0 -14 23 -13 38 2 15 15 16 38 2 38 -5 0 -10 -7 -10 -15z" })]);
 
     private readonly _promptContainer: HTMLDivElement = div({ class: "promptContainer", style: "display: none;" });
+    private readonly _promptContainerBG: HTMLDivElement = div({ class: "promptContainerBG", style: "display: none; height: 100%; width: 100%; position: fixed; z-index: 99; overflow-x: hidden; pointer-events: none;" });
     private readonly _zoomInButton: HTMLButtonElement = button({ class: "zoomInButton", type: "button", title: "Zoom In" });
     private readonly _zoomOutButton: HTMLButtonElement = button({ class: "zoomOutButton", type: "button", title: "Zoom Out" });
     private readonly _patternEditorRow: HTMLDivElement = div({ style: "flex: 1; height: 100%; display: flex; overflow: hidden; justify-content: center;" },
@@ -2044,6 +2047,7 @@ export class SongEditor {
                 this._doc.performance.play();
             }
             this._wasPlaying = false;
+            this._promptContainerBG.style.display = "none";
             this._promptContainer.style.display = "none";
             this._promptContainer.removeChild(this.prompt.container);
             this.prompt.cleanUp();
@@ -2139,7 +2143,19 @@ export class SongEditor {
                     this._doc.performance.pause();
                 }
                 this._promptContainer.style.display = "";
+                if (this._doc.prefs.frostedGlassBackground == true) {
+                    this._promptContainerBG.style.display = ""; 
+                    this._promptContainerBG.style.backgroundColor = "rgba(0,0,0, 0)"; 
+                    this._promptContainerBG.style.backdropFilter = "brightness(0.9) blur(14px)"; 
+                    this._promptContainerBG.style.opacity = "1"; 
+                } else {
+                    this._promptContainerBG.style.display = ""; 
+                    this._promptContainerBG.style.backgroundColor = "var(--editor-background)"; 
+                    this._promptContainerBG.style.backdropFilter = ""; 
+                    this._promptContainerBG.style.opacity = "0.5"; 
+                }
                 this._promptContainer.appendChild(this.prompt.container);
+                document.body.appendChild(this._promptContainerBG);
             }
         }
     }
@@ -2198,6 +2214,7 @@ export class SongEditor {
         this._sampleLoadingStatusContainer.style.display = this._doc.prefs.showSampleLoadingStatus ? "" : "none";
         this._instrumentCopyGroup.style.display = this._doc.prefs.instrumentCopyPaste ? "" : "none";
         this._instrumentExportGroup.style.display = this._doc.prefs.instrumentImportExport ? "" : "none";
+        this._instrumentSettingsArea.style.scrollbarWidth = this._doc.prefs.showInstrumentScrollbars ? "" : "none";
         if (document.getElementById('text-content'))
             document.getElementById('text-content')!.style.display = this._doc.prefs.showDescription ? "" : "none";
 
@@ -2248,6 +2265,7 @@ export class SongEditor {
         // the theme variables are named "icon" to prevent people getting confused and thinking they're svg
         const textOnIcon: string = ColorConfig.getComputed("--text-enabled-icon") !== "" ? ColorConfig.getComputed("--text-enabled-icon") : "✓ ";
         const textOffIcon: string = ColorConfig.getComputed("--text-disabled-icon") !== "" ? ColorConfig.getComputed("--text-disabled-icon") : "　";
+        const textSpacingIcon: string = ColorConfig.getComputed("--text-spacing-icon") !== "" ? ColorConfig.getComputed("--text-spacing-icon") : "　";
         const optionCommands: ReadonlyArray<string> = [
             "Technical",
             (prefs.autoPlay ? textOnIcon : textOffIcon) + "Auto Play on Load",
@@ -2261,22 +2279,24 @@ export class SongEditor {
             (prefs.instrumentImportExport ? textOnIcon : textOffIcon) + "Enable Import/Export Buttons",
             (prefs.displayBrowserUrl ? textOnIcon : textOffIcon) + "Enable Song Data in URL",
             (prefs.closePromptByClickoff ? textOnIcon : textOffIcon) + "Close Prompts on Click Off",
-            "　Note Recording...",
-            "Appearance",
+            textSpacingIcon + "Note Recording...",
+            textSpacingIcon + "Appearance",
             (prefs.showFifth ? textOnIcon : textOffIcon) + 'Highlight "Fifth" Note',
             (prefs.notesFlashWhenPlayed ? textOnIcon : textOffIcon) + "Notes Flash When Played",
             (prefs.instrumentButtonsAtTop ? textOnIcon : textOffIcon) + "Instrument Buttons at Top",
             (prefs.promptSongDetails ? textOnIcon : textOffIcon) + "Prompt Song Details on Load",
+            (prefs.frostedGlassBackground ? textOnIcon : textOffIcon) + "Frosted Glass Prompt Backdrop",
             (prefs.showChannels ? textOnIcon : textOffIcon) + "Show All Channels",
             (prefs.showScrollBar ? textOnIcon : textOffIcon) + "Show Octave Scroll Bar",
+            (prefs.showInstrumentScrollbars ? textOnIcon : textOffIcon) + "Show Instrument Scrollbars",
             (prefs.showLetters ? textOnIcon : textOffIcon) + "Show Piano Keys",
             (prefs.displayVolumeBar ? textOnIcon : textOffIcon) + "Show Playback Volume",
             (prefs.showOscilloscope ? textOnIcon : textOffIcon) + "Show Oscilloscope",
             (prefs.showSampleLoadingStatus ? textOnIcon : textOffIcon) + "Show Sample Loading Status",
             (prefs.showDescription ? textOnIcon : textOffIcon) + "Show Description",
-            "　Set Layout...",
-            "　Set Theme...",
-	        "　Custom Theme...",
+            textSpacingIcon + "Set Layout...",
+            textSpacingIcon + "Set Theme...",
+	        textSpacingIcon + "Custom Theme...",
         ];
         // Technical dropdown
         const technicalOptionGroup: HTMLOptGroupElement = <HTMLOptGroupElement>this._optionsMenu.children[1];
@@ -3929,7 +3949,7 @@ export class SongEditor {
                     this.refocusStage();
                 } else if (canPlayNotes) break;
                 if (needControlForShortcuts == (event.ctrlKey || event.metaKey) && event.shiftKey) {
-                    location.href = "player/index.html#song=" + this._doc.song.toBase64String();
+                    location.href = "player/" + (OFFLINE ? "index.html" : "") + "#song=" + this._doc.song.toBase64String();
                     event.preventDefault();
                 }
                 break;
@@ -4029,7 +4049,13 @@ export class SongEditor {
                 this._doc.synth.loopBarEnd = -1;
                 this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
 
-                if (event.ctrlKey || event.metaKey) {
+                if (event.shiftKey && !event.ctrlKey) {
+                    const minusWidth = this._doc.selection.boxSelectionWidth;
+                    this._doc.bar -= minusWidth;
+                    this._doc.selection.boxSelectionX0 -= minusWidth;
+                    this._doc.selection.boxSelectionX1 -= minusWidth;
+                    this._doc.selection.insertBars();
+                } else if ((event.ctrlKey || event.metaKey) && !event.shiftKey) {
                     this._doc.selection.insertChannel();
                 } else {
                     this._doc.selection.insertBars();
@@ -4076,14 +4102,28 @@ export class SongEditor {
                     if (!instrument.eqFilterType && this._doc.channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount)
                         this._openPrompt("customEQFilterSettings");
                 } else if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
+                    // EUCLEDIAN RHYTHM SHORTCUT (E)
                     this._openPrompt("generateEuclideanRhythm");
                     break;
-                    //EUCLEDIAN RHYTHM SHORTCUT (E)
 			    }
                 break;
             case 70: // f
                 if (canPlayNotes) break;
-                if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
+                if (event.shiftKey) { // if shift+f, move to start of loop bar instead 
+                    
+                    this._doc.synth.loopBarStart = -1;
+                    this._doc.synth.loopBarEnd = -1;
+                    this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+
+                    this._doc.synth.goToBar(this._doc.song.loopStart);
+                    this._doc.synth.snapToBar();
+                    this._doc.synth.initModFilters(this._doc.song);
+                    this._doc.synth.computeLatestModValues();
+                    if (this._doc.prefs.autoFollow) {
+                        this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
+                    }
+                    event.preventDefault();
+                } else if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
 
                     this._doc.synth.loopBarStart = -1;
                     this._doc.synth.loopBarEnd = -1;
@@ -4678,6 +4718,7 @@ export class SongEditor {
         const instrument: Instrument = channel.instruments[this._doc.getCurrentInstrument()];
         const instrumentCopy: any = instrument.toJsonObject();
         instrumentCopy["isDrum"] = this._doc.song.getChannelIsNoise(this._doc.channel);
+        instrumentCopy["isMod"] = this._doc.song.getChannelIsMod(this._doc.channel);
         window.localStorage.setItem("instrumentCopy", JSON.stringify(instrumentCopy));
         this.refocusStage();
     }
@@ -4686,7 +4727,7 @@ export class SongEditor {
         const channel: Channel = this._doc.song.channels[this._doc.channel];
         const instrument: Instrument = channel.instruments[this._doc.getCurrentInstrument()];
         const instrumentCopy: any = JSON.parse(String(window.localStorage.getItem("instrumentCopy")));
-        if (instrumentCopy != null && instrumentCopy["isDrum"] == this._doc.song.getChannelIsNoise(this._doc.channel)) {
+        if (instrumentCopy != null && instrumentCopy["isDrum"] == this._doc.song.getChannelIsNoise(this._doc.channel) && instrumentCopy["isMod"] == this._doc.song.getChannelIsMod(this._doc.channel)) {
             this._doc.record(new ChangePasteInstrument(this._doc, instrument, instrumentCopy));
         }
         this.refocusStage();
@@ -5061,7 +5102,7 @@ export class SongEditor {
                 this._openPrompt("configureShortener");
                 break;
             case "viewPlayer":
-                location.href = "player/index.html#song=" + this._doc.song.toBase64String();
+                location.href = "player/" + (OFFLINE ? "index.html" : "") + "#song=" + this._doc.song.toBase64String();
                 break;
             case "copyEmbed":
                 this._copyTextToClipboard(`<iframe width="384" height="60" style="border: none;" src="${new URL("player/#song=" + this._doc.song.toBase64String(), location.href).href}"></iframe>`);
@@ -5205,6 +5246,9 @@ export class SongEditor {
             case "showDescription":
                 this._doc.prefs.showDescription = !this._doc.prefs.showDescription;
                 break;
+            case "showInstrumentScrollbars":
+                this._doc.prefs.showInstrumentScrollbars = !this._doc.prefs.showInstrumentScrollbars;
+                break;
             case "showSampleLoadingStatus":
                 this._doc.prefs.showSampleLoadingStatus = !this._doc.prefs.showSampleLoadingStatus;
                 break;
@@ -5222,6 +5266,9 @@ export class SongEditor {
                 break;
             case "instrumentButtonsAtTop":
                 this._doc.prefs.instrumentButtonsAtTop = !this._doc.prefs.instrumentButtonsAtTop;
+                break;
+            case "frostedGlassBackground":
+                this._doc.prefs.frostedGlassBackground = !this._doc.prefs.frostedGlassBackground;
                 break;
         }
         this._optionsMenu.selectedIndex = 0;

@@ -38,13 +38,13 @@ export class SongRecoveryPrompt implements Prompt {
 			}
 				
 				const player: HTMLIFrameElement = iframe({style: "width: 100%; height: 60px; border: none; display: block;"});
-			player.src = "player/#song=" + window.localStorage.getItem(versionToKey(song.versions[0]));
+			player.src = "player/" + (OFFLINE ? "index.html" : "") + "#song=" + window.localStorage.getItem(versionToKey(song.versions[0]));
 				const container: HTMLDivElement = div({style: "margin: 4px 0;"}, div({class: "selectContainer", style: "width: 100%; margin: 2px 0;"}, versionMenu), player);
 			this._songContainer.appendChild(container);
 				
 			versionMenu.addEventListener("change", () => {
 				const version: RecoveredVersion = song.versions[versionMenu.selectedIndex];
-				player.contentWindow!.location.replace("player/#song=" + window.localStorage.getItem(versionToKey(version)));
+				player.contentWindow!.location.replace("player/" + (OFFLINE ? "index.html" : "") + "#song=" + window.localStorage.getItem(versionToKey(version)));
 				player.contentWindow!.dispatchEvent(new Event("hashchange"));
 			});
 		}

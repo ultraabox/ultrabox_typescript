@@ -914,20 +914,19 @@ export class Config {
 	public static readonly barCountMax: number = 1024;
     public static readonly instrumentCountMin: number = 1;
     public static readonly layeredInstrumentCountMax: number = 10;
-	//this still hasn't been properly tested...
     public static readonly patternInstrumentCountMax: number = 10;
 	public static readonly partsPerBeat: number = 24;
 	public static readonly ticksPerPart: number = 2;
 	public static readonly ticksPerArpeggio: number = 3;
 	public static readonly arpeggioPatterns: ReadonlyArray<ReadonlyArray<number>> = [[0], [0, 1], [0, 1, 2, 1], [0, 1, 2, 3], [0, 1, 2, 3, 4], [0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5, 6], [0, 1, 2, 3, 4, 5, 6, 7] ];
 	public static readonly rhythms: DictionaryArray<Rhythm> = toNameMap([
-		{ name: "÷1 (whole notes)", stepsPerBeat: 1, /*ticksPerArpeggio: 6, arpeggioPatterns: [[0], [0, 0, 1, 1], [0, 1, 2, 1]],*/ roundUpThresholds: [3] },
-		{ name: "÷2 (half notes)", stepsPerBeat: 2, /*ticksPerArpeggio: 5, arpeggioPatterns: [[0], [0, 0, 1, 1], [0, 1, 2, 1]],*/ roundUpThresholds: [3, 9] },
+		{ name: "÷1 (quarter notes)", stepsPerBeat: 1, /*ticksPerArpeggio: 6, arpeggioPatterns: [[0], [0, 0, 1, 1], [0, 1, 2, 1]],*/ roundUpThresholds: [3] },
+		{ name: "÷2 (eighth notes)", stepsPerBeat: 2, /*ticksPerArpeggio: 5, arpeggioPatterns: [[0], [0, 0, 1, 1], [0, 1, 2, 1]],*/ roundUpThresholds: [3, 9] },
 		{ name: "÷3 (triplets)", stepsPerBeat: 3, /*ticksPerArpeggio: 4, arpeggioPatterns: [[0], [0, 0, 1, 1], [0, 1, 2, 1], [0, 1, 2, 3]]*/ roundUpThresholds: [/*0*/ 5, /*8*/ 12, /*16*/ 18 /*24*/] },
 		{ name: "÷4 (standard)", stepsPerBeat: 4, /*ticksPerArpeggio: 3, arpeggioPatterns: [[0], [0, 0, 1, 1], [0, 1, 2, 1], [0, 1, 2, 3]]*/ roundUpThresholds: [/*0*/ 3, /*6*/ 9, /*12*/ 17, /*18*/ 21 /*24*/] },
 		{ name: "÷6 (sextuplets)", stepsPerBeat: 6, /*ticksPerArpeggio: 4, arpeggioPatterns: [[0], [0, 1], [0, 1, 2, 1], [0, 1, 2, 3]]*/ roundUpThresholds: null },
-		{ name: "÷8 (eighth notes)", stepsPerBeat: 8, /*ticksPerArpeggio: 3, arpeggioPatterns: [[0], [0, 1], [0, 1, 2, 1], [0, 1, 2, 3]]*/ roundUpThresholds: null },
-		{ name: "÷12 (twelfth notes)", stepsPerBeat: 12, /*ticksPerArpeggio: 3, arpeggioPatterns: [[0], [0, 1], [0, 1, 2, 1]]*/ roundUpThresholds: null },
+		{ name: "÷8 (32nd notes)", stepsPerBeat: 8, /*ticksPerArpeggio: 3, arpeggioPatterns: [[0], [0, 1], [0, 1, 2, 1], [0, 1, 2, 3]]*/ roundUpThresholds: null },
+		{ name: "÷12 (doudectuplets)", stepsPerBeat: 12, /*ticksPerArpeggio: 3, arpeggioPatterns: [[0], [0, 1], [0, 1, 2, 1]]*/ roundUpThresholds: null },
 		{ name: "freehand", stepsPerBeat: 24, /*ticksPerArpeggio: 3, arpeggioPatterns: [[0], [0, 1], [0, 1, 2, 1], [0, 1, 2, 3]]*/ roundUpThresholds: null },
 	]);
 
@@ -1434,9 +1433,9 @@ export class Config {
     public static readonly pitchChannelCountMin: number = 1;
     public static readonly pitchChannelCountMax: number = 60;
     public static readonly noiseChannelCountMin: number = 0;
-    public static readonly noiseChannelCountMax: number = 32;
+    public static readonly noiseChannelCountMax: number = 60;
     public static readonly modChannelCountMin: number = 0;
-    public static readonly modChannelCountMax: number = 24;
+    public static readonly modChannelCountMax: number = 60;
     public static readonly noiseInterval: number = 6;
     public static readonly pitchesPerOctave: number = 12; // TODO: Use this for converting pitch to frequency.
     public static readonly drumCount: number = 12;
@@ -1831,6 +1830,7 @@ export function getDrumWave(index: number, inverseRealFourierTransform: Function
             }
         }
         else if (index == 13) {
+            // https://noisehack.com/generate-noise-web-audio-api/
             var b0 = 0, b1 = 0, b2 = 0, b3, b4, b5, b6;
             b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0;
             
@@ -1845,7 +1845,6 @@ export function getDrumWave(index: number, inverseRealFourierTransform: Function
                 wave[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
                 wave[i] *= 0.44;
                 b6 = white * 0.115926;
-                // from https://github.com/zacharydenton/noise.js, MIT license soooo
             }
         }
         else if (index == 14) {
@@ -1856,7 +1855,6 @@ export function getDrumWave(index: number, inverseRealFourierTransform: Function
                 wave[i] = (lastOut + (0.02 * white)) / 1.02;
                 lastOut = wave[i];
                 wave[i] *= 14;
-                // this is also from noise.js
             }
         }
 		

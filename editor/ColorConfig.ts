@@ -384,6 +384,10 @@ export class ColorConfig {
 				.select2-selection__rendered {
 					box-shadow: inset 0 0 0 1px var(--secondary-text);
 				}
+
+				.promptContainerBG::before {
+					box-shadow: inset 0 0 2000px rgba(255, 255, 255, .5);
+				}	
 		`,
         "jummbox classic": `
 				:root {
@@ -976,6 +980,10 @@ export class ColorConfig {
 
 				.beepboxEditor .piano-button::before {
 					display: none;
+				}
+
+				.promptContainerBG::before {
+					box-shadow: inset 0 0 2000px rgba(255, 255, 255, .5);
 				}
 			`,
         "amoled dark": `
@@ -2634,6 +2642,9 @@ export class ColorConfig {
 			--mod-label-primary-text: black;
 			--disabled-note-primary: #616161;
 			--disabled-note-secondary: #474747;
+		}
+		.promptContainerBG::before {
+			box-shadow: inset 0 0 2000px rgba(255, 255, 255, .5);
 		}`,
         "energized": `
 		:root {
@@ -3977,6 +3988,7 @@ export class ColorConfig {
 					--mod-label-primary-text:   black;
 					--disabled-note-primary:    #999;
 					--disabled-note-secondary:  #666;
+					--text-disabled-icon: ✗ ;
 				}
 
 				.beepboxEditor input[type="range"]::-moz-range-thumb {
@@ -5004,126 +5016,6 @@ export class ColorConfig {
 					--disabled-note-secondary:  #666;
 				}
 			`,
-			 "fogbox": `
-			:root {
-				--page-margin: #252525;
-				--editor-background: #252525;
-				--hover-preview: white;
-				--playhead: white;
-				--primary-text: white;
-				--secondary-text: #999;
-				--inverted-text: black;
-				--text-selection: rgba(119,68,255,0.99);
-				--box-selection-fill: rgba(255,255,255,0.2);
-				--loop-accent: #74f;
-				--link-accent: #98f;
-				--ui-widget-background: #444;
-				--ui-widget-focus: #777;
-				--pitch-background: #444;
-				--tonic: #864;
-				--fifth-note: #468;
-				--white-piano-key: #bbb;
-				--black-piano-key: #444;
-				--white-piano-key-text: #131200;
-				--black-piano-key-text: #fff;
-					--use-color-formula: false;
-					--track-editor-bg-pitch: #444;
-					--track-editor-bg-pitch-dim: #333;
-					--track-editor-bg-noise: #444;
-					--track-editor-bg-noise-dim: #333;
-					--track-editor-bg-mod: #234;
-					--track-editor-bg-mod-dim: #123;
-					--multiplicative-mod-slider: #456;
-					--overwriting-mod-slider: #654;
-					--indicator-primary: #74f;
-					--indicator-secondary: #444;
-					--select2-opt-group: #585858;
-					--input-box-outline: #333;
-					--mute-button-normal: #ffa033;
-					--mute-button-mod: #9a6bff;
-				--pitch1-secondary-channel: #0099A1;
-				--pitch1-primary-channel:   #25F3FF;
-				--pitch1-secondary-note:    #00BDC7;
-				--pitch1-primary-note:      #92F9FF;
-				--pitch2-secondary-channel: #A1A100;
-				--pitch2-primary-channel:   #FFFF25;
-				--pitch2-secondary-note:    #C7C700;
-				--pitch2-primary-note:      #FFFF92;
-				--pitch3-secondary-channel: #C75000;
-				--pitch3-primary-channel:   #FF9752;
-				--pitch3-secondary-note:    #FF771C;
-				--pitch3-primary-note:      #FFCDAB;
-				--pitch4-secondary-channel: #00A100;
-				--pitch4-primary-channel:   #50FF50;
-				--pitch4-secondary-note:    #00C700;
-				--pitch4-primary-note:      #A0FFA0;
-				--pitch5-secondary-channel: #D020D0;
-				--pitch5-primary-channel:   #FF90FF;
-				--pitch5-secondary-note:    #E040E0;
-				--pitch5-primary-note:      #FFC0FF;
-				--pitch6-secondary-channel: #7777B0;
-				--pitch6-primary-channel:   #A0A0FF;
-				--pitch6-secondary-note:    #8888D0;
-				--pitch6-primary-note:      #D0D0FF;
-				--pitch7-secondary-channel: #8AA100;
-				--pitch7-primary-channel:   #DEFF25;
-				--pitch7-secondary-note:    #AAC700;
-				--pitch7-primary-note:      #E6FF92;
-				--pitch8-secondary-channel: #DF0019;
-				--pitch8-primary-channel:   #FF98A4;
-				--pitch8-secondary-note:    #FF4E63;
-				--pitch8-primary-note:      #FFB2BB;
-				--pitch9-secondary-channel: #00A170;
-				--pitch9-primary-channel:   #50FFC9;
-				--pitch9-secondary-note:    #00C78A;
-				--pitch9-primary-note:      #83FFD9;
-				--pitch10-secondary-channel:#A11FFF;
-				--pitch10-primary-channel:  #CE8BFF;
-				--pitch10-secondary-note:   #B757FF;
-				--pitch10-primary-note:     #DFACFF;
-				--noise1-secondary-channel: #6F6F6F;
-				--noise1-primary-channel:   #AAAAAA;
-				--noise1-secondary-note:    #A7A7A7;
-				--noise1-primary-note:      #E0E0E0;
-				--noise2-secondary-channel: #996633;
-				--noise2-primary-channel:   #DDAA77;
-				--noise2-secondary-note:    #CC9966;
-				--noise2-primary-note:      #F0D0BB;
-				--noise3-secondary-channel: #4A6D8F;
-				--noise3-primary-channel:   #77AADD;
-				--noise3-secondary-note:    #6F9FCF;
-				--noise3-primary-note:      #BBD7FF;
-				--noise4-secondary-channel: #7A4F9A;
-				--noise4-primary-channel:   #AF82D2;
-				--noise4-secondary-note:    #9E71C1;
-				--noise4-primary-note:      #D4C1EA;
-				--noise5-secondary-channel: #607837;
-				--noise5-primary-channel:   #A2BB77;
-				--noise5-secondary-note:    #91AA66;
-				--noise5-primary-note:      #C5E2B2;
-          --mod1-secondary-channel:   #339955;
-					--mod1-primary-channel:     #77fc55;
-					--mod1-secondary-note:      #77ff8a;
-					--mod1-primary-note:        #cdffee;
-					--mod2-secondary-channel:   #993355;
-					--mod2-primary-channel:     #f04960;
-					--mod2-secondary-note:      #f057a0;
-					--mod2-primary-note:        #ffb8de;
-					--mod3-secondary-channel:   #553399;
-					--mod3-primary-channel:     #8855fc;
-					--mod3-secondary-note:      #aa64ff;
-					--mod3-primary-note:	    #f8ddff;
-					--mod4-secondary-channel:   #a86436;
-					--mod4-primary-channel:     #c8a825;
-					--mod4-secondary-note:      #e8ba46;
-					--mod4-primary-note:        #fff6d3;
-					--mod-label-primary:        #999;
-					--mod-label-secondary-text: #333;
-					--mod-label-primary-text:   black;
-					--disabled-note-primary:    #999;
-					--disabled-note-secondary:  #666;
-				}
-			`,
 			"foxbox": `
 			:root {
 				--page-margin: #ADD8E6;
@@ -5370,6 +5262,10 @@ export class ColorConfig {
 				* {
 					cursor: url("theme_resources/wackybox_cursor.png"), auto !important;
 				}
+				#Hotdog {
+					display: inline !important;
+					content: url("theme_resources/hotdog.png") !important;
+				}
 
 			`,
 			 "microbox": `
@@ -5401,8 +5297,8 @@ export class ColorConfig {
 					--track-editor-bg-mod-dim: #000000;
 					--multiplicative-mod-slider: #FFC800;
 					--overwriting-mod-slider: #00ffc0;
-					--indicator-primary: #333333;
-					--indicator-secondary: #00ffc0;
+					--indicator-primary: #00ffc0;
+					--indicator-secondary: #333333;
 					--select2-opt-group: #2B2B2B;
 					--input-box-outline: #69BFC6;
 					--mute-button-normal: #00ffc0;
@@ -5969,6 +5865,11 @@ export class ColorConfig {
 				--note-flash: #ffffff;
 				--note-flash-secondary: #ffffff77;
 				
+				--oscilloscope-line-R: var(--ui-widget-background);
+				--oscilloscope-line-L: var(--secondary-text);
+				--text-spacing-icon: > ;
+				--scrollbar-color: #bf2c5d;
+				
 				--file-page-symbol: url("theme_resources/icon-file.png");
 				--edit-pencil-symbol: url("theme_resources/icon-edit.png");
 				--preferences-gear-symbol: url("theme_resources/icon-preferences.png");
@@ -5989,6 +5890,10 @@ export class ColorConfig {
 					}
 			* {
 			cursor: url("theme_resources/abyssbox_cursor.png"), auto;
+			}
+			#Hotdog {
+				display: inline !important;
+				content: url("theme_resources/hotdog.png") !important;
 			}
 			
 				@font-face {
@@ -6287,6 +6192,11 @@ export class ColorConfig {
 				--note-flash: #ffffff;
 				--note-flash-secondary: #ffffff77;
 
+				--oscilloscope-line-R: var(--ui-widget-background);
+				--oscilloscope-line-L: var(--secondary-text);
+				--text-spacing-icon: > ;
+				--scrollbar-color: #bf2c5d;
+
 				--file-page-symbol: url("theme_resources/icon-file.png");
 				--edit-pencil-symbol: url("theme_resources/icon-edit.png");
 				--preferences-gear-symbol: url("theme_resources/icon-preferences.png");
@@ -6383,6 +6293,10 @@ export class ColorConfig {
 			/* sets cursor */ 
 			* {
 			cursor: url("theme_resources/abyssbox_cursor.png"), auto !important;
+			}
+			#Hotdog {
+				display: inline !important;
+				content: url("theme_resources/hotdog.png") !important;
 			}
 				@font-face {
 			   font-family: "AbyssType";
@@ -6623,6 +6537,9 @@ export class ColorConfig {
 		#text-content > section > h1 {
 		margin: auto;
 		content: url("theme_resources/AzurLaneThemeLogo.png");
+		}
+		.promptContainerBG::before {
+			box-shadow: inset 0 0 2000px rgba(255, 255, 255, .5);
 		}
 	}`,
 			  "custom": `${localStorage.getItem("customColors") || `:root {
@@ -7188,15 +7105,15 @@ export class ColorConfig {
             if (channel < song.pitchChannelCount) {
 				return ColorConfig.getComputed("--pitch-channel-limit") == ""
 				? ColorConfig.pitchChannels[channel % ColorConfig.pitchChannels.length] 
-				: ColorConfig.pitchChannels[channel % (Number(ColorConfig.getComputed("--pitch-channel-limit")) % ColorConfig.pitchChannels.length)];
+				: ColorConfig.pitchChannels[(channel % Number(ColorConfig.getComputed("--pitch-channel-limit"))) % ColorConfig.pitchChannels.length];
             } else if (channel < song.pitchChannelCount + song.noiseChannelCount) {
                 return ColorConfig.getComputed("--noise-channel-limit") == ""
 				? ColorConfig.noiseChannels[(channel - song.pitchChannelCount) % ColorConfig.noiseChannels.length] 
-				: ColorConfig.noiseChannels[(channel - song.pitchChannelCount) % (Number(ColorConfig.getComputed("--noise-channel-limit")) % ColorConfig.noiseChannels.length)];
+				: ColorConfig.noiseChannels[((channel - song.pitchChannelCount) % Number(ColorConfig.getComputed("--noise-channel-limit"))) % ColorConfig.noiseChannels.length];
             } else {
                 return ColorConfig.getComputed("--mod-channel-limit") == ""
 				? ColorConfig.modChannels[(channel - song.pitchChannelCount - song.noiseChannelCount) % ColorConfig.modChannels.length] 
-				: ColorConfig.modChannels[(channel - song.pitchChannelCount - song.noiseChannelCount) % (Number(ColorConfig.getComputed("--mod-channel-limit")) % ColorConfig.modChannels.length)];
+				: ColorConfig.modChannels[((channel - song.pitchChannelCount - song.noiseChannelCount) % Number(ColorConfig.getComputed("--mod-channel-limit"))) % ColorConfig.modChannels.length];
             }
         }
         else {

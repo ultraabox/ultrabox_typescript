@@ -132,9 +132,12 @@ document.head.appendChild(HTML.style({ type: "text/css" }, `
 }
 
 
+html {
+	scrollbar-color: var(--scrollbar-color, ${ColorConfig.uiWidgetBackground}) var(--scrollbar-background, ${ColorConfig.editorBackground});
+}
+
 .obtrusive-scrollbars, .obtrusive-scrollbars * {
 	scrollbar-width: thin;
-	scrollbar-color: ${ColorConfig.uiWidgetBackground} ${ColorConfig.editorBackground};
 }
 .obtrusive-scrollbars::-webkit-scrollbar, .obtrusive-scrollbars *::-webkit-scrollbar {
 	width: 12px;
@@ -724,18 +727,6 @@ document.head.appendChild(HTML.style({ type: "text/css" }, `
 	justify-content: center;
 	align-items: center;
 	z-index: 100;
-}
-
-.beepboxEditor .promptContainer::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: ${ColorConfig.editorBackground};
-	opacity: 0.5;
-	display: flex;
 }
 
 .beepboxEditor .prompt {

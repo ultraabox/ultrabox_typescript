@@ -18,10 +18,11 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="theme-color" content="#444" />
+    <meta name="theme-color" content="#FF08FF"/>
     <meta name="msapplication-TileColor" content="#dba600" />
     <meta name="msapplication-config" content="/browserconfig.xml" />
     <meta name="format-detection" content="telephone=no" />
+    <meta property="og:image" content="/icon_maskable_192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/icon_32.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
@@ -64,6 +65,8 @@
             padding-left: 30px;
             padding-right: 30px;
         }
+
+        #Hotdog { display: none; }
 
         h1 {
             font-size: 1.7rem;
@@ -127,6 +130,7 @@
             .instructions-column {
 				min-width: 0;
             }
+        }
 
         /* narrow screen */
 		@media (max-width: 710px) {
@@ -146,8 +150,6 @@
         }
     </style>
 </head>
-	 <!--WIP, DO NOT USE-->
-	 <!--<center>THIS URL IS MEANT FOR TESTING THE CHANGES MADE IN ULTRABOX 2.0. THIS URL WILL BE DELETED WHEN ULTRABOX 2.0 RELEASES, AND ANY SONGS YOU MAKE HERE MAY BE UNRECOVERABLE. YOU'VE BEEN WARNED.</center>-->
 <body id="secondImage">
     <script>
         const image = localStorage.getItem('customTheme2');
@@ -182,7 +184,7 @@
                 When you are satisfied with your song, just copy and paste the URL to save and share your song!
             </p>
             <p>
-                The offline version of UltraBox can be found <a href="https://github.com/ultraabox/ultrabox_typescript/releases">here</a>.
+                The offline version of UltraBox can be found <a href="https://github.com/ultraabox/ultrabox_typescript/releases">here</a>, while the testing version can be found <a href="https://ultraabox.github.io/testing">here</a>.
             </p>
             <!--
     <div class="donation">
@@ -207,9 +209,9 @@
                     <p>
                         You can add or remove notes by clicking on the gray rows at the top.
                         UltraBox automatically plays the notes out loud for you. Try it!
-			    <img id="Hotdog" src="hotdog.png" width="500" height="333" onclick="myFunction()" />
+			    <img id="Hotdog" src="" width="500" height="333" onclick="changeHotdogSize()" />
 				<script>
-				function myFunction(){
+				function changeHotdogSize(){
 					var image = document.getElementById('Hotdog')
 					image.width = Math.random() * (750 - 20) + 20
 					image.height = Math.random() * (499 - 20) + 20
@@ -239,11 +241,11 @@
                             When UltraBox has focus (click on its interface above), you can use these keyboard shortcuts: <br />
                         </p>
                         <ul>
-                            <li>Spacebar: play or pause the song</li>
+                            <li><b>Spacebar</b>: play or pause the song</li>
                             <li><b>Shift Spacebar</b>: play from mouse location</li>
 							<li><b>Z</b>: undo, <b>Y or Shift Z</b>: redo</li>
-                            <li>C: copy pattern from selection</li>
-                            <li>V: paste pattern into selection</li>
+                            <li><b>C</b>: copy pattern from selection</li>
+                            <li><b>V</b>: paste pattern into selection</li>
                             <li><b>0-9</b>: assign pattern number to selection</li>
 							<li><b>Arrows</b>: move selection</li>
 							<li><b>Ctrl + Arrows</b>: rearrange channels</li>

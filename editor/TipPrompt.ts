@@ -116,7 +116,7 @@ export class TipPrompt implements Prompt {
 				message = div(
 					h2("Instrument Type"),
 					p("UltraBox comes with many instrument presets, try them out! You can also create your own custom instruments!"),
-					p("There are also options for copying and pasting instrument settings and for generating random instruments at the top of the instrument type menu."),
+					p("There are also buttons for copying and pasting instruments at the bottom of the instrument settings tab, and for generating random instruments in the \"Randomize\" category in the instrument type menu."),
 				);
 			} break;
 			case "eqFilter": {
