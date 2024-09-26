@@ -18,7 +18,8 @@
 		"build-synth": "bash ./compile_beepbox_synth.sh",
 		"build-player": "bash ./compile_beepbox_player.sh",
 		"build-editor": "bash ./compile_beepbox_editor.sh",
-		"build-offline": "bash ./compile_beepbox_offline.sh"
+		"build-offline": "bash ./compile_beepbox_offline.sh",
+		"deploy_files": "bash ./deploy_files.sh"
 	},
 	"repository": {
 		"type": "git",
