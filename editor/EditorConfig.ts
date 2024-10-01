@@ -23,7 +23,7 @@ export function prettyNumber(value: number): string {
 }
 
 export class EditorConfig {
-    public static readonly version: string = "2.2.11"; // Currently using patch versions in display (unlike JB)
+    public static readonly version: string = "2.3.0"; // Currently using patch versions in display (unlike JB)
     public static readonly versionDisplayName: string = "UltraBox " + EditorConfig.version;
 
     public static readonly releaseNotesURL: string = "./patch_notes.html";
@@ -33,6 +33,8 @@ export class EditorConfig {
     public static readonly ctrlName: string = EditorConfig.isOnMac ? "command" : "control";
 
     public static customSamples: string[] | null;
+
+    public static showSongDetailsAlert: boolean = true;
 	
     public static readonly presetCategories: DictionaryArray<PresetCategory> = toNameMap([
         {

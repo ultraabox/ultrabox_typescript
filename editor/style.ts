@@ -498,6 +498,27 @@ html {
 	-webkit-mask-repeat: no-repeat;
 	-webkit-mask-position: center;
 }
+
+.beepboxEditor .details-button {
+	width: var(--button-size);
+}
+.beepboxEditor .details-button::before {
+	content: "";
+	position: absolute;
+	width: var(--button-size);
+	height: var(--button-size);
+	left: 0;
+	top: 0;
+	pointer-events: none;
+	background: var(--primary-text);
+	mask-image: var(--internal-add-symbol);
+	mask-repeat: no-repeat;
+	mask-position: center;
+	-webkit-mask-image: var(--internal-add-symbol);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+}
+
 .beepboxEditor .add-envelope:disabled {
 	visibility: hidden;
 }
@@ -1427,6 +1448,11 @@ html {
 	position: absolute;
 	background: currentColor;
 	border-radius: 3px;
+}
+
+.textarea {
+	background: ${ColorConfig.editorBackground};
+	border: 0.5px solid ${ColorConfig.inputBoxOutline};
 }
 
 .beepboxEditor input[type=text], .beepboxEditor input[type=number] {

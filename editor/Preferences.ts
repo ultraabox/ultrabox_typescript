@@ -42,6 +42,7 @@ export class Preferences {
 	public showDescription: boolean;
 	public showInstrumentScrollbars: boolean;
 	public closePromptByClickoff: boolean;
+	public promptSongDetails: boolean;
 	public frostedGlassBackground: boolean;
 	
 	constructor() {
@@ -77,6 +78,7 @@ export class Preferences {
 		this.showDescription = window.localStorage.getItem("showDescription") != "false";
 		this.showInstrumentScrollbars = window.localStorage.getItem("showInstrumentScrollbars") == "true";
 		this.closePromptByClickoff = window.localStorage.getItem("closePromptByClickoff") == "true";
+		this.promptSongDetails = window.localStorage.getItem("promptSongDetails") != "false";
 		this.frostedGlassBackground = window.localStorage.getItem("frostedGlassBackground") == "true";
 		this.keyboardLayout = window.localStorage.getItem("keyboardLayout") || "wickiHayden";
 		this.bassOffset = (+(<any>window.localStorage.getItem("bassOffset"))) || 0;
@@ -130,6 +132,7 @@ export class Preferences {
 		window.localStorage.setItem("showDescription", this.showDescription ? "true" : "false");
 		window.localStorage.setItem("showInstrumentScrollbars", this.showInstrumentScrollbars ? "true" : "false");
 		window.localStorage.setItem("closePromptByClickoff", this.closePromptByClickoff ? "true" : "false");
+		window.localStorage.setItem("promptSongDetails", this.promptSongDetails ? "true" : "false");
 		window.localStorage.setItem("frostedGlassBackground", this.frostedGlassBackground ? "true" : "false");
 		window.localStorage.setItem("keyboardLayout", this.keyboardLayout);
 		window.localStorage.setItem("bassOffset", String(this.bassOffset));
