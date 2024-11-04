@@ -1,6 +1,9 @@
-const { app, BrowserWindow, ipcMain } = require('electron/main'); //, Menu
+import { app, BrowserWindow, ipcMain } from 'electron/main'; //, Menu
 // const { mainMenu } = require("./menu");
-const path = require('path');
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const createWindow = () => {
 	const win = new BrowserWindow({
@@ -14,7 +17,8 @@ const createWindow = () => {
 		}
 	})
 
-	win.loadFile('index.html');
+	// win.loadFile('index.html');
+	win.loadFile('ultrabox_offline.html');
 	win.removeMenu();
 	win.maximize();
 	// The line below opens the dev tools
@@ -22,6 +26,7 @@ const createWindow = () => {
 }
 
 // Menu.setApplicationMenu(mainMenu);
+// Menu.setApplicationMenu(null);
 
 app.whenReady().then(() => {
 	createWindow()

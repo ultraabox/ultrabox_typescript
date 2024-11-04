@@ -1,19 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- TODO: Figure out jQuery and select2 -->
-    <script src="jquery-3.4.1.min.js"></script>
-    <link href="select2.min.css" rel="stylesheet" />
-    <script src="select2.min.js"></script>
+    <link rel='shortcut icon' type='image/x-icon' href='./favicon.ico' />
+    <!-- CDN for jQuery and select2 -->
+    <!--
+    <script src="offline_deps/jquery-3.4.1.min.js"></script>
+    <link href="offline_deps/select2.min.css" rel="stylesheet" />
+    <script src="offline_deps/select2.min.js"></script>
+    -->
+    <script>
+    /* INSERT_JQUERY_MIN_JS_HERE */
+    </script>
+    <script>
+    /* INSERT_SELECT2_MIN_JS_HERE */
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>UltraBox Offline</title>
-    <meta name="application-name" content="UltraBox Offline" />
+    <title>UltraBox</title>
+    <meta name="application-name" content="UltraBox" />
+    <meta name="apple-mobile-web-app-title" content="UltraBox">
     <meta name="description" content="UltraBox is a mod of BeepBox that aims to combine every other beepmod into one." />
-    <meta name="theme-color" content="#444" />
+    <meta name="keywords" content="chiptune, instrumental, music, song, melody, composition, tool, free, online, square wave, NES, NSF, ultrabox, beepbox, jummbox, pandorasbox, modbox, sandbox, goldbox, wackybox, todbox" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#CCCCCC"/>
     <meta name="msapplication-TileColor" content="#dba600" />
     <meta name="msapplication-config" content="/browserconfig.xml" />
     <meta name="format-detection" content="telephone=no" />
+    <meta property="og:image" content="/icon_maskable_192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon_32.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <style type="text/css">
 
         @font-face {
@@ -47,7 +65,7 @@
             overflow: auto;
             background: var(--editor-background, black);
             width: 100%;
-			max-width: 710px;
+            max-width: 700px;
             padding-left: 30px;
             padding-right: 30px;
         }
@@ -56,7 +74,7 @@
             overflow: auto;
             background: var(--editor-background, black);
             width: 100%;
-			max-width: 710px;
+            max-width: 700px;
             padding-left: 30px;
             padding-right: 30px;
         }
@@ -67,7 +85,6 @@
             margin-top: 0.5em;
             margin-bottom: 0.5em;
             -webkit-text-stroke-width: 0;
-            color: var(--mod-title, var(--link-accent, #9c64f7));
         }
 
         h2 {
@@ -79,8 +96,8 @@
         }
 
         .centerDiv {
-			margin: 0px auto;
-		}
+            margin: 0px auto;
+        }
 
         a {
             color: var(--link-accent, #98f);
@@ -91,8 +108,8 @@
         }
 
         .donation input[type="submit"] {
-            appearance: none;
             -webkit-appearance: none;
+            appearance: none;
             background: none;
             border: none;
             font-family: inherit;
@@ -105,7 +122,7 @@
         }
 
         /* wide screen */
-		@media (min-width: 711px) {
+        @media (min-width: 701px) {
             html {
                 width: 100%;
             }
@@ -115,18 +132,15 @@
             }
 
             .column-container {
-				width: 710px;
+                width: 700px;
                 display: flex;
-				gap: 25px;
+                justify-content: space-between;
             }
 
-            .instructions-column {
-				min-width: 0;
-            }
-		}
+        }
 
         /* narrow screen */
-		@media (max-width: 710px) {
+        @media (max-width: 700px) {
             body {
                 width: 100%;
             }
@@ -141,8 +155,12 @@
                 align-items: center;
             }
         }
+        
+        /* INSERT_SELECT2_CSS_HERE */
+        
     </style>
 </head>
+
 <body id="secondImage">
     <script>
         const image = localStorage.getItem('customTheme2');
@@ -173,8 +191,6 @@
             </p>
     </div>
 
-    <script src="beepbox_editor.min.js"></script>
-
     <script type="text/javascript">
         // (ignore the comments below)
         // get local directory (if things are changed to where this is needed immediately, loading of beepbox_editor.min.js will have to be delayed)
@@ -182,10 +198,7 @@
         //getDirname().then((response) => {
         //    localDirectoryURL = response;
         //}); 
-        
-        // Randomize display of header
-        // 1-in-23
-        //I should rework this sometime (maybe add the midbox tips thingy?)
+
         if (Math.floor(Math.random() * 8) == 0) {
             switch (Math.floor(Math.random() * 22)) {
                 // jummbox/goldbox plants
@@ -214,26 +227,26 @@
                     document.getElementById("goldboxPlant").innerHTML = "  1️⃣3️⃣1️⃣2️⃣";
                     break;
                 // blubox plants 
-			    case 8:
+                case 8:
                     document.getElementById("goldboxPlant").innerHTML = "  ≽(◕ ᴗ ◕)≼";
                     break;
-			    case 9:
+                case 9:
                     document.getElementById("goldboxPlant").innerHTML = "  ≽(ᴗ _ ᴗ)≼";
                     break;
-			    case 10:
+                case 10:
                     document.getElementById("goldboxPlant").innerHTML = "  ≽(⌐ _ ⌐)≼";
                     break;
-			    case 11:
+                case 11:
                     document.getElementById("goldboxPlant").innerHTML = "  ≽(ᵕ ‿ ᵕ)≼";
                     break;
                 // familiarbox plant (there were others, but the code of familiarbox is long gone) 
                 // this is actually a reference to really old lore chippy made for one of their projects 
-			    case 12:
+                case 12:
                     document.getElementById("goldboxPlant").innerHTML = "  ☀️⭐🕒👁️";
                     break;
                 // suggested by mel, meant to supplement the lack of a worm logo 
                 // (in case it doesn't show up, this is meant to be a worm emoji)
-			    case 13:
+                case 13:
                     document.getElementById("goldboxPlant").innerHTML = "  🪱";
                     break;
                 // I believe this is from paandorasbox (might have also been present in familiarbox???? maybe not though...)
@@ -241,11 +254,11 @@
                     document.getElementById("goldboxPlant").innerHTML = "  :wackybox:";
                     break;
                 // plant suggested by mel, in reference to the "(don't eat) thegubbys" meme
-			    case 15:
+                case 15:
                     document.getElementById("goldboxPlant").innerHTML = "  🐟";
                     break;
-                 // blubox desktop plants 
-                 case 16:
+                // blubox desktop plants 
+                case 16:
                     document.getElementById("goldboxPlant").innerHTML = "  ⚡";
                     break;
                 case 17:
@@ -272,6 +285,9 @@
                     break;
             }
         }
+
+        /* INSERT_BEEPBOX_SOURCE_HERE */
+        
     </script>
 </body>
 </html>

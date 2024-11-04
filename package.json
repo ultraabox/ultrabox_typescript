@@ -7,25 +7,33 @@
 		"Neputendo",
 		"LeoV",
 		"Mid",
-		"Choptop84",
+		"choptop84",
 		"Slarmoo"
 	],
 	"license": "MIT",
 	"homepage": "https://ultraabox.github.io",
 	"type": "module",
+	"main": "main.js",
+	"icon": "path.join(__dirname, 'icon.ico')",
 	"scripts": {
 		"build": "npm run build-synth && npm run build-player && npm run build-editor",
 		"build-synth": "bash ./compile_beepbox_synth.sh",
 		"build-player": "bash ./compile_beepbox_player.sh",
 		"build-editor": "bash ./compile_beepbox_editor.sh",
-		"build-offline": "bash ./compile_beepbox_offline.sh"
+		"build-offline": "bash ./compile_beepbox_offline.sh",
+		"deploy-files": "bash ./deploy_files.sh",
+		"start": "electron ./to_deploy",
+		"package": "electron-packager ./to_deploy --platform=darwin,linux,win32 --arch=ia32,x64 --asar --overwrite",
+		"package-host": "electron-packager ./to_deploy UltraBox --asar --overwrite"
 	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/ultraabox/ultrabox_typescript.git"
 	},
 	"devDependencies": {
+		"@electron/packager": "^18.3.5",
 		"@rollup/plugin-node-resolve": "^15.1.0",
+		"electron": "^33.0.0",
 		"rollup": "^2.79.1",
 		"rollup-plugin-sourcemaps": "^0.6.3",
 		"terser": "^5.19.2",
@@ -34,8 +42,6 @@
 	"dependencies": {
 		"@types/jquery": "^3.5.5",
 		"@types/select2": "^4.0.53",
-		"electron": "^29.1.1",
-		"electron-packager": "^17.1.2",
 		"imperative-html": "^0.1.0",
 		"select2": "^4.0.13"
 	}

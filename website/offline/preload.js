@@ -1,3 +1,3 @@
-const { contextBridge, ipcRenderer } = require("electron");
+import { contextBridge, ipcRenderer } from "electron";
 contextBridge.exposeInMainWorld("getDirname", () => ipcRenderer.invoke("getDirname"));
 contextBridge.exposeInMainWorld("pathJoin", (...args) => ipcRenderer.invoke("pathJoin", ...args));

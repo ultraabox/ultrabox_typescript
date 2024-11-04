@@ -3,7 +3,7 @@
 import { Dictionary, DictionaryArray, EnvelopeType, InstrumentType, Transition, Chord, Envelope, Config } from "../synth/SynthConfig";
 import { ColorConfig } from "../editor/ColorConfig";
 import { NotePin, Note, Pattern, Instrument, Channel, Synth } from "../synth/synth";
-import { oscilascopeCanvas } from "../global/Oscilascope";
+import { oscilloscopeCanvas } from "../global/Oscilloscope";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
 
 	const {a, button, div, h1, input, canvas} = HTML;
@@ -150,7 +150,7 @@ import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
 	}
 `));
 const colorTheme: string | null = getLocalStorage("colorTheme");
-ColorConfig.setTheme(colorTheme === null ? "dark classic" : colorTheme);
+ColorConfig.setTheme(colorTheme === null ? ColorConfig.defaultTheme : colorTheme);
 
 let prevHash: string | null = null;
 let id: string = ((Math.random() * 0xffffffff) >>> 0).toString(16);
@@ -162,10 +162,10 @@ let outVolumeHistoricTimer: number = 0;
 let outVolumeHistoricCap: number = 0;
 
 const synth: Synth = new Synth();
-const oscilascope: oscilascopeCanvas = new oscilascopeCanvas(canvas({ width: isMobile? 144:288, height: isMobile?32:64, style: `border:2px solid ${ColorConfig.uiWidgetBackground}; overflow: hidden;` , id: "oscilascopeAll" }), isMobile?1:2);
+const oscilloscope: oscilloscopeCanvas = new oscilloscopeCanvas(canvas({ width: isMobile? 144:288, height: isMobile?32:64, style: `border:2px solid ${ColorConfig.uiWidgetBackground}; overflow: hidden;` , id: "oscilloscopeAll" }), isMobile?1:2);
 const showOscilloscope: boolean = getLocalStorage("showOscilloscope") != "false";
 if (!showOscilloscope) {
-	oscilascope.canvas.style.display = "none";
+	oscilloscope.canvas.style.display = "none";
 	synth.oscEnabled = false;
 }
 let titleText: HTMLHeadingElement = h1({ style: "flex-grow: 1; margin: 0 1px; margin-left: 10px; overflow: hidden;" }, "");
@@ -229,7 +229,7 @@ document.body.appendChild(
 		volumeSlider,
 		zoomButton,
 		volumeBarContainer,
-		oscilascope.canvas, //make it auto remove itself later
+		oscilloscope.canvas, //make it auto remove itself later
 		titleText,
 		editLink,
 		copyLink,
