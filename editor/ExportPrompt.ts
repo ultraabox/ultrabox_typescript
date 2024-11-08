@@ -139,7 +139,7 @@ export class ExportPrompt implements Prompt {
             this._formatSelect.value = lastExportFormat;
         }
 
-        const lastExportWhitespace: boolean = window.localStorage.getItem("exportWhitespace") == "true";
+        const lastExportWhitespace: boolean = window.localStorage.getItem("exportWhitespace") != "false";
         if (lastExportWhitespace != null) {
             this._removeWhitespace.checked = lastExportWhitespace;
         }
