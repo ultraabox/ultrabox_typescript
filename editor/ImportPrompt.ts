@@ -945,7 +945,7 @@ export class ImportPrompt implements Prompt {
 				song.beatsPerBar = beatsPerBar;
 				song.key = key;
 				song.scale = 0;
-				song.rhythm = 5;
+				song.rhythm = 2;
 				song.layeredInstruments = false;
 				song.patternInstruments = pitchChannels.some(channel => channel.instruments.length > 1) || noiseChannels.some(channel => channel.instruments.length > 1);
 					

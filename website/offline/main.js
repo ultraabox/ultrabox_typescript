@@ -17,8 +17,7 @@ const createWindow = () => {
 		}
 	})
 
-	// win.loadFile('index.html');
-	win.loadFile('ultrabox_offline.html');
+	win.loadFile('index.html');
 	win.removeMenu();
 	win.maximize();
 	// The line below opens the dev tools

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel='shortcut icon' type='image/x-icon' href='./favicon.ico' /> 
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="theme-color" content="#CCCCCC"/>
+	<meta property="og:image" content="/icon_maskable_192.png" />
+	<meta name="description" content="UltraBox is a mod of BeepBox that aims to combine every other beepmod into one." />
+    <title>UltraBox FAQ</title>
+    <style type="text/css">
+
+        html {
+            background: var(--page-margin, black);
+            overflow-x: hidden;
+            font-size: large;
+            font-family: 'B612', sans-serif;
+            line-height: 1.3;
+            color: var(--primary-text, white);
+        }
+
+        body {
+            margin-left: 3vw;
+            margin-right: 3vw;
+        }
+
+       h1 {
+            font-size: 1.7rem;
+            text-align: center;
+			align-items: center;
+            align-content: center;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+            -webkit-text-stroke-width: 0;
+        }
+
+        h2, summary {
+            font-size: 1.5rem;
+			font-weight: bold;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+            -webkit-text-stroke-width: 0;
+        }
+		
+
+        h3 {
+            font-size: 1.2rem;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+            -webkit-text-stroke-width: 0;
+        }
+
+        a {
+            color: var(--link-accent, #98f);
+        }
+    </style>
+  </body>
+  
+
+<h1>
+<font color="#FF8EC5">Frequently Asked Questions</font>
+</h1>
+
+<!-- description of ultrabox here? -->
+
+<details>
+<summary>How does UltraBox differ from Jummbox?</summary>
+UltraBox aims to combine every other beepmod into one. New features include:
+ <ul>
+    <li>
+		Custom sampling, for importing your own sounds
+	</li>
+	<li>
+		6-operator FM synthesis
+	</li>
+	<li>
+		Several new chip waves and presets, most from old mods (such as Modbox)
+	</li>
+    <li>
+		Increased channel counts and max tempo
+	</li>
+	<li>
+		New themes, and the ability to make custom themes
+	</li>
+</ul>
+and so much more!
+</details>
+
+<details>
+<summary>How do I add custom samples?</summary>
+Since UltraBox doesn't have a web server of its own, you'll have to first upload your sample to a CORS-friendly website.
+<ul><li>The easiest to use are <a href="https://filegarden.com/">File Garden</a> or <a href="https://catbox.moe/">Catbox</a>.</li></ul>
+
+Next, you have to copy the URL of the sound itself. The URL should end with the filetype, such as <code>.wav</code> or <code>.mp3</code>.
+<br><br>
+
+To import it into UltraBox, open the Edit tab, scroll to the bottom, and click on "Add Custom Samples..."
+<br><br>
+
+Paste your url and press "Okay." If everything goes smoothly, UltraBox will reload and your sample will be available in the preset list.
+</details>
+
+<!-- <details>
+<summary>How do I add samples to UB Offline?</summary>
+stuff
+</details> -->
+
+<!-- <details> -->
+<!-- <summary>What are the original sources of the built-in samples? Can I use them without legal repercussions?</summary> -->
+<!-- stuff -->
+<!-- huge list of all the legacysample origins here -->
+<!-- </details> -->
+
+<details>
+<summary>Does UltraBox have an offline version?</summary>
+Yes! You can access it <a href="https://github.com/ultraabox/ultrabox_typescript/releases">here</a>.<br>
+You can either download an OS-specific version that has custom sampling support, or the generic HTML version that lacks custom sampling support. 
+</details>
+
+<details>
+<summary>Does UltraBox claim ownership over songs created with it?</summary>
+UltraBox does not claim ownership over songs created with it, so original songs belong to their authors.<br><br>
+Neither Ultrabox nor its creators assume responsibility for any copyrighted material played on UltraBox. No songs are ever received, recorded, or distributed by UltraBox's servers. All song data is contained in the URL after the hash (#) mark, and Ultrabox running inside your browser converts that data into sound waves.
+</details>
+
+<!-- <details>
+<summary>Can I modify UltraBox?</summary>
+Yes! You can download and use <a href="https://github.com/ultraabox/ultrabox_typescript" target="_blank">the source code</a> under the MIT license.<br>
+The original BeepBox source code by John Nesky can be found <a href="https://github.com/johnnesky/beepbox" target="_blank">here.
+</details> -->
+
+<details>
+<summary>When will <code>x</code> feature be added?</summary>
+You can track the progress of new features on the <a href="https://github.com/ultraabox/ultrabox_typescript/issues">issues page</a>.<br>
+Please be patient; the dev team works on UltraBox in their free time. We can't guarantee that anything will be out in a timely manner. 
+</details>
+
+<details>
+<summary>Where can I contact the developers?</summary>
+You can contact the developers via the <a href="https://discord.gg/beepbox">BeepBox Discord</a>.<br>
+You can also contact us on the <a href="https://github.com/ultraabox/ultrabox_typescript/issues">issues page</a> if you have ideas/suggestions or have encountered any bugs.
+</details>
+	
+</body>
+</html>

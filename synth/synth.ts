@@ -3973,7 +3973,7 @@ export class Song {
                 }
             } break;
             case SongTagCode.scale: {
-                this.scale = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                this.scale = clamp(0, Config.scales.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                 // All the scales were jumbled around by Jummbox. Just convert to free.
                 if (this.scale == Config.scales["dictionary"]["Custom"].index) {
                     for (var i = 1; i < Config.pitchesPerOctave; i++) {

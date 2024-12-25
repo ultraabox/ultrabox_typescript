@@ -23,8 +23,6 @@ npx terser \
     --define OFFLINE=true \
 	--mangle \
 	--mangle-props regex="/^_.+/;"
-    
-# echo "WARNING: This file assumes you have already ran npm run build!"
 
 # Compile player/main.ts into build/player/main.js and dependencies
 npx tsc -p tsconfig_player.json
@@ -53,13 +51,8 @@ cp website/offline/icon.ico to_deploy/
 cp website/offline/main.js to_deploy/
 cp website/offline/preload.js to_deploy/
 cp website/offline/3JnySDDxiSz36j6yGQ.woff2 to_deploy/
+cp website/offline/jquery-3.4.1.min.js to_deploy/
+cp website/offline/select2.min.css to_deploy/
+cp website/offline/select2.min.js to_deploy/
+cp website/offline/index.html to_deploy/
 cp package.json to_deploy/
-
-# Combine the html and js into a single file for the html version
-sed \
-	-e '/INSERT_BEEPBOX_SOURCE_HERE/{r website/beepbox_editor.min.js' -e 'd' -e '}' \
-	-e '/INSERT_JQUERY_MIN_JS_HERE/{r website/offline/jquery-3.4.1.min.js' -e 'd' -e '}' \
-	-e '/INSERT_SELECT2_MIN_JS_HERE/{r website/offline/select2.min.js' -e 'd' -e '}' \
-	-e '/INSERT_SELECT2_CSS_HERE/{r website/offline/select2.min.css' -e 'd' -e '}' \
-	website/offline/ultrabox_offline_template.html \
-	> to_deploy/ultrabox_offline.html
