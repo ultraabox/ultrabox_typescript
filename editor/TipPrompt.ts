@@ -546,6 +546,36 @@ export class TipPrompt implements Prompt {
 					p("This setting is a volume multiplier applied to the second voice. This setting will only work correctly with two voices."),
 				);
 			} break;
+			case "unisonBuzzes": {
+				message = div(
+					h2("Unison Buzzing"),
+					p("This setting controls whether or not there's a buzzing noise when there's only 1 unison voice, and the spread is set to something other than 0."),
+				);
+			} break;
+			case "slideSpeedSlider": {
+				message = div(
+					h2("Slide Speed"),
+					p("This slider controls how fast/slow the slide transition is. In other audio software, this setting is sometimes referred to as \"Portamento\"."),
+				);
+			} break;
+			case "strumSpeedSlider": {
+				message = div(
+					h2("Strum Speed"),
+					p("This setting affects how fast your chord will strum."),
+				);
+			} break;
+			case "upperNoteLimit": {
+				message = div(
+					h2("Upper Note Limit"),
+					p("Defines the upper limit in which notes will play, useful for advanced instruments."),
+				);
+			} break;
+			case "lowerNoteLimit": {
+				message = div(
+					h2("Lower Note Limit"),
+					p("Defines the lower limit in which notes will play, useful for advanced instruments."),
+				);
+			} break;
 
 			default:
 				// Check for modSetinfo#

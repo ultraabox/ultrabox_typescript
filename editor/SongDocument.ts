@@ -488,4 +488,11 @@ export class SongDocument {
 		const visibleOctaveCount: number = this.getVisibleOctaveCount();
 		return Math.max(0, Math.min(Config.pitchOctaves - visibleOctaveCount, Math.ceil(this.song.channels[channel].octave - visibleOctaveCount * 0.5)));
 	}
+
+	public samplesToTime(samples: number): string {
+        const rawSeconds: number = Math.round(samples / this.synth.samplesPerSecond);
+        const seconds: number = rawSeconds % 60;
+        const minutes: number = Math.floor(rawSeconds / 60);
+        return minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+    }
 }

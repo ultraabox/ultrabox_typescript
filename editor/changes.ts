@@ -2028,6 +2028,23 @@ export class ChangeUnisonSign extends Change {
     }
 }
 
+export class ChangeUnisonBuzzing extends Change {
+    constructor(doc: SongDocument, newValue: boolean) {
+        super();
+        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const oldValue = instrument.unisonBuzzes;
+
+        doc.notifier.changed();
+        if (oldValue != newValue) {
+            instrument.unisonBuzzes = newValue;
+            // instrument.unison = Config.unisons.length; // Custom
+            instrument.preset = instrument.type;
+            doc.notifier.changed();
+            this._didSomething();
+        }
+    }
+}
+
 export class ChangeChord extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
@@ -2318,6 +2335,26 @@ export class ChangeSupersawShape extends ChangeInstrumentSlider {
 		doc.notifier.changed();
 		if (oldValue != newValue) this._didSomething();
 	}
+}
+
+export class ChangeSlideSpeed extends ChangeInstrumentSlider {
+    constructor(doc: SongDocument, oldValue: number, newValue: number) {
+        super(doc);
+        this._instrument.slideTicks = newValue;
+        // doc.synth.unsetMod(Config.modulators.dictionary["slideTicks"].index, doc.channel, doc.getCurrentInstrument());
+        doc.notifier.changed();
+        if (oldValue != newValue) this._didSomething();
+    }
+}
+
+export class ChangeStrumSpeed extends ChangeInstrumentSlider {
+    constructor(doc: SongDocument, oldValue: number, newValue: number) {
+        super(doc);
+        this._instrument.strumParts = newValue;
+        // doc.synth.unsetMod(Config.modulators.dictionary["strumTicks"].index, doc.channel, doc.getCurrentInstrument());
+        doc.notifier.changed();
+        if (oldValue != newValue) this._didSomething();
+    }
 }
 
 export class ChangePitchShift extends ChangeInstrumentSlider {
@@ -4060,6 +4097,24 @@ export class ChangeReverb extends ChangeInstrumentSlider {
     }
 }
 
+export class ChangeUpperLimit extends ChangeInstrumentSlider {
+    constructor(doc: SongDocument, oldValue: number, newValue: number) {
+        super(doc);
+        this._instrument.upperNoteLimit = newValue;
+        doc.notifier.changed();
+        if (oldValue != newValue) this._didSomething();
+    }
+}
+
+export class ChangeLowerLimit extends ChangeInstrumentSlider {
+    constructor(doc: SongDocument, oldValue: number, newValue: number) {
+        super(doc);
+        this._instrument.lowerNoteLimit = newValue;
+        doc.notifier.changed();
+        if (oldValue != newValue) this._didSomething();
+    }
+}
+
 export class ChangeSongReverb extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
@@ -4609,6 +4664,42 @@ export class ChangeSongTitle extends Change {
 
         doc.song.title = newValue;
         document.title = newValue + " - " + EditorConfig.versionDisplayName;
+        doc.notifier.changed();
+        if (oldValue != newValue) this._didSomething();
+    }
+}
+
+export class ChangeSongAuthor extends Change {
+    constructor(doc: SongDocument, oldValue: string, newValue: string) {
+        super();
+        if (newValue.length > 30) {
+            newValue = newValue.substring(0, 30);
+        }
+
+        doc.song.author = newValue;
+        doc.notifier.changed();
+        if (oldValue != newValue) this._didSomething();
+    }
+}
+
+export class ChangeSongDescription extends Change {
+    constructor(doc: SongDocument, oldValue: string, newValue: string) {
+        super();
+        if (newValue.length > 1200) {
+            newValue = newValue.substring(0, 1200);
+        }
+
+        doc.song.description = newValue;
+        doc.notifier.changed();
+        if (oldValue != newValue) this._didSomething();
+    }
+}
+
+export class ChangeShowSongDetails extends Change {
+    constructor(doc: SongDocument, oldValue: boolean, newValue: boolean) {
+        super();
+
+        doc.song.showSongDetails = newValue;
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }

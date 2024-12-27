@@ -157,24 +157,16 @@ export class ExportPrompt implements Prompt {
         this._loopDropDown.addEventListener("blur", ExportPrompt._validateNumber);
         this._exportButton.addEventListener("click", this._export);
         this._cancelButton.addEventListener("click", this._close);
-        this._enableOutro.addEventListener("click", () => { (this._computedSamplesLabel.firstChild as Text).textContent = this.samplesToTime(this._doc.synth.getTotalSamples(this._enableIntro.checked, this._enableOutro.checked, +this._loopDropDown.value - 1)); });
-        this._enableIntro.addEventListener("click", () => { (this._computedSamplesLabel.firstChild as Text).textContent = this.samplesToTime(this._doc.synth.getTotalSamples(this._enableIntro.checked, this._enableOutro.checked, +this._loopDropDown.value - 1)); });
-        this._loopDropDown.addEventListener("change", () => { (this._computedSamplesLabel.firstChild as Text).textContent = this.samplesToTime(this._doc.synth.getTotalSamples(this._enableIntro.checked, this._enableOutro.checked, +this._loopDropDown.value - 1)); });
+        this._enableOutro.addEventListener("click", () => { (this._computedSamplesLabel.firstChild as Text).textContent = this._doc.samplesToTime(this._doc.synth.getTotalSamples(this._enableIntro.checked, this._enableOutro.checked, +this._loopDropDown.value - 1)); });
+        this._enableIntro.addEventListener("click", () => { (this._computedSamplesLabel.firstChild as Text).textContent = this._doc.samplesToTime(this._doc.synth.getTotalSamples(this._enableIntro.checked, this._enableOutro.checked, +this._loopDropDown.value - 1)); });
+        this._loopDropDown.addEventListener("change", () => { (this._computedSamplesLabel.firstChild as Text).textContent = this._doc.samplesToTime(this._doc.synth.getTotalSamples(this._enableIntro.checked, this._enableOutro.checked, +this._loopDropDown.value - 1)); });
         this._formatSelect.addEventListener("change", () => { if (this._formatSelect.value == "json") { this._removeWhitespaceDiv.style.display = "block"; } else {  this._removeWhitespaceDiv.style.display = "none"; } });
         this.container.addEventListener("keydown", this._whenKeyPressed);
 
         this._fileName.value = _doc.song.title;
         ExportPrompt._validateFileName(null, this._fileName);
 
-        (this._computedSamplesLabel.firstChild as Text).textContent = this.samplesToTime(this._doc.synth.getTotalSamples(this._enableIntro.checked, this._enableOutro.checked, +this._loopDropDown.value - 1));
-    }
-
-    // Could probably be moved to doc or synth. Fine here for now until needed by something else.
-    private samplesToTime(samples: number): string {
-        const rawSeconds: number = Math.round(samples / this._doc.synth.samplesPerSecond);
-        const seconds: number = rawSeconds % 60;
-        const minutes: number = Math.floor(rawSeconds / 60);
-        return minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+        (this._computedSamplesLabel.firstChild as Text).textContent = this._doc.samplesToTime(this._doc.synth.getTotalSamples(this._enableIntro.checked, this._enableOutro.checked, +this._loopDropDown.value - 1));
     }
 
     private _close = (): void => {

@@ -103,7 +103,7 @@ export const enum EffectType {
     vibrato,
     transition,
     chord,
-    // If you add more, you'll also have to extend the bitfield used in Base64 which currently uses two six-bit characters.
+    noteRange,
     length,
 }
 
@@ -891,14 +891,6 @@ export class Config {
 		{ name: "A", isWhiteKey: true, basePitch: 21 },
 		{ name: "A♯", isWhiteKey: false, basePitch: 22 },
         { name: "B", isWhiteKey: true, basePitch: 23 },
-				// { name: "C+", isWhiteKey: false, basePitch: 24 },
-		//taken from todbox, called "B#" for some reason lol
-		// { name: "G- (actually F#-)", isWhiteKey: false, basePitch: 6 },
-        // { name: "C-", isWhiteKey: true, basePitch: 0 },
-	    //brucebox
-		//g- isn't actually g-???
-		// { name: "oh no (F-)", isWhiteKey: true, basePitch: 5 },
-		//shitbox
 	]);
 	public static readonly blackKeyNameParents: ReadonlyArray<number> = [-1, 1, -1, 1, -1, 1, -1, -1, 1, -1, 1, -1];
 	public static readonly tempoMin: number = 1;
@@ -1019,7 +1011,6 @@ export class Config {
         { name: "nerdbox unnamed 2", expression: 0.5, samples: centerAndNormalizeWave([2.0 , 5.0 / 55.0 , -9.0 , 6.5 / 6.5 , -55.0, 18.5 / -26.0]) },
         // zefbox
         { name: "zefbox semi-square", expression: 1.0, samples: centerAndNormalizeWave([1.0, 1.5, 2.0, 2.5, 2.5, 2.5, 2.0, 1.5, 1.0]) },
-        { name: "zefbox deep square", expression: 1.0, samples: centerAndNormalizeWave([1.0, 2.25, 1.0, -1.0, -2.25, -1.0]) },
         { name: "zefbox squaretal", expression: 0.7, samples: centerAndNormalizeWave([1.5, 1.0, 1.5, -1.5, -1.0, -1.5]) },
         { name: "zefbox saw wide", expression: 0.65, samples: centerAndNormalizeWave([0.0, -0.4, -0.8, -1.2, -1.6 , -2.0, 0.0, -0.4, -0.8, -1.2, -1.6]) },
         { name: "zefbox saw narrow", expression: 0.65,samples: centerAndNormalizeWave([1, 0.5, 1, 0.5, 1, 0.5, 1, 2, 1, 2 ,1]) },
@@ -1128,6 +1119,7 @@ export class Config {
 	// This array is more or less a linear step by 0.1 but there's a bit of range added at the start to hit specific ratios, and the end starts to grow faster.
 	//                                                             0       1      2    3     4      5    6    7      8     9   10   11 12   13   14   15   16   17   18   19   20   21 22   23   24   25   26   27   28   29   30   31 32   33   34   35   36   37   38    39  40   41 42    43   44   45   46 47   48 49 50
 	public static readonly arpSpeedScale: ReadonlyArray<number> = [0, 0.0625, 0.125, 0.2, 0.25, 1 / 3, 0.4, 0.5, 2 / 3, 0.75, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 4, 4.15, 4.3, 4.5, 4.8, 5, 5.5, 6, 8];
+     //public static readonly slideTicksScale: ReadonlyArray<number> = [0, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 46, 48];
 	public static readonly unisons: DictionaryArray<Unison> = toNameMap([
         { name: "none", voices: 1, spread: 0.0, offset: 0.0, expression: 1.4, sign: 1.0 },
         { name: "shimmer", voices: 2, spread: 0.018, offset: 0.0, expression: 0.8, sign: 1.0 },
@@ -1159,8 +1151,8 @@ export class Config {
 		
 	 //for modbox; voices = riffapp, spread = intervals, offset = offsets, expression = volume, and sign = signs
 	]);
-    public static readonly effectNames: ReadonlyArray<string> = ["reverb", "chorus", "panning", "distortion", "bitcrusher", "note filter", "echo", "pitch shift", "detune", "vibrato", "transition type", "chord type"];
-    public static readonly effectOrder: ReadonlyArray<EffectType> = [EffectType.panning, EffectType.transition, EffectType.chord, EffectType.pitchShift, EffectType.detune, EffectType.vibrato, EffectType.noteFilter, EffectType.distortion, EffectType.bitcrusher, EffectType.chorus, EffectType.echo, EffectType.reverb];
+    public static readonly effectNames: ReadonlyArray<string> = ["reverb", "chorus", "panning", "distortion", "bitcrusher", "note filter", "echo", "pitch shift", "detune", "vibrato", "transition type", "chord type", "note range"];
+    public static readonly effectOrder: ReadonlyArray<EffectType> = [EffectType.panning, EffectType.transition, EffectType.chord, EffectType.pitchShift, EffectType.detune, EffectType.vibrato, EffectType.noteFilter, EffectType.distortion, EffectType.bitcrusher, EffectType.chorus, EffectType.echo, EffectType.reverb, EffectType.noteRange];
     public static readonly noteSizeMax: number = 6;
 	public static readonly volumeRange: number = 50;
 	// Beepbox's old volume scale used factor -0.5 and was [0~7] had roughly value 6 = 0.125 power. This new value is chosen to have -21 be the same,
@@ -2030,6 +2022,9 @@ export function effectsIncludeEcho(effects: number): boolean {
 }
 export function effectsIncludeReverb(effects: number): boolean {
     return (effects & (1 << EffectType.reverb)) != 0;
+}
+export function effectsIncludeNoteRange(effects: number): boolean {
+    return (effects & (1 << EffectType.noteRange)) != 0;
 }
 export function rawChipToIntegrated(raw: DictionaryArray<ChipWave>): DictionaryArray<ChipWave> {
     const newArray: Array<ChipWave> = new Array<ChipWave>(raw.length);
