@@ -69,7 +69,6 @@ export class ThemePrompt implements Prompt {
 			option({ value: "lemmbox dark"}, "LemmBox"),
 		),
 		optgroup({ label: "Misc" },
-			option({ value: "azur lane" }, "Azur Lane"),
 			option({ value: "custom" }, "Custom")
 		),
 	);
