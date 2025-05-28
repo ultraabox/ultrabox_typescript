@@ -743,6 +743,24 @@ html {
 	box-shadow: 5px 5px 20px 10px rgba(0,0,0,0.5);
 }
 
+.alert {
+	margin: auto;
+	text-align: center;
+	background: ${ColorConfig.editorBackground};
+	border-radius: 15px;
+	border: 4px solid ${ColorConfig.uiWidgetBackground};
+	color: ${ColorConfig.primaryText};
+	<!--padding: 5px;
+	display: flex; -->
+	padding: 20px;
+	display: flex;
+	flex-direction: column; 
+	position: absolute; 
+	box-shadow: 5px 5px 20px 10px rgba(0,0,0,0.5);
+	z-index: 10; 
+	top: 5vh;
+}
+
 .beepboxEditor .prompt > *:not(:first-child):not(.cancelButton) {
 	margin-top: 1.5em;
 }

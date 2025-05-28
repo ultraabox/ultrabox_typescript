@@ -37,7 +37,7 @@ export class SongDetailsPrompt implements Prompt {
 			this._showSongDetailsBox,
 		),
 		div({ style: "text-align: left;" },
-			div({style:"display:flex; gap: 3px; margin-bottom: 1em;"},"Song Length: ", this._computedSamplesLabel,),
+		div({style:"display:flex; gap: 3px; margin-bottom: 1em;"},"Song Length: ", this._computedSamplesLabel),
 		// br(),
 		div({style:"margin-bottom: 0.5em;"},"Pitch Channels: " + this._doc.song.pitchChannelCount),
 		div({style:"margin-bottom: 0.5em;"},"Noise Channels: " + this._doc.song.noiseChannelCount),

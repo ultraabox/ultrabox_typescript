@@ -55,6 +55,7 @@ import { SampleLoadingStatusPrompt } from "./SampleLoadingStatusPrompt";
 import { AddSamplesPrompt } from "./AddSamplesPrompt";
 import { ShortenerConfigPrompt } from "./ShortenerConfigPrompt";
 import { SongDetailsPrompt } from "./SongDetailsPrompt";
+import { SongDetailsAlert } from "./SongDetailsAlert";
 
 const { button, div, input, select, span, optgroup, option, canvas } = HTML;
 
@@ -904,7 +905,6 @@ export class SongEditor {
     private readonly _slideSpeedDisplay: HTMLSpanElement = span({ style: `color: ${ColorConfig.secondaryText}; font-size: smaller; text-overflow: clip;` }, "x1");
     private readonly _slideSpeedSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "1", max: "48", value: "3", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeSlideSpeed(this._doc, oldValue, newValue), false);
     private readonly _slideSpeedRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", style: "margin-left:4px;", onclick: () => this._openPrompt("slideSpeedSlider") }, "‣ Spd:"), this._slideSpeedDisplay, this._slideSpeedSlider.container);
-    // should the slide speed be before or after the clickless setting???
     private readonly _transitionDropdownGroup: HTMLElement = div({ class: "editor-controls", style: "display: none;" }, this._slideSpeedRow, this._clicklessTransitionRow);
 
     private readonly _effectsSelect: HTMLSelectElement = select(option({ selected: true, disabled: true, hidden: false })); // todo: "hidden" should be true but looks wrong on mac chrome, adds checkmark next to first visible option even though it's not selected. :(
@@ -1014,9 +1014,10 @@ export class SongEditor {
     private readonly _arpeggioSpeedDisplay: HTMLSpanElement = span({ style: `color: ${ColorConfig.secondaryText}; font-size: smaller; text-overflow: clip;` }, "x1");
     private readonly _arpeggioSpeedSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.modulators.dictionary["arp speed"].maxRawVol, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeArpeggioSpeed(this._doc, oldValue, newValue), false);
     private readonly _arpeggioSpeedRow: HTMLElement = div({ class: "selectRow dropFader" }, span({ class: "tip", style: "margin-left:4px;", onclick: () => this._openPrompt("arpeggioSpeed") }, "‣ Spd:"), this._arpeggioSpeedDisplay, this._arpeggioSpeedSlider.container);
-    private readonly _strumSpeedDisplay: HTMLSpanElement = span({ style: `color: ${ColorConfig.secondaryText}; font-size: smaller; text-overflow: clip;` }, "0.04 beat(s)");
+    private readonly _strumSpeedDisplayNumber: HTMLSpanElement = span({ style: `color: ${ColorConfig.secondaryText}; font-size: 80%; text-overflow: clip;` }, "0.04");
+    private readonly _strumSpeedDisplayBeats: HTMLSpanElement = div({ style: `color: ${ColorConfig.secondaryText}; font-size: 80%; text-overflow: clip;` }, "beats");
     private readonly _strumSpeedSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "1", max: "48", value: "1", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeStrumSpeed(this._doc, oldValue, newValue), false);
-    private readonly _strumSpeedRow: HTMLElement = div({ class: "selectRow dropFader" }, span({ class: "tip", style: "margin-left:4px;", onclick: () => this._openPrompt("strumSpeedSlider") }, "‣ Spd:"), this._strumSpeedDisplay, this._strumSpeedSlider.container);
+    private readonly _strumSpeedRow: HTMLElement = div({ class: "selectRow dropFader" }, span({ class: "tip", style: "margin-left:4px;", onclick: () => this._openPrompt("strumSpeedSlider") }, "‣ Spd:"), div({}, this._strumSpeedDisplayNumber, this._strumSpeedDisplayBeats), this._strumSpeedSlider.container);
     private readonly _twoNoteArpBox: HTMLInputElement = input({ type: "checkbox", style: "width: 1em; padding: 0; margin-right: 4em;" });
     private readonly _twoNoteArpRow: HTMLElement = div({ class: "selectRow dropFader" }, span({ class: "tip", style: "margin-left:4px;", onclick: () => this._openPrompt("twoNoteArpeggio") }, "‣ Fast Two-Note:"), this._twoNoteArpBox);
     private readonly _chordDropdownGroup: HTMLElement = div({ class: "editor-controls", style: "display: none;" }, this._strumSpeedRow, this._arpeggioSpeedRow, this._twoNoteArpRow);
@@ -2218,6 +2219,13 @@ export class SongEditor {
         if (document.getElementById('text-content'))
             document.getElementById('text-content')!.style.display = this._doc.prefs.showDescription ? "" : "none";
 
+        if (this._doc.song.showSongDetails && EditorConfig.showSongDetailsAlert && this._doc.prefs.promptSongDetails) {
+            document.body.appendChild(new SongDetailsAlert(this._doc).container);
+        }
+
+        // always set showSongDetailsAlert to false, as if you set it to false in the if block it'll pop up when you change the "Prompt Song Details on Load" preference
+        EditorConfig.showSongDetailsAlert = false;
+
         if (this._doc.getFullScreen()) {
             const semitoneHeight: number = this._patternEditorRow.clientHeight / this._doc.getVisiblePitchCount();
             const targetBeatWidth: number = semitoneHeight * 5;
@@ -2875,7 +2883,8 @@ export class SongEditor {
             this._arpeggioSpeedSlider.input.title = "x" + prettyNumber(Config.arpSpeedScale[instrument.arpeggioSpeed]);
             this._arpeggioSpeedDisplay.textContent = "x" + prettyNumber(Config.arpSpeedScale[instrument.arpeggioSpeed]);
             this._strumSpeedSlider.input.title = prettyNumber(instrument.strumParts / Config.partsPerBeat) + " beat(s)";
-            this._strumSpeedDisplay.textContent = prettyNumber(instrument.strumParts / Config.partsPerBeat) + " beat(s)";
+            this._strumSpeedDisplayNumber.textContent = prettyNumber(instrument.strumParts / Config.partsPerBeat);
+            this._strumSpeedDisplayBeats.textContent = instrument.strumParts / Config.partsPerBeat == 1 ? "beat" : "beats";
             this._eqFilterSimpleCutSlider.updateValue(instrument.eqFilterSimpleCut);
             this._eqFilterSimplePeakSlider.updateValue(instrument.eqFilterSimplePeak);
             this._noteFilterSimpleCutSlider.updateValue(instrument.noteFilterSimpleCut);
@@ -3545,16 +3554,6 @@ export class SongEditor {
                 // A dummy change that pushes history state.
                 this._doc.record(new ChangeHoldingModRecording(this._doc, null, null, null));
             }
-
-        if (this._doc.song.showSongDetails && EditorConfig.showSongDetailsAlert && this._doc.prefs.promptSongDetails) {
-            alert(
-            (this._doc.song.title != "" ? this._doc.song.title : "Untitled") +
-            (this._doc.song.author != "" ? "\n\nBy " + this._doc.song.author : "") +
-            (this._doc.song.description != "" ? "\n\n\n" + this._doc.song.description : "")
-            );
-        }
-        // always set showSongDetailsAlert to false, as if you set it to false in the if block it'll pop up when you change the "Prompt Song Details on Load" preference
-        EditorConfig.showSongDetailsAlert = false;
     }
 
     private _renderInstrumentBar(channel: Channel, instrumentIndex: number, colors: ChannelColors) {
@@ -4087,12 +4086,8 @@ export class SongEditor {
             case 68: // d
                 if (canPlayNotes) break;
                 if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
-                    if (event.shiftKey) {
-                        this._openPrompt("songDetails");
-                    } else {
-                        this._doc.selection.duplicatePatterns();
-                        event.preventDefault();
-                    }
+                    this._doc.selection.duplicatePatterns();
+                    event.preventDefault();
                 }
                 break;
             case 69: // e (+shift: eq filter settings)

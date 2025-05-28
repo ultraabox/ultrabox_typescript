@@ -2869,7 +2869,6 @@ export class Song {
     private static readonly _oldestUltraBoxVersion: number = 1;
     private static readonly _latestUltraBoxVersion: number = 6;
     // One-character variant detection at the start of URL to distinguish variants such as JummBox, Or Goldbox. "j" and "g" respectively
-	//also "u" is ultrabox lol
     private static readonly _variant = 0x75; //"u" ~ ultrabox
 
     public title: string;
@@ -3123,9 +3122,11 @@ export class Song {
         buffer.push(SongTagCode.channelCount, base64IntToCharCode[this.pitchChannelCount], base64IntToCharCode[this.noiseChannelCount], base64IntToCharCode[this.modChannelCount]);
         buffer.push(SongTagCode.scale, base64IntToCharCode[this.scale]);
         if (this.scale == Config.scales["dictionary"]["Custom"].index) {
+            let customScaleBitfield = 0;
             for (var i = 1; i < Config.pitchesPerOctave; i++) {
-                buffer.push(base64IntToCharCode[this.scaleCustom[i]?1:0]) // ineffiecent? yes, all we're going to do for now? hell yes
+                if (this.scaleCustom[i]) customScaleBitfield = (customScaleBitfield | (1 << i));
             }
+            buffer.push(base64IntToCharCode[customScaleBitfield >> 6], base64IntToCharCode[customScaleBitfield & 63]);
         }
         buffer.push(SongTagCode.key, base64IntToCharCode[this.key], base64IntToCharCode[this.octave - Config.octaveMin]);
         buffer.push(SongTagCode.loopStart, base64IntToCharCode[this.loopStart >> 6], base64IntToCharCode[this.loopStart & 0x3f]);
@@ -3973,13 +3974,33 @@ export class Song {
                 }
             } break;
             case SongTagCode.scale: {
-                this.scale = clamp(0, Config.scales.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                // All the scales were jumbled around by Jummbox. Just convert to free.
-                if (this.scale == Config.scales["dictionary"]["Custom"].index) {
-                    for (var i = 1; i < Config.pitchesPerOctave; i++) {
-                        this.scaleCustom[i] = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] == 1; // ineffiecent? yes, all we're going to do for now? hell yes
+                this.scale = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                
+                // backcompat for removal of No Dabbing, Jacked Toad, and Test scales
+                if (fromUltraBox && beforeSix) {
+                    if (this.scale == 24) {
+                        this.scale = 21; // new Custom scale index
+                    } else if (this.scale > 20) {
+                        this.scale = 0; // Free scale
                     }
                 }
+
+                if (this.scale == Config.scales["dictionary"]["Custom"].index) {
+                    if (fromUltraBox && !beforeSix) {
+                        let customScaleBitfield = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                        for (var i = 1; i < Config.pitchesPerOctave; i++) {
+                            this.scaleCustom[i] = (customScaleBitfield & (1 << i)) != 0;
+                        }
+                    } else {
+                        for (var i = 1; i < Config.pitchesPerOctave; i++) {
+                            this.scaleCustom[i] = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] == 1; // old goldbox encoding
+                        }
+                    }
+                }
+
+                this.scale = clamp(0, Config.scales.length, this.scale);
+
+                // All the scales were jumbled around by Jummbox. Just convert to free.
                 if (fromBeepBox) this.scale = 0;
             } break;
             case SongTagCode.key: {
@@ -4270,7 +4291,6 @@ export class Song {
                                 const chipWaveReal = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                 const chipWaveCounter = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                             
-                                // backcompat for removal of zefbox deep square
                                 if (chipWaveCounter == 3) {
                                     instrument.chipWave = chipWaveReal + 186;											   					   	 						  								
                                 } else if (chipWaveCounter == 2) {
@@ -4281,6 +4301,7 @@ export class Song {
                                     instrument.chipWave = chipWaveReal;											   					   	 						  								
                                 }
 
+                                // backcompat for removal of zefbox deep square
                                 if (instrument.chipWave == 64) {
                                     instrument.chipWave = 52;
                                 } else if (instrument.chipWave > 64) {
