@@ -24,8 +24,8 @@ export class MuteEditor {
 		HTML.option({ value: "rename" }, "Rename..."),
 		HTML.option({ value: "chnUp" }, "Move Channel Up"),
 		HTML.option({ value: "chnDown" }, "Move Channel Down"),
-		HTML.option({ value: "chnMute" }, "Mute Channel"),
-		HTML.option({ value: "chnSolo" }, "Solo Channel"),
+		HTML.option({ value: "chnMute" }, "un/Mute Channel"),
+		HTML.option({ value: "chnSolo" }, "un/Solo Channel"),
 		HTML.option({ value: "chnInsert" }, "Insert Channel Below"),
 		HTML.option({ value: "chnDelete" }, "Delete This Channel"),
 	);
@@ -89,11 +89,11 @@ export class MuteEditor {
 	private _channelDropDownGetOpenedPosition = (event: MouseEvent): void => {
 
 		this._channelDropDownLastState = this._channelDropDownOpen;
-
+		
 		this._channelDropDownChannel = Math.floor(Math.min(this._buttons.length, Math.max(0, parseInt(this._channelDropDown.style.getPropertyValue("top")) / ChannelRow.patternHeight)));
 		this._doc.muteEditorChannel = this._channelDropDownChannel;
 
-		this._channelNameDisplay.style.setProperty("display", "");
+		this._channelNameDisplay.style.setProperty("display", "none");
 
 		// Check if channel is at limit, in which case another can't be inserted
 		if ((this._channelDropDownChannel < this._doc.song.pitchChannelCount && this._doc.song.pitchChannelCount == Config.pitchChannelCountMax)
