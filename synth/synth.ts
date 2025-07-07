@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { startLoadingSample, sampleLoadingState, SampleLoadingState, sampleLoadEvents, SampleLoadedEvent, SampleLoadingStatus, loadBuiltInSamples, Dictionary, DictionaryArray, toNameMap, FilterType, SustainType, EnvelopeType, InstrumentType, EffectType, EnvelopeComputeIndex, Transition, Unison, Chord, Vibrato, Envelope, AutomationTarget, Config, getDrumWave, drawNoiseSpectrum, getArpeggioPitchIndex, performIntegralOld, getPulseWidthRatio, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeNoteFilter, effectsIncludeDistortion, effectsIncludeBitcrusher, effectsIncludePanning, effectsIncludeChorus, effectsIncludeEcho, effectsIncludeReverb, OperatorWave } from "./SynthConfig";
+import { startLoadingSample, sampleLoadingState, SampleLoadingState, sampleLoadEvents, SampleLoadedEvent, SampleLoadingStatus, loadBuiltInSamples, Dictionary, DictionaryArray, toNameMap, FilterType, SustainType, EnvelopeType, InstrumentType, EffectType, EnvelopeComputeIndex, Transition, Unison, Chord, Vibrato, Envelope, AutomationTarget, Config, getDrumWave, drawNoiseSpectrum, getArpeggioPitchIndex, performIntegralOld, getPulseWidthRatio, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeNoteFilter, effectsIncludeDistortion, effectsIncludeBitcrusher, effectsIncludePanning, effectsIncludeChorus, effectsIncludeEcho, effectsIncludeReverb, OperatorWave, bundledSamplePacks } from "./SynthConfig";
 import { Preset, EditorConfig } from "../editor/EditorConfig";
 import { scaleElementsByFactor, inverseRealFourierTransform } from "./FFT";
 import { Deque } from "./Deque";
@@ -3819,21 +3819,21 @@ export class Song {
                         sampleLoadingState.samplesLoaded
                     ));
                     for (const url of compressed_array) {
-                        if (url.toLowerCase() === "legacysamples") {
+                        if (url.toLowerCase() === bundledSamplePacks.legacy) {
                             if (!willLoadLegacySamples) {
                                 willLoadLegacySamples = true;
                                 customSampleUrls.push(url);
                                 loadBuiltInSamples(0);
                             }
                         } 
-                        else if (url.toLowerCase() === "nintariboxsamples") {
+                        else if (url.toLowerCase() === bundledSamplePacks.nintaribox) {
                             if (!willLoadNintariboxSamples) {
                                 willLoadNintariboxSamples = true;
                                 customSampleUrls.push(url);
                                 loadBuiltInSamples(1);
                             }
                         }
-                        else if (url.toLowerCase() === "mariopaintboxsamples") {
+                        else if (url.toLowerCase() === bundledSamplePacks.mariopaintbox) {
                             if (!willLoadMarioPaintboxSamples) {
                                 willLoadMarioPaintboxSamples = true;
                                 customSampleUrls.push(url);
@@ -4414,11 +4414,11 @@ export class Song {
                     }
                 }
                 else if (fromGoldBox && !beforeFour && beforeSix) {
-                    if (document.URL.substring(document.URL.length - 13).toLowerCase() != "legacysamples") {
+                    if (document.URL.substring(document.URL.length - 13).toLowerCase() != bundledSamplePacks.legacy) {
                             if (!willLoadLegacySamplesForOldSongs) {
                                 willLoadLegacySamplesForOldSongs = true;
                                 Config.willReloadForCustomSamples = true;
-                                EditorConfig.customSamples = ["legacySamples"];
+                                EditorConfig.customSamples = [bundledSamplePacks.legacy];
                                 loadBuiltInSamples(0);
                             }
                     }
@@ -5104,11 +5104,11 @@ export class Song {
                     //is it more useful to save base64 characters or url length?
                     const chipWaveForCompat = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                     if ((chipWaveForCompat + 62) > 85) {
-                        if (document.URL.substring(document.URL.length - 13).toLowerCase() != "legacysamples") {
+                        if (document.URL.substring(document.URL.length - 13).toLowerCase() != bundledSamplePacks.legacy) {
                             if (!willLoadLegacySamplesForOldSongs) {
                                 willLoadLegacySamplesForOldSongs = true;
                                 Config.willReloadForCustomSamples = true;
-                                EditorConfig.customSamples = ["legacySamples"];
+                                EditorConfig.customSamples = [bundledSamplePacks.legacy];
                                 loadBuiltInSamples(0);
                             }
                         }
@@ -6219,21 +6219,21 @@ export class Song {
                 const customSampleUrls: string[] = [];
                 const customSamplePresets: Preset[] = [];
                 for (const url of customSamples) {
-                    if (url.toLowerCase() === "legacysamples") {
+                    if (url.toLowerCase() === bundledSamplePacks.legacy) {
                         if (!willLoadLegacySamples) {
                             willLoadLegacySamples = true;
                             customSampleUrls.push(url);
                             loadBuiltInSamples(0);
                         }
                     } 
-                    else if (url.toLowerCase() === "nintariboxsamples") {
+                    else if (url.toLowerCase() === bundledSamplePacks.nintaribox) {
                         if (!willLoadNintariboxSamples) {
                             willLoadNintariboxSamples = true;
                             customSampleUrls.push(url);
                             loadBuiltInSamples(1);
                         }
                     }
-                    else if (url.toLowerCase() === "mariopaintboxsamples") {
+                    else if (url.toLowerCase() === bundledSamplePacks.mariopaintbox) {
                         if (!willLoadMarioPaintboxSamples) {
                             willLoadMarioPaintboxSamples = true;
                             customSampleUrls.push(url);
@@ -6500,7 +6500,7 @@ export class Song {
                 Song._restoreChipWaveListToDefault();
 
                 loadBuiltInSamples(0);
-                EditorConfig.customSamples = ["legacySamples"];
+                EditorConfig.customSamples = [bundledSamplePacks.legacy];
             } else {
                 // We don't need to load the legacy samples, but we may have
                 // leftover samples in memory. If we do, clear them.

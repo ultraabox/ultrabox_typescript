@@ -1,5 +1,5 @@
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
-import { Dictionary, Config } from "../synth/SynthConfig";
+import { Dictionary, Config, bundledSamplePacks } from "../synth/SynthConfig";
 import { clamp, parseFloatWithDefault, parseIntWithDefault } from "../synth/synth";
 import { ColorConfig } from "./ColorConfig";
 import { EditorConfig } from "./EditorConfig";
@@ -49,11 +49,11 @@ export class AddSamplesPrompt {
     private readonly _description: HTMLDivElement = div(
         div({ style: "margin-bottom: 0.5em; -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; cursor: text;" },
             "In order to use the old UltraBox samples, you should add ",
-            code("legacySamples"),
+            code(bundledSamplePacks.legacy),
             " as an URL. You can also use ",
-            code("nintariboxSamples"),
+            code(bundledSamplePacks.nintaribox),
             " and ",
-            code("marioPaintboxSamples"),
+            code(bundledSamplePacks.mariopaintbox),
             " for more built-in sample packs."
         ),
         div({ style: "margin-bottom: 0.5em;" },
@@ -438,10 +438,10 @@ export class AddSamplesPrompt {
         const parsedEntries: SampleEntry[] = [];
         for (const url of urls) {
             if (url === "") continue;
-            if (url.toLowerCase() === "legacysamples") {
+            if (url.toLowerCase() === bundledSamplePacks.legacy) {
                 if (!useLegacySamples) {
                     parsedEntries.push({
-                        url: "legacySamples",
+                        url: bundledSamplePacks.legacy,
                         sampleRate: 44100,
                         rootKey: 60,
                         percussion: false,
@@ -453,10 +453,10 @@ export class AddSamplesPrompt {
                     });
                 }
                 useLegacySamples = true;
-            } else if (url.toLowerCase() === "nintariboxsamples") {
+            } else if (url.toLowerCase() === bundledSamplePacks.nintaribox) {
                 if (!useNintariboxSamples) {
                     parsedEntries.push({
-                        url: "nintariboxSamples",
+                        url: bundledSamplePacks.nintaribox,
                         sampleRate: 44100,
                         rootKey: 60,
                         percussion: false,
@@ -468,10 +468,10 @@ export class AddSamplesPrompt {
                     });
                 }
                 useNintariboxSamples = true;
-            } else if (url.toLowerCase() === "mariopaintboxsamples") {
+            } else if (url.toLowerCase() === bundledSamplePacks.mariopaintbox) {
                 if (!useMarioPaintboxSamples) {
                     parsedEntries.push({
-                        url: "marioPaintboxSamples",
+                        url: bundledSamplePacks.mariopaintbox,
                         sampleRate: 44100,
                         rootKey: 60,
                         percussion: false,
@@ -584,11 +584,7 @@ export class AddSamplesPrompt {
         const chipWaveLoopMode: number | null = entry.chipWaveLoopMode;
         const chipWavePlayBackwards: boolean = entry.chipWavePlayBackwards;
         const urlInLowerCase: string = url.toLowerCase();
-        const isBundledSamplePack: boolean = (
-            urlInLowerCase === "legacysamples"
-            || urlInLowerCase === "nintariboxsamples"
-            || urlInLowerCase === "mariopaintboxsamples"
-        );
+        const isBundledSamplePack: boolean = Object.keys(bundledSamplePacks).includes(urlInLowerCase);
         const options: string[] = [];
         if (sampleRate !== 44100) options.push("s" + sampleRate);
         if (rootKey !== 60) options.push("r" + rootKey);

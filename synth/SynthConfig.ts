@@ -506,6 +506,13 @@ function loadScript(url: string): Promise<void> {
     return result;
 }
 
+/** Specially-handled lowercase sample urls for ease-of-use. */
+export const bundledSamplePacks = {
+    legacy: "legacysamples",
+    nintaribox: "nintariboxsamples",
+    mariopaintbox: "mariopaintboxsamples"
+}
+
 export function loadBuiltInSamples(set: number): void {
     const defaultIndex: number = 0;
     const defaultIntegratedSamples: Float32Array = Config.chipWaves[defaultIndex].samples;
@@ -603,7 +610,7 @@ export function loadBuiltInSamples(set: number): void {
 	    Config.chipWaves[chipWaveIndex] = integratedChipWave;
 	    Config.chipWaves.dictionary[chipWave.name] = rawChipWave;
 	    sampleLoadingState.statusTable[chipWaveIndex] = SampleLoadingStatus.loading;
-	    sampleLoadingState.urlTable[chipWaveIndex] = "legacySamples";
+	    sampleLoadingState.urlTable[chipWaveIndex] = bundledSamplePacks.legacy;
 	}
 
 	loadScript("samples.js")
@@ -730,7 +737,7 @@ export function loadBuiltInSamples(set: number): void {
 	    Config.chipWaves[chipWaveIndex] = integratedChipWave;
 	    Config.chipWaves.dictionary[chipWave.name] = rawChipWave;
 	    sampleLoadingState.statusTable[chipWaveIndex] = SampleLoadingStatus.loading;
-	    sampleLoadingState.urlTable[chipWaveIndex] = "nintariboxSamples";
+	    sampleLoadingState.urlTable[chipWaveIndex] = bundledSamplePacks.nintaribox;
 	}
 
 	loadScript("nintaribox_samples.js")
@@ -792,7 +799,7 @@ export function loadBuiltInSamples(set: number): void {
 	    Config.chipWaves[chipWaveIndex] = integratedChipWave;
 	    Config.chipWaves.dictionary[chipWave.name] = rawChipWave;
 	    sampleLoadingState.statusTable[chipWaveIndex] = SampleLoadingStatus.loading;
-	    sampleLoadingState.urlTable[chipWaveIndex] = "marioPaintboxSamples";
+	    sampleLoadingState.urlTable[chipWaveIndex] = bundledSamplePacks.mariopaintbox;
 	}
 
 	loadScript("mario_paintbox_samples.js")
