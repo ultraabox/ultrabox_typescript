@@ -46,7 +46,7 @@ import { SpectrumEditor, SpectrumEditorPrompt } from "./SpectrumEditor";
 import { CustomThemePrompt } from "./CustomThemePrompt";
 import { ThemePrompt } from "./ThemePrompt";
 import { TipPrompt } from "./TipPrompt";
-import { ChangeTempo, ChangeKeyOctave, ChangeChorus, ChangeEchoDelay, ChangeEchoSustain, ChangeReverb, ChangeVolume, ChangePan, ChangePatternSelection, ChangePatternsPerChannel, ChangePatternNumbers, ChangeSupersawDynamism, ChangeSupersawSpread, ChangeSupersawShape, ChangePulseWidth, ChangeFeedbackAmplitude, ChangeOperatorAmplitude, ChangeOperatorFrequency, ChangeDrumsetEnvelope, ChangePasteInstrument, ChangePreset, pickRandomPresetValue, ChangeRandomGeneratedInstrument, ChangeEQFilterType, ChangeNoteFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeNoteFilterSimpleCut, ChangeNoteFilterSimplePeak, ChangeScale, ChangeDetectKey, ChangeKey, ChangeRhythm, ChangeFeedbackType, ChangeAlgorithm, ChangeChipWave, ChangeNoiseWave, ChangeTransition, ChangeToggleEffects, ChangeVibrato, ChangeUnison, ChangeChord, ChangeSong, ChangePitchShift, ChangeDetune, ChangeDistortion, ChangeStringSustain, ChangeBitcrusherFreq, ChangeBitcrusherQuantization, ChangeAddEnvelope, ChangeEnvelopeSpeed, ChangeDiscreteEnvelope, ChangeAddChannelInstrument, ChangeRemoveChannelInstrument, ChangeCustomWave, ChangeOperatorWaveform, ChangeOperatorPulseWidth, ChangeSongTitle, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangeVibratoType, ChangePanDelay, ChangeArpeggioSpeed, ChangeFastTwoNoteArp, ChangeClicklessTransition, ChangeAliasing, ChangeSetPatternInstruments, ChangeHoldingModRecording, ChangeChipWavePlayBackwards, ChangeChipWaveStartOffset, ChangeChipWaveLoopEnd, ChangeChipWaveLoopStart, ChangeChipWaveLoopMode, ChangeChipWaveUseAdvancedLoopControls, ChangeDecimalOffset, ChangeUnisonVoices, ChangeUnisonSpread, ChangeUnisonOffset, ChangeUnisonExpression, ChangeUnisonSign, Change6OpFeedbackType, Change6OpAlgorithm, ChangeCustomAlgorythmorFeedback } from "./changes";
+import { ChangeTempo, ChangeKeyOctave, ChangeChorus, ChangeEchoDelay, ChangeEchoSustain, ChangeReverb, ChangeVolume, ChangePan, ChangePatternSelection, ChangePatternsPerChannel, ChangePatternNumbers, ChangeSupersawDynamism, ChangeSupersawSpread, ChangeSupersawShape, ChangePulseWidth, ChangeFeedbackAmplitude, ChangeOperatorAmplitude, ChangeOperatorFrequency, ChangeDrumsetEnvelope, ChangePasteInstrument, ChangePreset, pickRandomPresetValue, ChangeRandomGeneratedInstrument, ChangeEQFilterType, ChangeNoteFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeNoteFilterSimpleCut, ChangeNoteFilterSimplePeak, ChangeScale, ChangeDetectKey, ChangeKey, ChangeRhythm, ChangeFeedbackType, ChangeAlgorithm, ChangeChipWave, ChangeNoiseWave, ChangeTransition, ChangeToggleEffects, ChangeVibrato, ChangeUnison, ChangeChord, ChangeSong, ChangePitchShift, ChangeDetune, ChangeDistortion, ChangeStringSustain, ChangeBitcrusherFreq, ChangeBitcrusherQuantization, ChangeAddEnvelope, ChangeEnvelopeSpeed, ChangeDiscreteEnvelope, ChangeAddChannelInstrument, ChangeRemoveChannelInstrument, ChangeCustomWave, ChangeOperatorWaveform, ChangeOperatorPulseWidth, ChangeSongTitle, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangeVibratoType, ChangePanDelay, ChangeArpeggioSpeed, ChangeFastTwoNoteArp, ChangeClicklessTransition, ChangeAliasing, ChangeSetPatternInstruments, ChangeHoldingModRecording, ChangeChipWavePlayBackwards, ChangeChipWaveStartOffset, ChangeChipWaveLoopEnd, ChangeChipWaveLoopStart, ChangeChipWaveLoopMode, ChangeChipWaveUseAdvancedLoopControls, ChangeDecimalOffset, ChangeUnisonVoices, ChangeUnisonSpread, ChangeUnisonOffset, ChangeUnisonExpression, ChangeUnisonSign, Change6OpFeedbackType, Change6OpAlgorithm, ChangeCustomAlgorythmorFeedback, ChangeViewedTab } from "./changes";
 
 import { TrackEditor } from "./TrackEditor";
 import { oscilloscopeCanvas } from "../global/Oscilloscope";
@@ -54,6 +54,7 @@ import { VisualLoopControlsPrompt } from "./VisualLoopControlsPrompt";
 import { SampleLoadingStatusPrompt } from "./SampleLoadingStatusPrompt";
 import { AddSamplesPrompt } from "./AddSamplesPrompt";
 import { ShortenerConfigPrompt } from "./ShortenerConfigPrompt";
+import { TabControls, TabSettingType as TabSettingType } from "./TabControls";
 
 const { button, div, input, select, span, optgroup, option, canvas } = HTML;
 
@@ -849,6 +850,13 @@ export class SongEditor {
     private readonly _drumPresetSelect: HTMLSelectElement = buildPresetOptions(true, "drumPresetSelect");
     private readonly _algorithmSelect: HTMLSelectElement = buildOptions(select(), Config.algorithms.map(algorithm => algorithm.name));
     private readonly _algorithmSelectRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("algorithm") }, "Algorithm: "), div({ class: "selectContainer" }, this._algorithmSelect));
+    private readonly _tabButtonInstrument: HTMLInputElement = input({ type: "radio", name: 'tab-settings-radio-group', class: "tab-settings-radio" });
+    private readonly _tabBtnInstrLabel: HTMLDivElement = div({ class: "tab-settings-radio selected-tab" }, TabControls[TabSettingType.EditInstrument].icon);
+    private readonly _tabRadioDivInstr: HTMLDivElement = div({ class: "tab-settings-radiodiv" }, this._tabButtonInstrument, this._tabBtnInstrLabel);
+    private readonly _tabButtonSelection: HTMLInputElement = input({ type: "radio", name: 'tab-settings-radio-group', class: "tab-settings-radio" });
+    private readonly _tabBtnSelLabel: HTMLDivElement = div({ class: "tab-settings-radio" }, TabControls[TabSettingType.EditSelection].icon);
+    private readonly _tabRadioDivSel: HTMLDivElement = div({ class: "tab-settings-radiodiv" }, this._tabButtonSelection, this._tabBtnSelLabel);
+    private readonly _tabSettingsButtonsGroup: HTMLDivElement = div({ class: "tab-settings-buttons-group" }, this._tabRadioDivInstr, this._tabRadioDivSel);
     private readonly _instrumentButtons: HTMLButtonElement[] = [];
     private readonly _instrumentAddButton: HTMLButtonElement = button({ type: "button", class: "add-instrument last-button" });
     private readonly _instrumentRemoveButton: HTMLButtonElement = button({ type: "button", class: "remove-instrument" });
@@ -1329,9 +1337,13 @@ export class SongEditor {
             this._sampleLoadingStatusContainer,
         ),
     );
-    private readonly _instrumentSettingsArea: HTMLDivElement = div({ class: "instrument-settings-area" },
+    private readonly instrumentAndModulatorSettings: HTMLDivElement = div({ class: "instrument-settings" },
         this._instrumentSettingsGroup,
         this._modulatorGroup);
+    private readonly _tabSettingsArea: HTMLDivElement = div({ class: 'tab-controls-area' },
+        this._tabSettingsButtonsGroup,
+        this.instrumentAndModulatorSettings
+    );
     public readonly _settingsArea: HTMLDivElement = div({ class: "settings-area noSelection" },
         div({ class: "version-area" },
             div({ style: `text-align: center; margin: 3px 0; color: ${ColorConfig.secondaryText};` },
@@ -1356,7 +1368,7 @@ export class SongEditor {
         ),
         this._menuArea,
         this._songSettingsArea,
-        this._instrumentSettingsArea,
+        this._tabSettingsArea,
     );
 
     public readonly mainLayer: HTMLDivElement = div({ class: "beepboxEditor", tabIndex: "0" },
@@ -1577,6 +1589,8 @@ export class SongEditor {
         //this._pitchedPresetSelect.addEventListener("change", this._whenSetPitchedPreset);
         //this._drumPresetSelect.addEventListener("change", this._whenSetDrumPreset);
         this._algorithmSelect.addEventListener("change", this._whenSetAlgorithm);
+        this._tabButtonInstrument.addEventListener("change", () => this._whenSelectTab(TabSettingType.EditInstrument));
+        this._tabButtonSelection.addEventListener("change", () => this._whenSelectTab(TabSettingType.EditSelection));
         this._instrumentsButtonBar.addEventListener("click", this._whenSelectInstrument);
         //this._customizeInstrumentButton.addEventListener("click", this._whenCustomizePressed);
         this._feedbackTypeSelect.addEventListener("change", this._whenSetFeedbackType);
@@ -2193,7 +2207,8 @@ export class SongEditor {
         this._sampleLoadingStatusContainer.style.display = this._doc.prefs.showSampleLoadingStatus ? "" : "none";
         this._instrumentCopyGroup.style.display = this._doc.prefs.instrumentCopyPaste ? "" : "none";
         this._instrumentExportGroup.style.display = this._doc.prefs.instrumentImportExport ? "" : "none";
-        this._instrumentSettingsArea.style.scrollbarWidth = this._doc.prefs.showInstrumentScrollbars ? "" : "none";
+        this.instrumentAndModulatorSettings.style.display = this._doc.viewedTab == TabControls[TabSettingType.EditInstrument] ? "" : "none";
+        this.instrumentAndModulatorSettings.style.scrollbarWidth = this._doc.prefs.showInstrumentScrollbars ? "" : "none";
         if (document.getElementById('text-content'))
             document.getElementById('text-content')!.style.display = this._doc.prefs.showDescription ? "" : "none";
 
@@ -3454,14 +3469,14 @@ export class SongEditor {
         // auto-scroll the settings areas to ensure the new settings are visible.
         if (this._doc.addedEffect) {
             const envButtonRect: DOMRect = this._addEnvelopeButton.getBoundingClientRect();
-            const instSettingsRect: DOMRect = this._instrumentSettingsArea.getBoundingClientRect();
+            const instSettingsRect: DOMRect = this.instrumentAndModulatorSettings.getBoundingClientRect();
             const settingsRect: DOMRect = this._settingsArea.getBoundingClientRect();
-            this._instrumentSettingsArea.scrollTop += Math.max(0, envButtonRect.top - (instSettingsRect.top + instSettingsRect.height));
+            this.instrumentAndModulatorSettings.scrollTop += Math.max(0, envButtonRect.top - (instSettingsRect.top + instSettingsRect.height));
             this._settingsArea.scrollTop += Math.max(0, envButtonRect.top - (settingsRect.top + settingsRect.height));
             this._doc.addedEffect = false;
         }
         if (this._doc.addedEnvelope) {
-            this._instrumentSettingsArea.scrollTop = this._instrumentSettingsArea.scrollHeight;
+            this.instrumentAndModulatorSettings.scrollTop = this.instrumentAndModulatorSettings.scrollHeight;
             this._settingsArea.scrollTop = this._settingsArea.scrollHeight;
             this._doc.addedEnvelope = false;
         }
@@ -3492,6 +3507,10 @@ export class SongEditor {
     }
 
     private _renderInstrumentBar(channel: Channel, instrumentIndex: number, colors: ChannelColors) {
+        if (this._doc.viewedTab !== TabControls[TabSettingType.EditInstrument]) {
+            return;
+        }
+
         if (this._doc.song.layeredInstruments || this._doc.song.patternInstruments) {
             this._instrumentsButtonRow.style.display = "";
             this._instrumentsButtonBar.style.setProperty("--text-color-lit", colors.primaryNote);
@@ -3595,8 +3614,8 @@ export class SongEditor {
             this._octaveScrollBar.container.style.opacity = "";
             this._trackContainer.style.pointerEvents = "";
             this._loopEditor.container.style.opacity = "";
-            this._instrumentSettingsArea.style.pointerEvents = "";
-            this._instrumentSettingsArea.style.opacity = "";
+            this._tabSettingsArea.style.pointerEvents = "";
+            this._tabSettingsArea.style.opacity = "";
             this._menuArea.style.pointerEvents = "";
             this._menuArea.style.opacity = "";
             this._songSettingsArea.style.pointerEvents = "";
@@ -3611,8 +3630,8 @@ export class SongEditor {
                 this._octaveScrollBar.container.style.opacity = "0.5";
                 this._trackContainer.style.pointerEvents = "none";
                 this._loopEditor.container.style.opacity = "0.5";
-                this._instrumentSettingsArea.style.pointerEvents = "none";
-                this._instrumentSettingsArea.style.opacity = "0.5";
+                this._tabSettingsArea.style.pointerEvents = "none";
+                this._tabSettingsArea.style.opacity = "0.5";
                 this._menuArea.style.pointerEvents = "none";
                 this._menuArea.style.opacity = "0.5";
                 this._songSettingsArea.style.pointerEvents = "none";
@@ -4792,6 +4811,21 @@ export class SongEditor {
         this._doc.record(new Change6OpAlgorithm(this._doc, this._algorithm6OpSelect.selectedIndex));
         this._customAlgorithmCanvas.reset()
     }
+
+    private _whenSelectTab = (type: TabSettingType): void => {
+        [
+            {type: TabSettingType.EditInstrument, obj: this._tabBtnInstrLabel},
+            {type: TabSettingType.EditSelection, obj: this._tabBtnSelLabel}
+        ].forEach((entry) => {
+            if (type == entry.type) {
+                if (!entry.obj.classList.contains('selected-tab')) { entry.obj.classList.add('selected-tab') }
+            } else {
+                entry.obj.classList.remove('selected-tab')
+            }
+        })
+
+        this._doc.record(new ChangeViewedTab(this._doc, type))
+    }
     
     private _whenSelectInstrument = (event: MouseEvent): void => {
         if (event.target == this._instrumentAddButton) {
@@ -4807,7 +4841,7 @@ export class SongEditor {
             if (this._doc.channel >= this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount) {
                 this._piano.forceRender();
             }
-		this._renderInstrumentBar(this._doc.song.channels[this._doc.channel], index, ColorConfig.getChannelColor(this._doc.song, this._doc.channel));
+            this._renderInstrumentBar(this._doc.song.channels[this._doc.channel], index, ColorConfig.getChannelColor(this._doc.song, this._doc.channel));
         }
 
         this.refocusStage();

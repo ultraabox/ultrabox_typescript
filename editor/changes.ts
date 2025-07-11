@@ -7,6 +7,7 @@ import { Change, ChangeGroup, ChangeSequence, UndoableChange } from "./Change";
 import { SongDocument } from "./SongDocument";
 import { ColorConfig } from "./ColorConfig";
 import { Slider } from "./HTMLWrapper";
+import { TabControls } from "./TabControls";
 
 export function patternsContainSameInstruments(pattern1Instruments: number[], pattern2Instruments: number[]): boolean {
     const pattern2Has1Instruments: boolean = pattern1Instruments.every(instrument => pattern2Instruments.indexOf(instrument) != -1);
@@ -2958,6 +2959,17 @@ export class ChangeRemoveChannelInstrument extends Change {
 
         doc.notifier.changed();
         this._didSomething();
+    }
+}
+
+export class ChangeViewedTab extends Change {
+    constructor(doc: SongDocument, index: number) {
+        super();
+        if (doc.viewedTab.type != index && TabControls[index]) {
+            doc.viewedTab = TabControls[index];
+        doc.notifier.changed();
+        this._didSomething();
+        }
     }
 }
 

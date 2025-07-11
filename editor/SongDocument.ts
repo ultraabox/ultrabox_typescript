@@ -12,6 +12,7 @@ import { Preferences } from "./Preferences";
 import { Change } from "./Change";
 import { ChangeNotifier } from "./ChangeNotifier";
 import { ChangeSong, setDefaultInstruments, discardInvalidPatternInstruments, ChangeHoldingModRecording} from "./changes";
+import { TabControl, TabControls, TabSettingType } from "./TabControls"
 
 interface HistoryState {
 	canUndo: boolean;
@@ -37,6 +38,7 @@ export class SongDocument {
 	public bar: number = 0;
 	public recalcChannelNames: boolean;
 	public recentPatternInstruments: number[][] = [];
+	public viewedTab: TabControl = TabControls[TabSettingType.EditInstrument];
 	public viewedInstrument: number[] = [];
 	public recordingModulators: boolean = false;
 	public continuingModRecordingChange: ChangeHoldingModRecording | null = null;

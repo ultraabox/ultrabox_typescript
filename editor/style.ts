@@ -216,7 +216,7 @@ html {
     transition-delay: 0.35s;
 }
 
-.instrument-settings-area {
+.tab-controls-area {
     opacity: 0;
     -webkit-transition: opacity 0.5s ease-in;
     -moz-transition: opacity 0.5s ease-in;
@@ -224,6 +224,49 @@ html {
     -ms-transition: opacity 0.5s ease-in;
     transition: opacity 0.5s ease-in;
     transition-delay: 0.45s;
+}
+
+.tab-settings-buttons-group {
+	 display: flex;
+}
+
+input.tab-settings-radio {
+    margin: 0;
+	padding: 0;
+	position: absolute;
+	opacity: 0;
+}
+
+div.tab-settings-radio {
+	text-align: center;
+}
+
+div.tab-settings-radiodiv {
+    margin-top: 0.5rem;
+	color: ${ColorConfig.primaryText};
+}
+
+div.tab-settings-radiodiv,
+input.tab-settings-radio {
+	height: 2rem;
+	width: 2rem;
+	padding: 0.2rem;
+	cursor: pointer;
+	border-style: solid;
+	border-width: 1px;
+	border-color: transparent;
+}
+
+div.selected-tab {
+    background-color: ${ColorConfig.boxSelectionFill};
+}
+
+div.tab-settings-radiodiv:hover {
+	border-color: ${ColorConfig.primaryText};
+}
+
+input.tab-settings-radio + div {
+	font-size: 1.5rem;
 }
 
 .trackAndMuteContainer {
@@ -291,7 +334,7 @@ html {
 	display: grid;
     grid-template-columns: auto;
     grid-template-rows: min-content min-content min-content min-content min-content;
-    grid-template-areas: "version-area" "play-pause-area" "menu-area" "song-settings-area" "instrument-settings-area";
+    grid-template-areas: "version-area" "play-pause-area" "menu-area" "song-settings-area" "tab-controls-area";
 	grid-column-gap: 6px;
 }
 
@@ -299,7 +342,7 @@ html {
 .beepboxEditor .play-pause-area{ grid-area: play-pause-area; }
 .beepboxEditor .menu-area{ grid-area: menu-area; }
 .beepboxEditor .song-settings-area{ grid-area: song-settings-area; }
-.beepboxEditor .instrument-settings-area{ grid-area: instrument-settings-area; }
+.beepboxEditor .tab-controls-area{ grid-area: tab-controls-area; }
 
 .beepboxEditor .tip {
 	cursor: help;
@@ -1393,7 +1436,7 @@ html {
 	flex-direction: column;
 }
 
-.beepboxEditor .instrument-settings-area {
+.beepboxEditor .tab-controls-area {
 	display: flex;
 	flex-direction: column;
 }
@@ -1609,8 +1652,8 @@ li.select2-results__option[role=group] > strong:hover {
 		grid-template-rows: min-content min-content 1fr min-content;
 		grid-template-areas:
 			"play-pause-area play-pause-area"
-			"menu-area instrument-settings-area"
-			"song-settings-area instrument-settings-area"
+			"menu-area tab-controls-area"
+			"song-settings-area tab-controls-area"
 			"version-area version-area";
 		grid-column-gap: 8px;
 		margin: 0 4px;

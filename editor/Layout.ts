@@ -38,11 +38,11 @@ export class Layout {
 					overflow: auto;
 					max-height: 97.5vh;
 				}
-				.beepboxEditor .instrument-settings-area {
+				.beepboxEditor .tab-controls-area {
 					overflow-y: auto;
 					position: relative;
 				}
-				.beepboxEditor .instrument-settings-area > .editor-controls {
+				.beepboxEditor tab-controls-area > instrument-settings > .editor-controls {
 					position: absolute;
 					width: 100%;
 				}
@@ -55,10 +55,10 @@ export class Layout {
 					grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 					grid-template-rows: auto auto auto minmax(0, 1fr);
 					grid-template-areas:
-						"instrument-settings-area version-area"
-						"instrument-settings-area play-pause-area"
-						"instrument-settings-area menu-area"
-						"instrument-settings-area song-settings-area";
+						"tab-controls-area version-area"
+						"tab-controls-area play-pause-area"
+						"tab-controls-area menu-area"
+						"tab-controls-area song-settings-area";
 				}
 				
 				.beepboxEditor .barScrollBar {
@@ -128,7 +128,7 @@ export class Layout {
 					flex-grow: 0;
 					max-height: 97.5vh;
 				}
-				.beepboxEditor .instrument-settings-area > .editor-controls {
+				.beepboxEditor tab-controls-area > instrument-settings > .editor-controls {
 					position: absolute;
 					width: 100%;
 				}
@@ -144,7 +144,7 @@ export class Layout {
 						"play-pause-area"
 						"menu-area"
 						"song-settings-area"
-						"instrument-settings-area";
+						"tab-controls-area";
 				}
 				.beepboxEditor .version-area {
 					position: sticky;
@@ -225,11 +225,11 @@ export class Layout {
 					overflow-y: auto;
 					max-height: 97.5vh;
 				}
-				.beepboxEditor .instrument-settings-area {
+				.beepboxEditor .tab-controls-area {
 					overflow-y: auto;
 					position: relative;
 				}
-				.beepboxEditor .instrument-settings-area > .editor-controls {
+				.beepboxEditor tab-controls-area > instrument-settings > .editor-controls {
 					position: absolute;
 					width: 100%;
 				}
@@ -243,10 +243,10 @@ export class Layout {
 					grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 					grid-template-rows: auto auto auto minmax(0, 1fr);
 					grid-template-areas:
-						"instrument-settings-area version-area"
-						"instrument-settings-area play-pause-area"
-						"instrument-settings-area menu-area"
-						"instrument-settings-area song-settings-area";
+						"tab-controls-area version-area"
+						"tab-controls-area play-pause-area"
+						"tab-controls-area menu-area"
+						"tab-controls-area song-settings-area";
 				}
 				.beepboxEditor .version-area {
 					position: sticky;
@@ -304,11 +304,11 @@ export class Layout {
 					overflow: auto;
 					max-height: 97.5vh;
 				}
-				.beepboxEditor .instrument-settings-area {
+				.beepboxEditor .tab-controls-area {
 					overflow-y: auto;
 					position: relative;
 				}
-				.beepboxEditor .instrument-settings-area > .editor-controls {
+				.beepboxEditor tab-controls-area > instrument-settings > .editor-controls {
 					position: absolute;
 					width: 100%;
 				}
@@ -321,10 +321,10 @@ export class Layout {
 					grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 					grid-template-rows: auto auto auto minmax(0, 1fr);
 					grid-template-areas:
-						"version-area instrument-settings-area"
-						"play-pause-area instrument-settings-area"
-						"menu-area instrument-settings-area"
-						"song-settings-area instrument-settings-area";
+						"version-area tab-controls-area"
+						"play-pause-area tab-controls-area"
+						"menu-area tab-controls-area"
+						"song-settings-area tab-controls-area";
 				}
 				
 				.beepboxEditor .barScrollBar {
@@ -388,11 +388,11 @@ export class Layout {
 					overflow: auto;
 					max-height: 97.5vh;
 				}
-				.beepboxEditor .instrument-settings-area {
+				.beepboxEditor .tab-controls-area {
 					overflow-y: auto;
 					position: relative;
 				}
-				.beepboxEditor .instrument-settings-area > .editor-controls {
+				.beepboxEditor tab-controls-area > instrument-settings > .editor-controls {
 					position: absolute;
 					width: 100%;
 				}
@@ -406,10 +406,10 @@ export class Layout {
 					grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 					grid-template-rows: auto auto auto minmax(0, 1fr);
 					grid-template-areas:
-						"instrument-settings-area version-area"
-						"instrument-settings-area play-pause-area"
-						"instrument-settings-area menu-area"
-						"instrument-settings-area song-settings-area";
+						"tab-controls-area version-area"
+						"tab-controls-area play-pause-area"
+						"tab-controls-area menu-area"
+						"tab-controls-area song-settings-area";
 				}				
 				.beepboxEditor .barScrollBar {
 					display: none;
@@ -473,16 +473,16 @@ export class Layout {
 					overflow: auto;
 					max-height: 97.5vh;
 				}
-				.beepboxEditor .instrument-settings-area {
+				.beepboxEditor .tab-controls-area {
 					overflow-y: auto;
 					position: relative;
 				}
-				.beepboxEditor .instrument-settings-area > .editor-controls {
+				.beepboxEditor tab-controls-area > instrument-settings > .editor-controls {
 					position: absolute;
 					width: 100%;
 				}
 				
-				.beepboxEditor .instrument-settings-area > .editor-controls {
+				.beepboxEditor tab-controls-area > instrument-settings > .editor-controls {
 					position: absolute;
 					width: 100%;
 				}
@@ -498,7 +498,7 @@ export class Layout {
 						"play-pause-area"
 						"menu-area"
 						"song-settings-area"
-						"instrument-settings-area";
+						"tab-controls-area";
 				}
 				.beepboxEditor .barScrollBar {
 					display: none;
