@@ -4192,6 +4192,76 @@ export class ChangeNoteTruncate extends ChangeSequence {
     }
 }
 
+class ChangeSplitNotesAtPoint extends ChangeSequence {
+    constructor(doc: SongDocument, pattern: Pattern, cutPoints: number[]) {
+        super();
+
+        for (let i = pattern.notes.length - 1; i >= 0; i--) {
+            for (let j = 0; j < cutPoints.length; j++) {
+                const note: Note = pattern.notes[i];
+                if (note.start < cutPoints[j] && cutPoints[j] < note.end) {
+                    // Separate the pins left and right of the cut point into two notes, also adjust the times.
+                    // Right note pins will need to be normalized by pitch and interval, but that means knowing the
+                    // exact values at the cutpoint.
+                    const cutRelativeToNote = cutPoints[j] - note.start
+                    const cutIndex = note.pins.findIndex((pin) => pin.time > cutRelativeToNote)
+                    if (cutIndex != -1) {
+                        const leftNote = note.clone();
+                        leftNote.end = cutPoints[j];
+                        leftNote.pins = [...note.pins.slice(0, cutIndex)];
+                        const rightNote = note.clone();
+                        rightNote.continuesLastPattern = false;
+                        rightNote.start = cutPoints[j];
+                        rightNote.pins = [...note.pins.slice(cutIndex)];
+                        rightNote.pins.forEach((pin) => {
+                            pin.time -= cutRelativeToNote;
+                        });
+
+                        // This note used to continuously go from its left pin values to its right pin values, by
+                        // linear interpolation (lerp). So if we consider their distance to the cutpoint, we can find
+                        // its exact pitch and volume, which is a lerp between those pins.
+                        const leftPin = leftNote.pins[leftNote.pins.length - 1];
+                        const rightPin = rightNote.pins[0];
+                        const spaceToLeftPin = cutRelativeToNote - leftPin.time;
+                        const spaceBetweenPins = spaceToLeftPin + rightPin.time;
+                        const percentBetweenPins = spaceBetweenPins > 0
+                            ? spaceToLeftPin / spaceBetweenPins
+                            : 0;
+
+                        // We know enough to create a pin with the exact interval and size we want, though we need to
+                        // round those values to make them legal. The time is relative to left note. For the right note
+                        // it would be zero.
+                        const cutPin = makeNotePin(
+                            Math.round(leftPin.interval + percentBetweenPins * (rightPin.interval - leftPin.interval)),
+                            cutRelativeToNote,
+                            Math.round(leftPin.size + percentBetweenPins * (rightPin.size - leftPin.size)),
+                        );
+
+                        // We can now normalize the pitch and pin intervals of the right note.
+                        rightNote.pitches = rightNote.pitches.map((pitch) => pitch + cutPin.interval)
+                        rightNote.pins.forEach((pin) => pin.interval -= cutPin.interval);
+
+                        // Notes need pins at their exact start/end. We cut the pins left and right earlier, but now
+                        // insert the cut pin as needed to the end of left note and start of right note.
+                        if (leftPin.time != cutRelativeToNote) {
+                            leftNote.pins.push(cutPin);
+                        }
+                        if (rightPin.time > 0) {
+                            rightNote.pins.unshift(makeNotePin(0, 0, cutPin.size))
+                        }
+
+                        // Delete the old note and append the modified notes in its place.
+                        this.append(new ChangeNoteAdded(doc, pattern, note, i, true));
+                        this.append(new ChangeNoteAdded(doc, pattern, rightNote, i, false));
+                        this.append(new ChangeNoteAdded(doc, pattern, leftNote, i, false));
+                        i--; // added two notes, go backwards an extra time.
+                    }
+                }
+            }
+        }
+    }
+}
+
 class ChangeSplitNotesAtSelection extends ChangeSequence {
     constructor(doc: SongDocument, pattern: Pattern) {
         super();
@@ -4370,6 +4440,282 @@ export class ChangeTranspose extends ChangeSequence {
                 continue;
             }
             this.append(new ChangeTransposeNote(doc, channelIndex, note, upward, ignoreScale, octave));
+        }
+    }
+}
+
+export class ChangeNoteOpMerge extends ChangeSequence {
+    private _doc: SongDocument;
+    private _pattern: Pattern;
+    private _firstNoteIndex = 0;
+    private _firstNote: Note | null = null;
+    private _lastNote: Note | null = null;
+    private _notePinList: NotePin[];
+    private _notesMergedOver: Note[] = [];
+    constructor(doc: SongDocument, pattern: Pattern) {
+        super();
+
+        this._doc = doc;
+        this._pattern = pattern;
+        if (pattern.notes.length == 0) { return; }
+
+        for (let i = 0; i < pattern.notes.length; i++) {
+            const note = pattern.notes[i];
+            if (doc.selection.patternSelectionActive) {
+                if (note.end <= doc.selection.patternSelectionStart) {
+                    continue;
+                }
+                if (note.start >= doc.selection.patternSelectionEnd) {
+                    break;
+                }
+            }
+
+            if (!this._firstNote) {
+                this._firstNote = note;
+                this._firstNoteIndex = i;
+                this._notesMergedOver.push(note);
+                this._notePinList = this._firstNote.pins;
+            }
+
+            if ((!doc.selection.patternSelectionActive || note.end <= doc.selection.patternSelectionEnd) &&
+                (!this._lastNote || note.end > this._lastNote.end)) {
+                this._lastNote = note;
+            }
+            
+            if (note != this._firstNote) {
+                // Accumulate pins across notes (adjust relative values based on first note)
+                for (const pin of note.pins) {
+                    const newPin = {
+                        interval: note.pitches[0] + pin.interval - this._firstNote.pitches[0],
+                        size: pin.size,
+                        time: note.start - this._firstNote.start + pin.time
+                    };
+
+                    // If the last note's ending pin is fully redundant with the start of the new note, or if it has
+                    // a length of 1, delete the last note's ending pin. Else, if they have the same time but aren't
+                    // identical, nudge the last note's end pin backwards 1 unit of time.
+                    if (this._notePinList.length > 0) {
+                        const lastPin = this._notePinList[this._notePinList.length - 1];
+                        const pinBeforeLast = this._notePinList.length > 1 ? this._notePinList[this._notePinList.length - 2] : null;
+                        if (newPin.time == lastPin.time) {
+                            // Delete prior pin if it's fully redundant with this one.
+                            // Delete prior pin if it can't be nudged back by 1 (time - 1 conflicts with pin before it).
+                            if ((newPin.interval === lastPin.interval && newPin.size === lastPin.size) ||
+                                (pinBeforeLast && lastPin.time - 1 == pinBeforeLast.time)) {
+                                this._notePinList.splice(this._notePinList.length - 1, 1);
+                            } else {
+                                // Adjust last pin time backwards by 1 since it's not redundant and is nudgeable.
+                                lastPin.time -= 1;
+                            }
+                        }
+                    }
+
+                    this._notePinList.push(newPin);
+                }
+
+                // We need to remove these later.
+                this._notesMergedOver.push(note);
+            }
+        }
+
+        // Nothing to merge if entire selection is one note, or if no notes were found in range.
+        if (this._firstNote === this._lastNote || !this._firstNote || !this._lastNote) {
+            return;
+        }
+
+        // Delete all notes within selection
+        for (const note of this._notesMergedOver) {
+            this.append(new ChangeNoteAdded(this._doc, this._pattern, note, this._firstNoteIndex, true));
+        }
+
+        // Span first note to the end note length and recreate all other notes as pins.
+        let firstNoteCopy = this._firstNote.clone();
+        firstNoteCopy.end = this._lastNote.end;
+        firstNoteCopy.pins = this._notePinList;
+        this.append(new ChangeNoteAdded(this._doc, this._pattern, firstNoteCopy, this._firstNoteIndex, false));
+        this._doc.notifier.changed();
+        this._didSomething();
+    }
+}
+
+export class ChangeNoteOpBridge extends ChangeSequence {
+    private _doc: SongDocument;
+    private _pattern: Pattern;
+    private _notesToInsert: {insertAt: number, note: Note}[] = [];
+    constructor(doc: SongDocument, pattern: Pattern, doBends: boolean) {
+        super();
+
+        this._doc = doc;
+        this._pattern = pattern;
+        if (pattern.notes.length == 0) { return; }
+
+        let note: Note;
+        let prevNote: Note | null;
+        let noteLeftOfSelection: number | null = null;
+        for (let i = 0; i < pattern.notes.length; i++) {
+            note = pattern.notes[i];
+
+            // Skip out-of-bounds notes
+            if (doc.selection.patternSelectionActive) {
+                if (note.end <= doc.selection.patternSelectionStart) {
+                    noteLeftOfSelection = i;
+                    continue;
+                }
+                if (note.start >= doc.selection.patternSelectionEnd) {
+                    break;
+                }
+            }
+
+            // Don't bridge from the note left of selection to first within.
+            if (doc.selection.patternSelectionActive && i - 1 == noteLeftOfSelection) { continue; }
+
+            // If space exists between two notes, create a note pitch bending between them, with the pitches of the
+            // previous one, before the specified index.
+            if (i > 0) {
+                prevNote = pattern.notes[i - 1];
+                if (note.start - prevNote.end > 0) {
+                    const newNote = new Note(-1, prevNote.end, note.start, prevNote.pins[prevNote.pins.length - 1].size, false);
+
+                    // Adjust pitch so first pin has 0 interval
+                    newNote.pitches = [];
+                    for (let pitch of prevNote.pitches) {
+                        newNote.pitches.push(pitch + prevNote.pins[prevNote.pins.length - 1].interval);
+                    }
+
+                    if (doBends) {
+                        newNote.pins[1].interval = note.pitches[0] - newNote.pitches[0] + note.pins[0].interval;
+                        newNote.pins[1].size = note.pins[0].size;
+                    }
+
+                    this._notesToInsert.push({ insertAt: i, note: newNote });
+                }
+            }
+        }
+
+        if (this._notesToInsert.length === 0) {
+            return;
+        }
+        for (let i = 0; i < this._notesToInsert.length; i++) {
+            this.append(new ChangeNoteAdded(this._doc, this._pattern, this._notesToInsert[i].note.clone(), this._notesToInsert[i].insertAt + i, false));
+        }
+
+        this._doc.notifier.changed();
+        this._didSomething();
+    }
+}
+
+export class ChangeNoteOpSeparate extends ChangeSequence {
+    constructor(doc: SongDocument, pattern: Pattern, numCuts: number, X1?: number, X2?: number) {
+        super();
+
+        X1 = X1 ?? (doc.selection.patternSelectionActive ? doc.selection.patternSelectionStart : -1);
+        X2 = X2 ?? (doc.selection.patternSelectionActive ? doc.selection.patternSelectionEnd : -1);
+
+        const range = X2 - X1;
+        if (numCuts < 1) { return; }
+        if (numCuts > 1 && range <= 1) { return; }
+
+        let cutIndices: number[] = [];
+
+        if (numCuts === 1) { cutIndices.push(X1); }
+        else {
+            const chunk = Math.max(range / (numCuts + 1), 1); // Never less than 1 for time.
+            for (let i = 1; i < numCuts + 1; i++) {
+                // Always cut integer sizes or greater; never the same spot twice.
+                const cut = Math.round(X1 + chunk * i)
+                if (cutIndices.length === 0 || cutIndices[cutIndices.length - 1] !== cut) {
+                    cutIndices.push(cut)
+                }
+            }
+        }
+
+        if (cutIndices.length > 0) {
+            this.append(new ChangeSplitNotesAtPoint(doc, pattern, cutIndices));
+            doc.notifier.changed();
+            this._didSomething();
+        }
+    }
+}
+
+export class ChangeNoteOpPartition extends ChangeSequence {
+    constructor(doc: SongDocument, pattern: Pattern) {
+        super();
+        if (doc.selection.patternSelectionActive) {
+            this.append(new ChangeSplitNotesAtPoint(doc, pattern, [doc.selection.patternSelectionStart]));
+            doc.notifier.changed();
+            this._didSomething();
+        }
+    }
+}
+
+export class ChangeFlattenNotes extends ChangeSequence {
+    constructor(doc: SongDocument, pattern: Pattern) {
+        super();
+
+        if (doc.selection.patternSelectionActive) {
+            this.append(new ChangeSplitNotesAtSelection(doc, pattern));
+        }
+
+        for (const note of pattern.notes) {
+            if (doc.selection.patternSelectionActive && (note.end <= doc.selection.patternSelectionStart || note.start >= doc.selection.patternSelectionEnd)) {
+                continue;
+            }
+
+            // TODO
+        }
+    }
+}
+
+export class ChangeNoteOpRemoveSpace extends ChangeSequence {
+    constructor(doc: SongDocument, pattern: Pattern) {
+        super();
+
+        if (doc.selection.patternSelectionActive) {
+            this.append(new ChangeSplitNotesAtSelection(doc, pattern));
+        }
+
+        for (const note of pattern.notes) {
+            if (doc.selection.patternSelectionActive && (note.end <= doc.selection.patternSelectionStart || note.start >= doc.selection.patternSelectionEnd)) {
+                continue;
+            }
+
+            // TODO
+        }
+    }
+}
+
+export class ChangeNoteOpSpreadEvenly extends ChangeSequence {
+    constructor(doc: SongDocument, pattern: Pattern) {
+        super();
+
+        if (doc.selection.patternSelectionActive) {
+            this.append(new ChangeSplitNotesAtSelection(doc, pattern));
+        }
+
+        for (const note of pattern.notes) {
+            if (doc.selection.patternSelectionActive && (note.end <= doc.selection.patternSelectionStart || note.start >= doc.selection.patternSelectionEnd)) {
+                continue;
+            }
+
+            // TODO
+        }
+    }
+}
+
+export class ChangeMirrorNotes extends ChangeSequence {
+    constructor(doc: SongDocument, pattern: Pattern, mirrorVertically: boolean) {
+        super();
+
+        if (doc.selection.patternSelectionActive) {
+            this.append(new ChangeSplitNotesAtSelection(doc, pattern));
+        }
+
+        for (const note of pattern.notes) {
+            if (doc.selection.patternSelectionActive && (note.end <= doc.selection.patternSelectionStart || note.start >= doc.selection.patternSelectionEnd)) {
+                continue;
+            }
+
+            // TODO
         }
     }
 }

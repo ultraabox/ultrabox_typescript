@@ -790,6 +790,13 @@ export class SongEditor {
         option({ value: "duplicatePatterns" }, "Duplicate Reused Patterns (D)"),
         option({ value: "transposeUp" }, "Move Notes Up (+ or ⇧+)"),
         option({ value: "transposeDown" }, "Move Notes Down (- or ⇧-)"),
+        option({ value: "noteOpMerge" }, "Merge Notes"),
+        option({ value: "noteOpBridge" }, "Bridge Between Notes"),
+        option({ value: "noteOpSeparate" }, "Separate Notes"),
+        option({ value: "noteOpPartition" }, "Divide Evenly Within Notes"),
+        option({ value: "noteOpFlatten" }, "Flatten Notes"),
+        option({ value: "noteOpMirrorHorizontal" }, "Mirror Notes Horz"),
+        option({ value: "noteOpMirrorVertical" }, "Mirror Notes Vert"),
         option({ value: "moveNotesSideways" }, "Move All Notes Sideways... (W)"),
 	    option({ value: "generateEuclideanRhythm" }, "Generate Euclidean Rhythm... (E)"),
         option({ value: "beatsPerBar" }, "Change Beats Per Bar... (⇧B)"),
@@ -5103,6 +5110,27 @@ export class SongEditor {
                 break;
             case "transposeDown":
                 this._doc.selection.transpose(false, false);
+                break;
+            case "noteOpMerge":
+                this._doc.selection.noteOpMerge();
+                break;
+            case "noteOpBridge":
+                this._doc.selection.noteOpBridge(false);
+                break;
+            case "noteOpSeparate":
+                this._doc.selection.noteOpSeparate(1, this._doc.selection.boxSelectionActive ? this._doc.selection.patternSelectionStart : undefined);
+                break;
+            case "noteOpPartition":
+                this._doc.selection.noteOpPartition();
+                break;
+            case "noteOpFlatten":
+                this._doc.selection.flattenNotes();
+                break;
+            case "noteOpMirrorHorizontal":
+                this._doc.selection.mirrorNotes(false);
+                break;
+            case "noteOpMirrorVertical":
+                this._doc.selection.mirrorNotes(true);
                 break;
             case "selectAll":
                 this._doc.selection.selectAll();
