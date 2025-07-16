@@ -794,7 +794,8 @@ export class SongEditor {
         option({ value: "noteOpBridge" }, "Bridge Between Notes"),
         option({ value: "noteOpSeparate" }, "Separate Notes"),
         option({ value: "noteOpPartition" }, "Divide Evenly Within Notes"),
-        option({ value: "noteOpFlatten" }, "Flatten Notes"),
+        option({ value: "flattenNotes" }, "Flatten Notes"),
+        option({ value: "stretchNotes" }, "Stretch Notes"),
         option({ value: "noteOpMirrorHorizontal" }, "Mirror Notes Horz"),
         option({ value: "noteOpMirrorVertical" }, "Mirror Notes Vert"),
         option({ value: "moveNotesSideways" }, "Move All Notes Sideways... (W)"),
@@ -5118,13 +5119,16 @@ export class SongEditor {
                 this._doc.selection.noteOpBridge(false);
                 break;
             case "noteOpSeparate":
-                this._doc.selection.noteOpSeparate(1, this._doc.selection.boxSelectionActive ? this._doc.selection.patternSelectionStart : undefined);
+                this._doc.selection.noteOpSeparate(5, this._doc.selection.boxSelectionActive ? this._doc.selection.patternSelectionStart : undefined);
                 break;
             case "noteOpPartition":
                 this._doc.selection.noteOpPartition();
                 break;
-            case "noteOpFlatten":
+            case "flattenNotes":
                 this._doc.selection.flattenNotes();
+                break;
+            case "stretchNotes":
+                this._doc.selection.stretchNotes(this._doc.selection.patternSelectionStart, this._doc.selection.patternSelectionEnd, 0, this._doc.song.beatsPerBar * Config.partsPerBeat);
                 break;
             case "noteOpMirrorHorizontal":
                 this._doc.selection.mirrorNotes(false);

@@ -5,7 +5,7 @@ import { Note, NotePin, Pattern } from "../synth/synth";
 import { SongDocument } from "./SongDocument";
 import { ChangeGroup } from "./Change";
 import { ColorConfig } from "./ColorConfig";
-import { ChangeTrackSelection, ChangeChannelBar, ChangeAddChannel, ChangeRemoveChannel, ChangeChannelOrder, ChangeDuplicateSelectedReusedPatterns, ChangeNoteAdded, ChangeNoteTruncate, ChangePatternNumbers, ChangePatternSelection, ChangeInsertBars, ChangeDeleteBars, ChangeEnsurePatternExists, ChangeNoteLength, ChangePaste, ChangeSetPatternInstruments, ChangeViewInstrument, ChangeModChannel, ChangeModInstrument, ChangeModSetting, ChangeModFilter, ChangePatternsPerChannel, ChangePatternRhythm, ChangePatternScale, ChangeTranspose, ChangeRhythm, comparePatternNotes, unionOfUsedNotes, generateScaleMap, discardInvalidPatternInstruments, patternsContainSameInstruments, ChangeNoteOpMerge, ChangeNoteOpSeparate, ChangeNoteOpPartition, ChangeFlattenNotes, ChangeMirrorNotes, ChangeNoteOpSpreadEvenly, ChangeNoteOpRemoveSpace, ChangeNoteOpBridge } from "./changes";
+import { ChangeTrackSelection, ChangeChannelBar, ChangeAddChannel, ChangeRemoveChannel, ChangeChannelOrder, ChangeDuplicateSelectedReusedPatterns, ChangeNoteAdded, ChangeNoteTruncate, ChangePatternNumbers, ChangePatternSelection, ChangeInsertBars, ChangeDeleteBars, ChangeEnsurePatternExists, ChangeNoteLength, ChangePaste, ChangeSetPatternInstruments, ChangeViewInstrument, ChangeModChannel, ChangeModInstrument, ChangeModSetting, ChangeModFilter, ChangePatternsPerChannel, ChangePatternRhythm, ChangePatternScale, ChangeTranspose, ChangeRhythm, comparePatternNotes, unionOfUsedNotes, generateScaleMap, discardInvalidPatternInstruments, patternsContainSameInstruments, ChangeNoteOpMerge, ChangeNoteOpSeparate, ChangeNoteOpPartition, ChangeFlattenNotes, ChangeMirrorNotes, ChangeNoteOpSpreadEvenly, ChangeNoteOpRemoveSpace, ChangeNoteOpBridge, ChangeStretchNotes } from "./changes";
 
 interface PatternCopy {
     instruments: number[];
@@ -44,6 +44,7 @@ export class Selection {
     private _changeNoteOpRemoveSpace: ChangeGroup | null = null;
     private _changeNoteOpSpreadEvenly: ChangeGroup | null = null;
     private _changeMirrorNotes: ChangeGroup | null = null;
+    private _changeStretchNotes: ChangeGroup | null = null;
     private _changeTrack: ChangeGroup | null = null;
     private _changeInstrument: ChangeGroup | null = null;
     private _changeReorder: ChangeGroup | null = null;
@@ -929,6 +930,24 @@ export class Selection {
         }
 
         this._doc.record(this._changeMirrorNotes, canReplaceLastChange);
+    }
+
+    /**
+     * Stretches/shrinks all note start/end and pins horizontally from the given range to the new range, with maximum
+     * stretch being the size of the bar sheet and minimum being the number of note pins. Notes are deleted from the
+     * original and new ranges, and the edited notes are reconstructed into the new range.
+     */
+    public stretchNotes(oldX1: number, oldX2: number, newX1: number, newX2: number): void {
+        const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeStretchNotes);
+        this._changeStretchNotes = new ChangeGroup();
+
+        for (const channelIndex of this._eachSelectedChannel()) {
+            for (const pattern of this._eachSelectedPattern(channelIndex)) {
+                this._changeStretchNotes.append(new ChangeStretchNotes(this._doc, pattern, oldX1, oldX2, newX1, newX2));
+            }
+        }
+
+        this._doc.record(this._changeStretchNotes, canReplaceLastChange);
     }
 
     /** Moves notes left and right (or up/down) by a full step (or octave). */
