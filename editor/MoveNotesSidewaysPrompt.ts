@@ -14,6 +14,7 @@ export class MoveNotesSidewaysPrompt implements Prompt {
 		private readonly _conversionStrategySelect: HTMLSelectElement = select({style: "width: 100%;"},
 			option({value: "overflow"}, "Overflow notes across bars."),
 			option({value: "wrapAround"}, "Wrap notes around within bars."),
+			option({value: "truncate"}, "Push notes and let them cut off."),
 	);
 		private readonly _cancelButton: HTMLButtonElement = button({class: "cancelButton"});
 		private readonly _okayButton: HTMLButtonElement = button({class: "okayButton", style: "width:45%;"}, "Okay");

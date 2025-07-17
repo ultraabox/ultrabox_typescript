@@ -4396,9 +4396,9 @@ export class SongEditor {
                 break;
             case 37: // left
                 if (event.shiftKey) {
-                    this._doc.selection.boxSelectionX1 = Math.max(0, this._doc.selection.boxSelectionX1 - 1);
-                    this._doc.selection.scrollToEndOfSelection();
-                    this._doc.selection.selectionUpdated();
+                        this._doc.selection.boxSelectionX1 = Math.max(0, this._doc.selection.boxSelectionX1 - 1);
+                        this._doc.selection.scrollToEndOfSelection();
+                        this._doc.selection.selectionUpdated();
                 } else {
                     this._doc.selection.setChannelBar(this._doc.channel, (this._doc.bar + this._doc.song.barCount - 1) % this._doc.song.barCount);
                     this._doc.selection.resetBoxSelection();
@@ -4407,9 +4407,9 @@ export class SongEditor {
                 break;
             case 39: // right
                 if (event.shiftKey) {
-                    this._doc.selection.boxSelectionX1 = Math.min(this._doc.song.barCount - 1, this._doc.selection.boxSelectionX1 + 1);
-                    this._doc.selection.scrollToEndOfSelection();
-                    this._doc.selection.selectionUpdated();
+                        this._doc.selection.boxSelectionX1 = Math.min(this._doc.song.barCount - 1, this._doc.selection.boxSelectionX1 + 1);
+                        this._doc.selection.scrollToEndOfSelection();
+                        this._doc.selection.selectionUpdated();
                 } else {
                     this._doc.selection.setChannelBar(this._doc.channel, (this._doc.bar + 1) % this._doc.song.barCount);
                     this._doc.selection.resetBoxSelection();
@@ -5113,28 +5113,28 @@ export class SongEditor {
                 this._doc.selection.transpose(false, false);
                 break;
             case "noteOpMerge":
-                this._doc.selection.noteOpMerge();
+                this._doc.selection.noteMerge(true);
                 break;
             case "noteOpBridge":
-                this._doc.selection.noteOpBridge(false);
+                this._doc.selection.noteBridge(true, true);
                 break;
             case "noteOpSeparate":
-                this._doc.selection.noteOpSeparate(5, this._doc.selection.boxSelectionActive ? this._doc.selection.patternSelectionStart : undefined);
+                this._doc.selection.noteSegmentizeAcross(2, false, true);
                 break;
             case "noteOpPartition":
-                this._doc.selection.noteOpPartition();
+                this._doc.selection.noteDivideSelfAcross();
                 break;
             case "flattenNotes":
-                this._doc.selection.flattenNotes();
+                this._doc.selection.noteFlattenAcross();
                 break;
             case "stretchNotes":
-                this._doc.selection.stretchNotes(this._doc.selection.patternSelectionStart, this._doc.selection.patternSelectionEnd, 0, this._doc.song.beatsPerBar * Config.partsPerBeat);
+                this._doc.selection.noteStretchAcross(this._doc.selection.patternSelectionStart, this._doc.selection.patternSelectionEnd, 0, this._doc.song.beatsPerBar * Config.partsPerBeat);
                 break;
             case "noteOpMirrorHorizontal":
-                this._doc.selection.mirrorNotes(false);
+                this._doc.selection.noteMirrorAcross(false);
                 break;
             case "noteOpMirrorVertical":
-                this._doc.selection.mirrorNotes(true);
+                this._doc.selection.noteMirrorAcross(true);
                 break;
             case "selectAll":
                 this._doc.selection.selectAll();
