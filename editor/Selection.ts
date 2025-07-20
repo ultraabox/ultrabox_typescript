@@ -6,7 +6,7 @@ import { SongDocument } from "./SongDocument";
 import { ChangeGroup } from "./Change";
 import { ColorConfig } from "./ColorConfig";
 import { ChangeTrackSelection, ChangeChannelBar, ChangeAddChannel, ChangeRemoveChannel, ChangeChannelOrder, ChangeDuplicateSelectedReusedPatterns, ChangeNoteAdded, ChangeNoteTruncate, ChangePatternNumbers, ChangePatternSelection, ChangeInsertBars, ChangeDeleteBars, ChangeEnsurePatternExists, ChangeNoteLength, ChangePaste, ChangeSetPatternInstruments, ChangeViewInstrument, ChangeModChannel, ChangeModInstrument, ChangeModSetting, ChangeModFilter, ChangePatternsPerChannel, ChangePatternRhythm, ChangePatternScale, ChangeTranspose, ChangeRhythm, comparePatternNotes, unionOfUsedNotes, generateScaleMap, discardInvalidPatternInstruments, patternsContainSameInstruments } from "./changes";
-import { ChangeMergeAcross, ChangeSegmentizeAcross, ChangeDivideSelfAcross, ChangeFlattenAcross, ChangeMirrorAcross, ChangeSpreadAcross, ChangeStackLeftAcross, ChangeBridgeAcross, ChangeStretchAcross, ChangeMergeAcrossAdjacent } from "./changesNoteOps";
+import { ChangeMergeAcross, ChangeSegmentizeAcross, ChangeSpreadAcross, ChangeBridgeAcross, ChangeStretchHorizontal, ChangeMergeAcrossAdjacent, ChangeStretchVertical, ChangeStretchVerticalRelative, ChangeMirrorHorizontal, ChangeTapNotesAcross, ChangeStepAcross } from "./changesNoteOps";
 
 interface PatternCopy {
     instruments: number[];
@@ -37,15 +37,9 @@ export class Selection {
     public patternSelectionActive: boolean = false;
 
     private _changeTranspose: ChangeGroup | null = null;
-    private _changeMergeAcross: ChangeGroup | null = null;
-    private _changeBridgeAcross: ChangeGroup | null = null;
-    private _changeSegmentizeAcross: ChangeGroup | null = null;
-    private _changeDivideSelfAcross: ChangeGroup | null = null;
-    private _changeFlattenAcross: ChangeGroup | null = null;
-    private _changeStackLeft: ChangeGroup | null = null;
-    private _changeSpreadAcross: ChangeGroup | null = null;
-    private _changeMirrorAcross: ChangeGroup | null = null;
-    private _changeStretchAcross: ChangeGroup | null = null;
+    private _changeNoteOperations: ChangeGroup | null = null;
+    private _ChangeStretchHorizontal: ChangeGroup | null = null;
+    private _changeStretchVertical: ChangeGroup | null = null;
     private _changeTrack: ChangeGroup | null = null;
     private _changeInstrument: ChangeGroup | null = null;
     private _changeReorder: ChangeGroup | null = null;
@@ -106,80 +100,34 @@ export class Selection {
         this._doc.channelScrollPos = Math.min(this.boxSelectionY1, Math.max(this.boxSelectionY1 - (this._doc.trackVisibleChannels - 1), this._doc.channelScrollPos));
     }
 
-    /** Returns bounds of the next logical note right/left of selection bounds, if any, or first note if none. Stops at furthest note. */
-    private _getNextNote(backwards: boolean): ({x1: number, x2: number} | null) {
-        if (this._doc.song.getChannelIsMod(this._doc.channel)) {
-            return null;
-        }
+    /** Returns the pitches of the lowest and highest point among all notes in the given range. */
+    public getVerticalBounds(notes: Note[], x1: number, x2: number) {
+    let absoluteMax = 0;
+    let absoluteMin = Number.MAX_SAFE_INTEGER;
 
-        const notes = this._doc.getCurrentPattern()?.notes;
-        let newX1 = -1;
-        let newX2 = -1;
+    for (let i = 0; i < notes.length; i++) {
+        const note = notes[i];
 
-        if (notes && notes.length > 0) {
-            const firstNote = backwards ? notes[notes.length - 1] : notes[0];
-            const lastNote = backwards ? notes[0] : notes[notes.length - 1];
-
-            // Select first note with start(end) position >=(<=) current start(end) position
-            if (this._doc.selection.patternSelectionActive) {
-                if (backwards) {
-                    for (let i = notes.length - 1; i >= 0; i--) {
-                        if (notes[i].end <= this._doc.selection.patternSelectionStart) {
-                            newX1 = notes[i].start;
-                            newX2 = notes[i].end;
-                            break;
-                        }
-                    }
-                } else {
-                    for (const note of notes) {
-                        if (note.start >= this._doc.selection.patternSelectionEnd) {
-                            newX1 = note.start;
-                            newX2 = note.end;
-                            break;
-                        }
-                    }
-                }
+        // For all notes in selection range
+        if (note.end > x1 && note.start < x2) {
+            let pinMax = 0;
+            let pinMin = Number.MAX_SAFE_INTEGER;
+    
+            // Find vertical min/max among pins.
+            for (let j = 0; j < note.pins.length; j++) {
+                pinMax = Math.max(pinMax, note.pins[j].interval);
+                pinMin = Math.min(pinMin, note.pins[j].interval);
             }
-            // Select first(last) note if no selection is active.
-            else {
-                newX1 = firstNote.start;
-                newX2 = firstNote.end;
-            }
-
-            // Selects last(first) note if no notes > selection since it touches right(left) edge.
-            if (newX1 === -1) {
-                newX1 = lastNote.start;
-                newX2 = lastNote.end;
+    
+            // The vertical min/max among pitches + pin min/max gives the highest/lowest points in a note.
+            for (let j = 0; j < note.pitches.length; j++) {
+                absoluteMax = Math.max(absoluteMax, note.pitches[j] + pinMax);
+                absoluteMin = Math.min(absoluteMin, note.pitches[j] + pinMin);
             }
         }
-
-        return { x1: newX1, x2: newX2 };
     }
 
-    /**
-     * For non-mod channels, sets selection to the bounds of next logical note from current selection.
-     * Backwards selects previous, and union uses the widest bounds of both.
-    */
-    public selectNextNote(backwards?: boolean, combine?: 'union'|'intersect') {
-        const result = this._getNextNote(backwards === true);
-        if (result !== null) {
-            let x1 = result.x1;
-            let x2 = result.x2;
-            
-            if (this._doc.selection.patternSelectionActive) {
-                if (combine === 'union') {
-                    x1 = Math.min(this._doc.selection.patternSelectionStart, result.x1);
-                    x2 = Math.max(this._doc.selection.patternSelectionEnd, result.x2);
-                } else if (combine === 'intersect') {
-                    x1 = Math.max(this._doc.selection.patternSelectionStart, result.x1);
-                    x2 = Math.min(this._doc.selection.patternSelectionEnd, result.x2);
-                }
-            }
-
-            const select = new ChangeGroup();
-            select.append(new ChangePatternSelection(this._doc, x1, x2));
-            this._doc.record(select);
-        }
+    return { min: absoluteMin, max: absoluteMax };
     }
 
     public setChannelBar(channelIndex: number, bar: number): void {
@@ -354,6 +302,56 @@ export class Selection {
         }
     }
 
+    /** Returns bounds of the next logical note right/left of selection bounds, if any, or first note if none. Stops at furthest note. */
+    private _getNextNote(backwards: boolean): ({x1: number, x2: number} | null) {
+        if (this._doc.song.getChannelIsMod(this._doc.channel)) {
+            return null;
+        }
+
+        const notes = this._doc.getCurrentPattern()?.notes;
+        let newX1 = -1;
+        let newX2 = -1;
+
+        if (notes && notes.length > 0) {
+            const firstNote = backwards ? notes[notes.length - 1] : notes[0];
+            const lastNote = backwards ? notes[0] : notes[notes.length - 1];
+
+            // Select first note with start(end) position >=(<=) current start(end) position
+            if (this._doc.selection.patternSelectionActive) {
+                if (backwards) {
+                    for (let i = notes.length - 1; i >= 0; i--) {
+                        if (notes[i].end <= this._doc.selection.patternSelectionStart) {
+                            newX1 = notes[i].start;
+                            newX2 = notes[i].end;
+                            break;
+                        }
+                    }
+                } else {
+                    for (const note of notes) {
+                        if (note.start >= this._doc.selection.patternSelectionEnd) {
+                            newX1 = note.start;
+                            newX2 = note.end;
+                            break;
+                        }
+                    }
+                }
+            }
+            // Select first(last) note if no selection is active.
+            else {
+                newX1 = firstNote.start;
+                newX2 = firstNote.end;
+            }
+
+            // Selects last(first) note if no notes > selection since it touches right(left) edge.
+            if (newX1 === -1) {
+                newX1 = lastNote.start;
+                newX2 = lastNote.end;
+            }
+        }
+
+        return { x1: newX1, x2: newX2 };
+    }
+
     private _parseCopiedInstrumentArray(patternCopy: any, channelIndex: number): number[] {
         const instruments: number[] = Array.from(patternCopy["instruments"]).map(i => (<any>i) >>> 0);
         discardInvalidPatternInstruments(instruments, this._doc.song, channelIndex);
@@ -415,7 +413,7 @@ export class Selection {
         }
 
         const selectionCopy: SelectionCopy = {
-            "partDuration": this.patternSelectionActive ? this.patternSelectionEnd - this.patternSelectionStart : this._doc.song.beatsPerBar * Config.partsPerBeat,
+            "partDuration": this.patternSelectionActive ? this.patternSelectionEnd - this.patternSelectionStart : this._doc.song.partsPerPattern,
             "channels": channels,
         };
         window.localStorage.setItem("selectionCopy", JSON.stringify(selectionCopy));
@@ -718,6 +716,32 @@ export class Selection {
         this._doc.record(group);
     }
 
+    /**
+     * For non-mod channels, sets selection to the bounds of next logical note from current selection.
+     * Backwards selects previous, and union uses the widest bounds of both.
+    */
+    public selectNextNote(backwards?: boolean, combine?: 'union'|'intersect') {
+        const result = this._getNextNote(backwards === true);
+        if (result !== null) {
+            let x1 = result.x1;
+            let x2 = result.x2;
+            
+            if (this._doc.selection.patternSelectionActive) {
+                if (combine === 'union') {
+                    x1 = Math.min(this._doc.selection.patternSelectionStart, result.x1);
+                    x2 = Math.max(this._doc.selection.patternSelectionEnd, result.x2);
+                } else if (combine === 'intersect') {
+                    x1 = Math.max(this._doc.selection.patternSelectionStart, result.x1);
+                    x2 = Math.min(this._doc.selection.patternSelectionEnd, result.x2);
+                }
+            }
+
+            const select = new ChangeGroup();
+            select.append(new ChangePatternSelection(this._doc, x1, x2));
+            this._doc.record(select);
+        }
+    }
+
     public selectAll(): void {
         new ChangePatternSelection(this._doc, 0, 0);
         if (this.boxSelectionBar == 0 &&
@@ -894,8 +918,7 @@ export class Selection {
      * This can optionally be limited to only adjacent touching notes with the same pitches.
      */
     public noteMerge(adjacentOnly: boolean): void {
-        const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeMergeAcross);
-        this._changeMergeAcross = new ChangeGroup();
+        this._changeNoteOperations = new ChangeGroup();
 
         for (const channelIndex of this._eachSelectedChannel()) {
             // Mod channels aren't supported.
@@ -904,12 +927,12 @@ export class Selection {
             }
 
             for (const pattern of this._eachSelectedPattern(channelIndex)) {
-                if (adjacentOnly) this._changeMergeAcross.append(new ChangeMergeAcrossAdjacent(this._doc, pattern)); 
-                else this._changeMergeAcross.append(new ChangeMergeAcross(this._doc, pattern));
+                if (adjacentOnly) this._changeNoteOperations.append(new ChangeMergeAcrossAdjacent(this._doc, pattern)); 
+                else this._changeNoteOperations.append(new ChangeMergeAcross(this._doc, pattern));
 			}
         }
 
-        this._doc.record(this._changeMergeAcross, canReplaceLastChange);
+        this._doc.record(this._changeNoteOperations);
     }
 
     /**
@@ -919,24 +942,17 @@ export class Selection {
      * and end with the same size that last note did. If both are on, doBends takes precedence on end note size.
      */
     public noteBridge(doBends: boolean, copyEnds: boolean): void {
-        const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeBridgeAcross);
-        this._changeBridgeAcross = new ChangeGroup();
+        this._changeNoteOperations = new ChangeGroup();
 
         for (const channelIndex of this._eachSelectedChannel()) {
-            // Mod channels don't have notes, so there's no volume envelope to edit -- no point.
             if (this._doc.song.getChannelIsMod(channelIndex)) { continue; }
             for (const pattern of this._eachSelectedPattern(channelIndex)) {
                 const bridgeOp = new ChangeBridgeAcross(this._doc, pattern, doBends, copyEnds);
-                this._changeBridgeAcross.append(bridgeOp);
-
-                // Chain into segmentize operation. THIS IS A TEST.
-                bridgeOp.perNote((note) => {
-                    this._changeBridgeAcross!.append(new ChangeSegmentizeAcross(this._doc, pattern, 3, note.start, note.end))
-                });
+                this._changeNoteOperations.append(bridgeOp);
 			}
         }
 
-        this._doc.record(this._changeBridgeAcross, canReplaceLastChange);
+        this._doc.record(this._changeNoteOperations);
     }
 
     /**
@@ -944,14 +960,15 @@ export class Selection {
      * The range is optional, defaulting to selection or full sheet. If absolute, then cuts means a cut
      * will be made every X units of time. If perNote, a copy of segmentize runs on each note.
      */
-    public noteSegmentizeAcross(cuts: number, absolute?: boolean, perNote?: boolean, x1?: number, x2?: number): void {
-        const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeSegmentizeAcross);
-        this._changeSegmentizeAcross = new ChangeGroup();
+    public noteSegmentizeAcross(cuts: number, absolute?: boolean, perNote?: boolean): void {
+        this._changeNoteOperations = new ChangeGroup();
+        let x1 = 0;
+        let x2 = 0;
 
         // Instead of cuts-per-range, this makes a segment every {cut} units of time.
         if (absolute || perNote) {
-            x1 = x1 ?? (this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionStart : 0);
-            x2 = x2 ?? (this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionEnd : this._doc.song.beatsPerBar * Config.partsPerBeat);
+            x1 = this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionStart : 0;
+            x2 = this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionEnd : this._doc.song.partsPerPattern;
 
             if (absolute && !perNote) {
                 cuts = Math.max(Math.floor((x2 - x1) / cuts), 1);
@@ -967,86 +984,110 @@ export class Selection {
                         const adjustedX2 = Math.min(x2 as number, note.end);
                         const adjustedCuts = absolute ? Math.max(Math.floor((adjustedX2 - adjustedX1) / cuts), 1) : cuts;
 
-                        this._changeSegmentizeAcross.append(new ChangeSegmentizeAcross(this._doc, pattern, adjustedCuts, adjustedX1, adjustedX2));
+                        this._changeNoteOperations.append(new ChangeSegmentizeAcross(this._doc, pattern, adjustedCuts, adjustedX1, adjustedX2));
                     }
                 } else {
-                    this._changeSegmentizeAcross.append(new ChangeSegmentizeAcross(this._doc, pattern, cuts, x1, x2));
+                    this._changeNoteOperations.append(new ChangeSegmentizeAcross(this._doc, pattern, cuts, x1, x2));
                 }
 			}
         }
 
-        this._doc.record(this._changeSegmentizeAcross, canReplaceLastChange);
+        this._doc.record(this._changeNoteOperations);
     }
 
-    /** Each note is divided into X copies across its interval, which mimic pins as best as possible. */
-    public noteDivideSelfAcross(): void {
-        const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeDivideSelfAcross);
-        this._changeDivideSelfAcross = new ChangeGroup();
+    /**
+     * Flattens every note in the given range across the center of that note.
+     * @param fade If fade is in/out or both, the stretch changes from 1 to 0 across the range.
+    */
+    public noteFlattenAcross(fade?: 'in'|'out'): void {
+        const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeStretchVertical);
+        this._changeStretchVertical = new ChangeGroup();
+
+        const x1 = (this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionStart : 0);
+        const x2 = (this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionEnd : this._doc.song.partsPerPattern);
 
         for (const channelIndex of this._eachSelectedChannel()) {
+            if (this._doc.song.getChannelIsMod(channelIndex)) { continue; } // Mod channels unsupported.
             for (const pattern of this._eachSelectedPattern(channelIndex)) {
-                this._changeDivideSelfAcross.append(new ChangeDivideSelfAcross(this._doc, pattern));
+                const bounds = this.getVerticalBounds(pattern.notes, x1, x2);
+                let end = fade ? pattern.notes.filter((note) => note.end > x1 && note.start < x2).length - 1 : 0
+
+                for (let i = 0; i < pattern.notes.length; i++) {
+                    const note = pattern.notes[i];
+                    if (note.end > x1 && note.start < x2) {
+                        let multiplier =  (fade === 'in') ? i/end : (fade === 'out') ? 1 - i/end : 0;
+
+                        this._changeStretchVertical.append(new ChangeStretchVerticalRelative(
+                            this._doc, channelIndex, pattern, multiplier, 0, false, note.start, note.end, bounds));
+                    }
+                }
 			}
         }
 
-        this._doc.record(this._changeDivideSelfAcross, canReplaceLastChange);
-    }
-
-    /** All notes are placed on the average pitch within that note, and are locked to that pitch. Any pitch pins are
-     * then removed. The notes can also be force-snapped to nearest value in the active scale. */
-    public noteFlattenAcross(): void {
-        const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeFlattenAcross);
-        this._changeFlattenAcross = new ChangeGroup();
-
-        for (const channelIndex of this._eachSelectedChannel()) {
-            for (const pattern of this._eachSelectedPattern(channelIndex)) {
-                this._changeFlattenAcross.append(new ChangeFlattenAcross(this._doc, pattern));
-			}
-        }
-
-        this._doc.record(this._changeFlattenAcross, canReplaceLastChange);
-    }
-
-    /** Any space between notes is removed, stacking notes start-to-end from selection start. */
-    public noteStackLeft(): void {
-        const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeStackLeft);
-        this._changeStackLeft = new ChangeGroup();
-
-        for (const channelIndex of this._eachSelectedChannel()) {
-            for (const pattern of this._eachSelectedPattern(channelIndex)) {
-                this._changeStackLeft.append(new ChangeStackLeftAcross(this._doc, pattern));
-			}
-        }
-
-        this._doc.record(this._changeStackLeft, canReplaceLastChange);
+        this._doc.record(this._changeStretchVertical, canReplaceLastChange);
     }
 
     /** Sums the empty space between all notes in the selection bounds and gives them an even division of that space. */
     public noteSpreadAcross(): void {
-        const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeSpreadAcross);
-        this._changeSpreadAcross = new ChangeGroup();
+        this._changeNoteOperations = new ChangeGroup();
 
         for (const channelIndex of this._eachSelectedChannel()) {
             for (const pattern of this._eachSelectedPattern(channelIndex)) {
-                this._changeSpreadAcross.append(new ChangeSpreadAcross(this._doc, pattern));
+                this._changeNoteOperations.append(new ChangeSpreadAcross(this._doc, pattern));
 			}
         }
 
-        this._doc.record(this._changeSpreadAcross, canReplaceLastChange);
+        this._doc.record(this._changeNoteOperations);
+    }
+
+    /** Shifts notes slightly by 1 time left or right at random, if there's space. */
+    public noteStutterAcross(): void {
+        this._changeNoteOperations = new ChangeGroup();
+
+        for (const channelIndex of this._eachSelectedChannel()) {
+            for (const pattern of this._eachSelectedPattern(channelIndex)) {
+                this._changeNoteOperations.append(new ChangeTapNotesAcross(this._doc, pattern));
+			}
+        }
+
+        this._doc.record(this._changeNoteOperations);
+    }
+
+    public noteStepAcross(): void {
+        this._changeNoteOperations = new ChangeGroup();
+
+        for (const channelIndex of this._eachSelectedChannel()) {
+            for (const pattern of this._eachSelectedPattern(channelIndex)) {
+                this._changeNoteOperations.append(new ChangeStepAcross(this._doc, channelIndex, pattern, -1));
+			}
+        }
+
+        this._doc.record(this._changeNoteOperations);
     }
 
     /** Mirrors notes in the selection horizontally within the selection bounds, or vertically between min and max configured pitch. */
     public noteMirrorAcross(isVertical: boolean): void {
-        const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeMirrorAcross);
-        this._changeMirrorAcross = new ChangeGroup();
+        this._changeNoteOperations = new ChangeGroup();
+
+        const range = {
+            start: this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionStart : 0,
+            end: this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionEnd : this._doc.song.partsPerPattern
+        };
 
         for (const channelIndex of this._eachSelectedChannel()) {
+            if (this._doc.song.getChannelIsMod(channelIndex)) { continue; } // mod channels aren't supported
             for (const pattern of this._eachSelectedPattern(channelIndex)) {
-                this._changeMirrorAcross.append(new ChangeMirrorAcross(this._doc, pattern, isVertical));
+                const vertRange = this._doc.selection.getVerticalBounds(pattern.notes, range.start, range.end);
+
+                if (isVertical) {
+                    this._changeNoteOperations.append(new ChangeStretchVertical(this._doc, channelIndex, pattern, vertRange.max, vertRange.min));
+                } else {
+                    this._changeNoteOperations.append(new ChangeMirrorHorizontal(this._doc, pattern, false, range.start, range.end));
+                }
             }
         }
 
-        this._doc.record(this._changeMirrorAcross, canReplaceLastChange);
+        this._doc.record(this._changeNoteOperations);
     }
 
     /**
@@ -1054,17 +1095,43 @@ export class Selection {
      * stretch being the size of the bar sheet and minimum being the number of note pins. Notes are deleted from the
      * original and new ranges, and the edited notes are reconstructed into the new range.
      */
-    public noteStretchAcross(oldX1: number, oldX2: number, newX1: number, newX2: number): void {
-        const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeStretchAcross);
-        this._changeStretchAcross = new ChangeGroup();
+    public noteStretchHorizontal(newX1: number, newX2: number): void {
+        const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._ChangeStretchHorizontal);
+        this._ChangeStretchHorizontal = new ChangeGroup();
+
+        const bounds = {
+            start: this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionStart : 0,
+            end: this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionEnd : this._doc.song.partsPerPattern
+        };
 
         for (const channelIndex of this._eachSelectedChannel()) {
             for (const pattern of this._eachSelectedPattern(channelIndex)) {
-                this._changeStretchAcross.append(new ChangeStretchAcross(this._doc, pattern, oldX1, oldX2, newX1, newX2));
+                this._ChangeStretchHorizontal.append(new ChangeStretchHorizontal(this._doc, pattern, bounds.start, bounds.end, newX1, newX2));
             }
         }
 
-        this._doc.record(this._changeStretchAcross, canReplaceLastChange);
+        this._doc.record(this._ChangeStretchHorizontal, canReplaceLastChange);
+    }
+
+    /** Stretches/shrinks all notes vertically to fit a new vertical range. */
+    public noteStretchVertical(yMin: number, yMax: number): void {
+        const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeStretchVertical);
+        this._changeStretchVertical = new ChangeGroup();
+
+        const bounds = {
+            start: this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionStart : 0,
+            end: this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionEnd : this._doc.song.partsPerPattern
+        };
+
+        for (const channelIndex of this._eachSelectedChannel()) {
+            if (this._doc.song.getChannelIsMod(channelIndex)) { continue; } // mod channels aren't supported
+            for (const pattern of this._eachSelectedPattern(channelIndex)) {
+                this._changeStretchVertical.append(new ChangeStretchVertical(
+                    this._doc, channelIndex, pattern, yMin, yMax, undefined, bounds.start, bounds.end));
+            }
+        }
+
+        this._doc.record(this._changeStretchVertical, canReplaceLastChange);
     }
 
     /** Moves notes left and right (or up/down) by a full step (or octave). */

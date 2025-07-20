@@ -3621,7 +3621,7 @@ export class ChangeMoveNotesSideways extends ChangeGroup {
         const boxY1 = Math.max(doc.selection.boxSelectionY0, doc.selection.boxSelectionY1);
 
         let partsToMove: number = Math.round((beatsToMove % doc.song.beatsPerBar) * Config.partsPerBeat);
-        if (partsToMove < 0) partsToMove += doc.song.beatsPerBar * Config.partsPerBeat;
+        if (partsToMove < 0) partsToMove += doc.song.partsPerPattern;
         if (partsToMove == 0.0) return;
 
         switch (strategy) {
@@ -3736,7 +3736,7 @@ export class ChangeBeatsPerBar extends ChangeGroup {
                         const sequence: ChangeSequence = new ChangeSequence();
                         for (let i: number = 0; i < doc.song.getChannelCount(); i++) {
                             for (let j: number = 0; j < doc.song.channels[i].patterns.length; j++) {
-                                sequence.append(new ChangeNoteTruncate(doc, doc.song.channels[i].patterns[j], newValue * Config.partsPerBeat, doc.song.beatsPerBar * Config.partsPerBeat, null, true));
+                                sequence.append(new ChangeNoteTruncate(doc, doc.song.channels[i].patterns[j], newValue * Config.partsPerBeat, doc.song.partsPerPattern, null, true));
                             }
                         }
                     }
@@ -4596,8 +4596,8 @@ export class ChangeDragSelectedNotes extends ChangeSequence {
 
         const oldStart: number = doc.selection.patternSelectionStart;
         const oldEnd: number = doc.selection.patternSelectionEnd;
-        const newStart: number = Math.max(0, Math.min(doc.song.beatsPerBar * Config.partsPerBeat, oldStart + parts));
-        const newEnd: number = Math.max(0, Math.min(doc.song.beatsPerBar * Config.partsPerBeat, oldEnd + parts));
+        const newStart: number = Math.max(0, Math.min(doc.song.partsPerPattern, oldStart + parts));
+        const newEnd: number = Math.max(0, Math.min(doc.song.partsPerPattern, oldEnd + parts));
         if (newStart == newEnd) {
             // Just erase the current contents of the selection:
             this.append(new ChangeNoteTruncate(doc, pattern, oldStart, oldEnd, null, true));

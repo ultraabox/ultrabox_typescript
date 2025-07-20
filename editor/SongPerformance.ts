@@ -126,7 +126,7 @@ export class SongPerformance {
 	}
 	
 	private _getCurrentPlayheadPart(): number {
-		const currentPart: number = this._doc.synth.playhead * this._doc.song.beatsPerBar * Config.partsPerBeat;
+		const currentPart: number = this._doc.synth.playhead * this._doc.song.partsPerPattern;
 		if (this._doc.prefs.snapRecordedNotesToRhythm) {
 			const minDivision: number = this._getMinDivision();
 			return Math.round(currentPart / minDivision) * minDivision;
@@ -167,7 +167,7 @@ export class SongPerformance {
 			return false;
 		}
 		
-		const partsPerBar: number = this._doc.song.beatsPerBar * Config.partsPerBeat;
+		const partsPerBar: number = this._doc.song.partsPerPattern;
 		const oldPart: number = this._playheadPart % partsPerBar;
 		const oldBar: number = Math.floor(this._playheadPart / partsPerBar);
 		const oldPlayheadPart: number = this._playheadPart;
@@ -269,7 +269,7 @@ export class SongPerformance {
 			return false;
 		}
 		
-		const partsPerBar: number = this._doc.song.beatsPerBar * Config.partsPerBeat;
+		const partsPerBar: number = this._doc.song.partsPerPattern;
 		const oldPart: number = this._bassPlayheadPart % partsPerBar;
 		const oldBar: number = Math.floor(this._bassPlayheadPart / partsPerBar);
 		const oldPlayheadPart: number = this._bassPlayheadPart;

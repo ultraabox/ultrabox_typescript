@@ -2899,6 +2899,10 @@ export class Song {
         }
     }
 
+    public get partsPerPattern() {
+        return this.beatsPerBar * Config.partsPerBeat;
+    }
+
     // Returns the ideal new note volume when dragging (max volume for a normal note, a "neutral" value for mod notes based on how they work)
     public getNewNoteVolume = (isMod: boolean, modChannel?: number, modInstrument?: number, modCount?: number): number => {
         if (!isMod || modChannel == undefined || modInstrument == undefined || modCount == undefined)

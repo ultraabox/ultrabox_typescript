@@ -792,12 +792,14 @@ export class SongEditor {
         option({ value: "transposeDown" }, "Move Notes Down (- or ⇧-)"),
         option({ value: "noteOpMerge" }, "Merge Notes"),
         option({ value: "noteOpBridge" }, "Bridge Between Notes"),
-        option({ value: "noteOpSeparate" }, "Separate Notes"),
-        option({ value: "noteOpPartition" }, "Divide Evenly Within Notes"),
+        option({ value: "noteOpSegmentize" }, "Segmentize Notes"),
         option({ value: "flattenNotes" }, "Flatten Notes"),
-        option({ value: "stretchNotes" }, "Stretch Notes"),
+        option({ value: "stretchNotes" }, "Stretch Notes Horz"),
+        option({ value: "stretchNotesVertical" }, "Stretch Notes Vert"),
         option({ value: "noteOpMirrorHorizontal" }, "Mirror Notes Horz"),
         option({ value: "noteOpMirrorVertical" }, "Mirror Notes Vert"),
+        option({ value: "spreadAcross" }, "Spread Notes Evenly"),
+        option({ value: "stutterNotes"}, "Stutter Notes"),
         option({ value: "moveNotesSideways" }, "Move All Notes Sideways... (W)"),
 	    option({ value: "generateEuclideanRhythm" }, "Generate Euclidean Rhythm... (E)"),
         option({ value: "beatsPerBar" }, "Change Beats Per Bar... (⇧B)"),
@@ -5118,23 +5120,29 @@ export class SongEditor {
             case "noteOpBridge":
                 this._doc.selection.noteBridge(true, true);
                 break;
-            case "noteOpSeparate":
+            case "noteOpSegmentize":
                 this._doc.selection.noteSegmentizeAcross(2, false, true);
-                break;
-            case "noteOpPartition":
-                this._doc.selection.noteDivideSelfAcross();
                 break;
             case "flattenNotes":
                 this._doc.selection.noteFlattenAcross();
                 break;
             case "stretchNotes":
-                this._doc.selection.noteStretchAcross(this._doc.selection.patternSelectionStart, this._doc.selection.patternSelectionEnd, 0, this._doc.song.beatsPerBar * Config.partsPerBeat);
+                this._doc.selection.noteStretchHorizontal(this._doc.selection.patternSelectionStart, this._doc.selection.patternSelectionEnd);
+                break;
+            case "stretchNotesVertical":
+                this._doc.selection.noteStretchVertical(this._doc.selection.patternSelectionStart, this._doc.selection.patternSelectionEnd);
                 break;
             case "noteOpMirrorHorizontal":
                 this._doc.selection.noteMirrorAcross(false);
                 break;
             case "noteOpMirrorVertical":
                 this._doc.selection.noteMirrorAcross(true);
+                break;
+            case "spreadAcross":
+                this._doc.selection.noteSpreadAcross();
+                break;
+            case "stutterNotes":
+                this._doc.selection.noteStutterAcross();
                 break;
             case "selectAll":
                 this._doc.selection.selectAll();

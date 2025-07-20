@@ -240,7 +240,7 @@ export class PatternEditor {
         this._cursor.part =
             Math.floor(
                 Math.max(0,
-                    Math.min(this._doc.song.beatsPerBar * Config.partsPerBeat - minDivision, this._cursor.exactPart)
+                    Math.min(this._doc.song.partsPerPattern - minDivision, this._cursor.exactPart)
                 )
                 / minDivision) * minDivision;
 
@@ -433,7 +433,7 @@ export class PatternEditor {
             }
             this._cursor.end = this._cursor.start + defaultLength;
             let forceStart: number = 0;
-            let forceEnd: number = this._doc.song.beatsPerBar * Config.partsPerBeat;
+            let forceEnd: number = this._doc.song.partsPerPattern;
             if (this._cursor.prevNote != null) {
                 forceStart = this._cursor.prevNote.end;
             }
@@ -631,8 +631,8 @@ export class PatternEditor {
             // note flash
             for (var i = 0; i < noteFlashElements.length; i++) {
                 var element: SVGPathElement = noteFlashElements[i];
-                const noteStart: number = Number(element.getAttribute("note-start"))/(this._doc.song.beatsPerBar * Config.partsPerBeat)
-                const noteEnd: number = Number(element.getAttribute("note-end"))/(this._doc.song.beatsPerBar * Config.partsPerBeat)
+                const noteStart: number = Number(element.getAttribute("note-start"))/(this._doc.song.partsPerPattern)
+                const noteEnd: number = Number(element.getAttribute("note-end"))/(this._doc.song.partsPerPattern)
                 if ((modPlayhead>=noteStart)&&this._doc.prefs.notesFlashWhenPlayed) {
                     const dist = noteEnd-noteStart
                     element.style.opacity = String((1-(((modPlayhead-noteStart)-(dist/2))/(dist/2))))
@@ -1749,10 +1749,10 @@ export class PatternEditor {
             const minDivision: number = this._getMinDivision();
             const currentPart: number = this._snapToMinDivision(this._mouseX / this._partWidth);
             if (this._draggingStartOfSelection) {
-                sequence.append(new ChangePatternSelection(this._doc, Math.max(0, Math.min(this._doc.song.beatsPerBar * Config.partsPerBeat, currentPart)), this._doc.selection.patternSelectionEnd));
+                sequence.append(new ChangePatternSelection(this._doc, Math.max(0, Math.min(this._doc.song.partsPerPattern, currentPart)), this._doc.selection.patternSelectionEnd));
                 this._updateSelection();
             } else if (this._draggingEndOfSelection) {
-                sequence.append(new ChangePatternSelection(this._doc, this._doc.selection.patternSelectionStart, Math.max(0, Math.min(this._doc.song.beatsPerBar * Config.partsPerBeat, currentPart))));
+                sequence.append(new ChangePatternSelection(this._doc, this._doc.selection.patternSelectionStart, Math.max(0, Math.min(this._doc.song.partsPerPattern, currentPart))));
                 this._updateSelection();
             } else if (this._draggingSelectionContents) {
                 const pattern: Pattern | null = this._doc.getCurrentPattern(this._barOffset);
@@ -1845,7 +1845,7 @@ export class PatternEditor {
                     }
 
                     let defaultLength: number = minDivision;
-                    for (let i: number = minDivision; i <= this._doc.song.beatsPerBar * Config.partsPerBeat; i += minDivision) {
+                    for (let i: number = minDivision; i <= this._doc.song.partsPerPattern; i += minDivision) {
                         if (minDivision == 1) {
                             if (i < 5) {
                                 // Allow small lengths.
@@ -1899,7 +1899,7 @@ export class PatternEditor {
                     }
                     const continuesLastPattern: boolean = (start < 0 && this._doc.channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount);
                     if (start < 0) start = 0;
-                    if (end > this._doc.song.beatsPerBar * Config.partsPerBeat) end = this._doc.song.beatsPerBar * Config.partsPerBeat;
+                    if (end > this._doc.song.partsPerPattern) end = this._doc.song.partsPerPattern;
 
                     if (start < end) {
                         sequence.append(new ChangeEnsurePatternExists(this._doc, this._doc.channel, this._doc.bar));
@@ -1943,7 +1943,7 @@ export class PatternEditor {
                     let shiftedTime: number = Math.round((this._cursor.curNote.start + shiftedPin.time + shift) / minDivision) * minDivision;
                     const continuesLastPattern: boolean = (shiftedTime < 0.0 && this._doc.channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount);
                     if (shiftedTime < 0) shiftedTime = 0;
-                    if (shiftedTime > this._doc.song.beatsPerBar * Config.partsPerBeat) shiftedTime = this._doc.song.beatsPerBar * Config.partsPerBeat;
+                    if (shiftedTime > this._doc.song.partsPerPattern) shiftedTime = this._doc.song.partsPerPattern;
 
                     if (this._pattern == null) throw new Error();
 
@@ -2014,7 +2014,7 @@ export class PatternEditor {
                     if (this._doc.song.getChannelIsMod(this._doc.channel) && this.controlMode) {
                         // Link bend to the next note over
                         if (bendPart >= this._cursor.curNote.pins[this._cursor.curNote.pins.length - 1].time) {
-                            if (this._cursor.curNote.start + this._cursor.curNote.pins[this._cursor.curNote.pins.length - 1].time < this._doc.song.beatsPerBar * Config.partsPerBeat) {
+                            if (this._cursor.curNote.start + this._cursor.curNote.pins[this._cursor.curNote.pins.length - 1].time < this._doc.song.partsPerPattern) {
                                 for (const note of this._pattern!.notes) {
                                     if (note.start == this._cursor.curNote.start + this._cursor.curNote.pins[this._cursor.curNote.pins.length - 1].time && note.pitches[0] == this._cursor.curNote.pitches[0]) {
                                         sequence.append(new ChangeSizeBend(this._doc, note, note.pins[0].time, bendSize, bendInterval, this.shiftMode));
@@ -2050,7 +2050,7 @@ export class PatternEditor {
 
                                 if (prevPattern != null && prevPattern.instruments[0] == this._pattern!.instruments[0]) {
                                     for (const note of prevPattern.notes) {
-                                        if (note.end == this._doc.song.beatsPerBar * Config.partsPerBeat && note.pitches[0] == this._cursor.curNote.pitches[0]) {
+                                        if (note.end == this._doc.song.partsPerPattern && note.pitches[0] == this._cursor.curNote.pitches[0]) {
                                             sequence.append(new ChangeSizeBend(this._doc, note, note.pins[note.pins.length - 1].time, bendSize, bendInterval, this.shiftMode));
                                         }
                                     }
@@ -2083,7 +2083,7 @@ export class PatternEditor {
                         bendEnd = currentPart;
                     }
                     if (bendEnd < 0) bendEnd = 0;
-                    if (bendEnd > this._doc.song.beatsPerBar * Config.partsPerBeat) bendEnd = this._doc.song.beatsPerBar * Config.partsPerBeat;
+                    if (bendEnd > this._doc.song.partsPerPattern) bendEnd = this._doc.song.partsPerPattern;
                     if (bendEnd > this._cursor.curNote.end) {
                         sequence.append(new ChangeNoteTruncate(this._doc, this._pattern, this._cursor.curNote.start, bendEnd, this._cursor.curNote));
                     }
@@ -2293,7 +2293,7 @@ export class PatternEditor {
 
         this._editorWidth = this.container.clientWidth;
         this._editorHeight = this.container.clientHeight;
-        this._partWidth = this._editorWidth / (this._doc.song.beatsPerBar * Config.partsPerBeat);
+        this._partWidth = this._editorWidth / (this._doc.song.partsPerPattern);
         this._octaveOffset = (this._doc.channel >= this._doc.song.pitchChannelCount) ? 0 : this._doc.song.channels[this._doc.channel].octave * Config.pitchesPerOctave;
 
         if (this._doc.song.getChannelIsNoise(this._doc.channel)) {
