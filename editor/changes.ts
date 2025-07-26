@@ -4184,7 +4184,7 @@ export class ChangeNotesAdded extends UndoableChange {
             .filter((note) => !this._oldNotes.includes(note))
             .concat(this._newNotes);
 
-        this._pattern.notes.sort((note1, note2) => note1.start - note2.start);
+        this._pattern.notes.sort(function (a, b) { return (a.start == b.start) ? a.pitches[0] - b.pitches[0] : a.start - b.start; })
         this._doc.notifier.changed();
     }
 
@@ -4193,7 +4193,7 @@ export class ChangeNotesAdded extends UndoableChange {
             .filter((note) => !this._newNotes.includes(note))
             .concat(this._oldNotes);
 
-        this._pattern.notes.sort((note1, note2) => note1.start - note2.start);
+        this._pattern.notes.sort(function (a, b) { return (a.start == b.start) ? a.pitches[0] - b.pitches[0] : a.start - b.start; })
         this._doc.notifier.changed();
     }
 }

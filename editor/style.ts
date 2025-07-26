@@ -129,8 +129,48 @@ document.head.appendChild(HTML.style({ type: "text/css" }, `
 			<path d="M -1 76 L 30 76 L 30 1 L 33 -1 L 33 80 L -1 80 z" fill="rgba(0,0,0,0.7)"/> \
 			<rect x="-1" y="-1" width="19" height="80" fill="url(%23shadow)"/> \
 		</svg>'));
+	--internal-note-merge-symbol: var(--note-merge-symbol, url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"> \
+		<path d="M2.960992,16C2.960992,16 14.022811,16 14.022811,16 " transform="matrix(0.849555154,0,0,1,-2.515526041,0.883805424)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M2.960992,16C2.960992,16 14.022811,16 14.022811,16 " transform="matrix(0.849555154,0,0,1,12.08684837,-5.479941038)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M9.397626,16.883805C9.397626,16.883805 14.602374,10.520059 14.602374,10.520059 " fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2" stroke-linecap="round"/> \
+	</svg>'));
+	--internal-note-bridge-symbol: var(--note-bridge-symbol, url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"> \
+		<path d="M2.960992,16C2.960992,16 14.022811,16 14.022811,16 " transform="matrix(0.521774032,0,0,1,-1.54496875,0.883805424)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M2.960992,16C2.960992,16 14.022811,16 14.022811,16 " transform="matrix(0.521774032,0,0,1,16.683261204,-5.516939564)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M7.28871,16.883805C7.28871,16.883805 16.982323,16.883805 16.982323,16.883805 " fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+	</svg>'));
+	--internal-note-spread-symbol: var(--note-spread-symbol, url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"> \
+		<path d="M2.960992,16C2.960992,16 14.022811,16 14.022811,16 " transform="matrix(0.575289317,0,0,1,-1.703427083,2.883805424)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M5.77177,5.475782C5.77177,5.475782 5.77177,11.580539 5.77177,11.580539 " transform="matrix(0,1,-1,0,13.844224124,2.294529431)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M5.77177,11.580539C5.77177,11.580539 2.290663,8.099431 2.290663,8.099431 " transform="matrix(0,1,-1,0,12.844224124,2.997501424)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M5.77177,11.580539C5.77177,11.580539 2.290663,8.099431 2.290663,8.099431 " transform="matrix(-1,0,0,-1,7.035455551,18.953098003)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M5.77177,5.475782C5.77177,5.475782 5.77177,11.580539 5.77177,11.580539 " transform="matrix(0,-1,1,0,10.220330533,13.844224124)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M5.77177,11.580539C5.77177,11.580539 2.290663,8.099431 2.290663,8.099431 " transform="matrix(0,-1,1,0,11.220330533,13.141252131)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M5.77177,11.580539C5.77177,11.580539 2.290663,8.099431 2.290663,8.099431 " transform="matrix(1,0,0,1,17.029099106,-2.814344448)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M2.960992,16C2.960992,16 14.022811,16 14.022811,16 " transform="matrix(0.575289317,0,0,1,15.932826455,2.883805424)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M2.960992,16C2.960992,16 14.022811,16 14.022811,16 " transform="matrix(0.575289317,0,0,1,7.114699686,2.883805424)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+	</svg>'));
+	--internal-note-mirror-symbol: var(--note-mirror-symbol, url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23 23" width="23" height="23"> \
+		<path d="M10.187072,5.368752C10.187072,5.368752 10.187072,18.627013 10.187072,18.627013 C10.187072,18.627013 2.649364,18.631248 2.649364,18.631248 C2.649364,18.631248 10.187072,5.368752 10.187072,5.368752 Z" fill="${ColorConfig.primaryText}" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M13.521935,2.108916C13.521935,2.108916 13.521935,19.15979 13.521935,19.15979 C13.521935,19.15979 21.059643,19.165236 21.059643,19.165236 C21.059643,19.165236 13.521935,2.108916 13.521935,2.108916 Z" transform="matrix(1,0,0,1,0,0)" fill="none" stroke="${ColorConfig.primaryText}" stroke-dasharray="2" stroke-dashoffset="-0.0000000000000014155343563970746"/> \
+	</svg>'));
+	--internal-note-flatten-symbol: var(--note-flatten-symbol, url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"> \
+		<path d="M2.960992,16C2.960992,16 14.022811,16 14.022811,16 " transform="matrix(2.17071376,0,0,1,-6.427466145,2.883805424)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M5.77177,5.475782C5.77177,5.475782 5.77177,11.580539 5.77177,11.580539 " transform="matrix(1,0,0,1,0,2)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M5.77177,11.580539C5.77177,11.580539 2.290663,8.099431 2.290663,8.099431 " transform="matrix(1,0,0,1,0.702971993,3)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M5.77177,11.580539C5.77177,11.580539 2.290663,8.099431 2.290663,8.099431 " transform="matrix(0,1,-1,0,16.658568572,8.808768572)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M5.77177,5.475782C5.77177,5.475782 5.77177,11.580539 5.77177,11.580539 " transform="matrix(1,0,0,1,12.514859964,2)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M5.77177,11.580539C5.77177,11.580539 2.290663,8.099431 2.290663,8.099431 " transform="matrix(1,0,0,1,13.217831957,3)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M5.77177,11.580539C5.77177,11.580539 2.290663,8.099431 2.290663,8.099431 " transform="matrix(0,1,-1,0,29.173428536,8.808768572)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+	</svg>'));
+	--internal-note-split-symbol: var(--note-split-symbol, url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"> \
+		<path d="M2.960992,16C2.960992,16 14.022811,16 14.022811,16 " transform="matrix(0.444845809,0,0,1,-1.317184896,1.883805424)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M2.960992,16C2.960992,16 14.022811,16 14.022811,16 " transform="matrix(0,1.69800195,-1,0,21.926220079,-1.66298398)" fill="none" stroke="${ColorConfig.primaryText}" stroke-dasharray="1"/> \
+		<path d="M2.960992,16C2.960992,16 14.022811,8.51278 14.022811,8.51278 " transform="matrix(0.88467456,0,0,0.998194604,4.632196761,1.825177311)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M2.960992,16C2.960992,16 14.022811,16 14.022811,16 " transform="matrix(0.40696532,0,0,1,18.293202099,-5.857204894)" fill="none" stroke="${ColorConfig.primaryText}" stroke-width="2"/> \
+		<path d="M2.960992,16C2.960992,16 14.022811,16 14.022811,16 " transform="matrix(0,1.69800195,-1,0,34.418809989,-3.66298398)" fill="none" stroke="${ColorConfig.primaryText}" stroke-dasharray="1"/> \
+	</svg>'));
 }
-
 
 html {
 	scrollbar-color: var(--scrollbar-color, ${ColorConfig.uiWidgetBackground}) var(--scrollbar-background, ${ColorConfig.editorBackground});
@@ -267,6 +307,46 @@ div.tab-settings-radiodiv:hover {
 
 input.tab-settings-radio + div {
 	font-size: 1.5rem;
+}
+
+.beepboxEditor div.selectionOps-row {
+    display: flex;
+	margin-top: 10px;
+}
+
+.beepboxEditor div.selectionOps-row-inside {
+    display: flex;
+}
+
+.beepboxEditor div.selectionOps-action-controls {
+	padding: 0.3rem;
+}
+
+.beepboxEditor .selectionOps-action {
+    text-align: center;
+}
+
+.beepboxEditor .selectionOps-action-controls .checkbox-container {
+    text-align: left;
+	margin-top: 0.3rem;
+}
+
+.beepboxEditor div.selectionOps-action button.selectionOps-actionbutton {
+    height: calc(1.5 * var(--button-size));
+	width: calc(1.5 * var(--button-size));
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.beepboxEditor .noteOpMerge { background-image: var(--internal-note-merge-symbol) !important; }
+.beepboxEditor .noteOpBridge { background-image: var(--internal-note-bridge-symbol) !important; }
+.beepboxEditor .noteOpSpread { background-image: var(--internal-note-spread-symbol) !important; }
+.beepboxEditor .noteOpFlatten { background-image: var(--internal-note-flatten-symbol) !important; }
+.beepboxEditor .noteOpMirror { background-image: var(--internal-note-mirror-symbol) !important; }
+.beepboxEditor .noteOpSplit { background-image: var(--internal-note-split-symbol) !important; }
+
+.beepboxEditor div.selectionOps-action label {
+    padding-left: 0.3rem;
 }
 
 .trackAndMuteContainer {
@@ -1491,6 +1571,55 @@ input.tab-settings-radio + div {
   transform: scale(1.5);
 }
 
+.beepboxEditor checkbox-container,
+.beepboxEditor checkbox-container:before,
+.beepboxEditor checkbox-container:after {
+  box-sizing: border-box;
+}
+
+.beepboxEditor .checkbox-container {
+  color: ${ColorConfig.secondaryText};
+  line-height: 1.1;
+  display: grid;
+  grid-template-columns: 1em auto;
+  gap: 0.5em;
+}
+
+.beepboxEditor .checkbox-container--disabled {
+  color: ${ColorConfig.uiWidgetBackground};
+  cursor: not-allowed;
+}
+
+.beepboxEditor .checkbox-container input[type="checkbox"] {
+  /* Remove most native input styles */
+  -webkit-appearance: none;
+  appearance: none;
+  /* Not removed via appearance */
+  margin: 0;
+
+  font: inherit;
+  color: currentColor;
+  background-color: ${ColorConfig.uiWidgetBackground};
+  width: 1.15em;
+  height: 1.15em;
+  transform: translateY(-0.075em);
+
+  display: grid;
+  place-content: center;
+}
+
+.beepboxEditor .checkbox-container input[type="checkbox"]:checked::before {
+  content: "✓";
+  width: 0.8em;
+  height: 1.1em;
+  color: ${ColorConfig.primaryText};
+}
+
+.beepboxEditor .checkbox-container input[type="checkbox"]:disabled {
+  color: ${ColorConfig.uiWidgetBackground};
+  cursor: default;
+}
+
 .beepboxEditor input[type=range] {
 	-webkit-appearance: none;
 	color: inherit;
@@ -1501,7 +1630,7 @@ input.tab-settings-radio + div {
 	cursor: pointer;
 	background: none;
 	touch-action: pan-y;
-  position: relative;
+    position: relative;
 }
 .beepboxEditor input[type=range]:focus {
 	outline: none;

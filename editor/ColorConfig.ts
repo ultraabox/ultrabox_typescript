@@ -5615,6 +5615,7 @@ export class ColorConfig {
     public static readonly blackPianoKey: string = "var(--black-piano-key, #444)";
     public static readonly whitePianoKeyText: string = "var(--white-piano-key-text, #131200)";
     public static readonly blackPianoKeyText: string = "var(--black-piano-key-text, #fff)";
+
 	//public static readonly oscilloscopeLineL: string = "var(--oscilloscope-line-L, var(--primary-text, white))";
 	//public static readonly oscilloscopeLineR: string = "var(--oscilloscope-line-R, var(--text-selection, rgba(119,68,255,0.99)))";
 	// modTitle can stay uncommented until it's used somwhere that's not index.html

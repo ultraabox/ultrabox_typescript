@@ -23,6 +23,50 @@ export class TipPrompt implements Prompt {
 					p("The most common scales are major and minor. Assuming your song uses all pitches in the scale and especially \"tonic\" pitches (the purple rows in the pattern editor) then major scales tend to sound more playful or optimistic, whereas minor scales sound more serious or sad."),
 				);
 			} break;
+			case "selectionMerge": {
+				message = div(
+					h2("Merge"),
+					p("This combines adjacent, touching notes into one. If \"All\" is active, it works regardless of pitch and will even shift notes as needed to connect them."),
+					p("It affects only notes in the selected range, or all notes on the pattern(s) if none are selected.")
+				);
+				break;
+			}
+			case "selectionBridge": {
+				message = div(
+					h2("Bridge"),
+					p("This creates notes in the empty space to the right of other notes. If \"Bend\" is active, the new notes will end at the starting pitch of the next note."),
+					p("It affects only notes in the selected range, or all notes on the pattern(s) if none are selected.")
+				);
+				break;
+			}
+			case "selectionSpread": {
+				message = div(
+					h2("Spread"),
+					p("This redistributes the notes into the selection bounds with even spacing between them all."),
+					p("It affects only notes in the selected range, or all notes on the pattern(s) if none are selected.")
+				);
+			} break;
+			case "selectionMirror": {
+				message = div(
+					h2("Mirror"),
+					p("The mirror operations cause notes to appear at the opposite ends, proportionally, of the range. For vertical mirror, the range is detected as the distance from lowest and highest existing notes."),
+					p("It affects only notes in the selected range, or all notes on the pattern(s) if none are selected.")
+				);
+			} break;
+			case "selectionFlatten": {
+				message = div(
+					h2("Flatten"),
+					p("This removes all pitch bends from notes. If \"Across\" is active, it also sets the notes to the average of their pitches."),
+					p("It affects only notes in the selected range, or all notes on the pattern(s) if none are selected.")
+				);
+			} break;
+			case "selectionSplit": {
+				message = div(
+					h2("Split"),
+					p("This makes a number of evenly-spaced cuts across the selected range, which separate notes."),
+					p("It affects only notes in the selected range, or all notes on the pattern(s) if none are selected.")
+				);
+			} break;
 			case "key": {
 				message = div(
 					h2("Song Key"),

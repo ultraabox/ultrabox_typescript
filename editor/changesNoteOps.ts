@@ -224,7 +224,7 @@ export class ChangeBridgeAcross extends ChangeSequence {
 }
 
 /** Draw cuts across notes in selected range. */
-export class ChangeSegmentizeAcross extends ChangeSequence {
+export class ChangeSplitAcross extends ChangeSequence {
     private _pattern: Pattern;
     private _splitNotes: Note[] = [];
     private _cuts: number[] = [];
@@ -237,12 +237,13 @@ export class ChangeSegmentizeAcross extends ChangeSequence {
         if (pattern.notes.length === 0) { return; }
 
         const range = x2 - x1;
+        numCuts = Math.min(numCuts, x2 - x1 - 1);
         if (numCuts < 1) { return; }
-        if (numCuts > 1 && range <= 1) { return; }
+        if (numCuts >= 1 && range <= 1) { return; }
 
         let cutIndices: number[] = [];
 
-        if (numCuts === 1) { cutIndices.push(x1); }
+        if (numCuts === 1) { cutIndices.push(Math.round((x1 + x2) / 2)); }
         else {
             const chunk = Math.max(range / (numCuts + 1), 1); // Never less than 1 for time.
             for (let i = 1; i < numCuts + 1; i++) {
@@ -279,7 +280,7 @@ export class ChangeSegmentizeAcross extends ChangeSequence {
     }
 
     /**
-     * Performs a callback per-note for all segments created. Only includes matching notes.
+     * Performs a callback per-note for all splits created. Only includes matching notes.
      * Return true anytime to exit early.
      */
     public perNote(callback: (note: Note) => boolean | void) {
@@ -509,7 +510,8 @@ export class ChangeStretchHorizontal extends ChangeSequence {
         newX2 = Math.min(newX2, doc.song.partsPerPattern);
 
         if (oldX1 < 0 || oldX2 <= oldX1 || newX1 < 0 || newX2 < 0 || newX1 == newX2
-            || newX1 > doc.song.partsPerPattern || newX2 > doc.song.partsPerPattern) {
+            || newX1 > doc.song.partsPerPattern || newX2 > doc.song.partsPerPattern
+            || (oldX1 === newX1 && oldX2 == newX2)) {
             return;
         }
 
@@ -546,7 +548,7 @@ export class ChangeStretchHorizontal extends ChangeSequence {
 
                 // transpose the note, then stretch it to hold at minimum its pins.
                 const newNote = note.clone();
-                newNote.start = Math.round((newNote.start + newX1 - oldX1) * scaleFactor);
+                newNote.start = Math.round(newNote.start + newX1 - oldX1);
                 newNote.end += newX1 - oldX1;
 
                 let prevPin: NotePin | null = null;
@@ -589,8 +591,8 @@ export class ChangeStretchHorizontal extends ChangeSequence {
         if (newRangeEnd === -1) { newRangeEnd = pattern.notes.length; }
 
         // Delete the notes in the old range, then replace the notes in the new range.
-        const oldRangeToDelete = pattern.notes.slice(oldRangeStart, oldRangeEnd)
-        const newRangeToDelete = pattern.notes.slice(newRangeStart, newRangeEnd)
+        const oldRangeToDelete = pattern.notes.slice(oldRangeStart, oldRangeEnd);
+        const newRangeToDelete = pattern.notes.slice(newRangeStart, newRangeEnd).filter((note) => !oldRangeToDelete.includes(note));
         this.append(new ChangeNotesAdded(doc, pattern, oldRangeToDelete, []));
         this.append(new ChangeNotesAdded(doc, pattern, newRangeToDelete, newNotes));
         doc.notifier.changed();

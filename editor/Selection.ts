@@ -6,7 +6,7 @@ import { SongDocument } from "./SongDocument";
 import { ChangeGroup } from "./Change";
 import { ColorConfig } from "./ColorConfig";
 import { ChangeTrackSelection, ChangeChannelBar, ChangeAddChannel, ChangeRemoveChannel, ChangeChannelOrder, ChangeDuplicateSelectedReusedPatterns, ChangeNoteAdded, ChangeNoteTruncate, ChangePatternNumbers, ChangePatternSelection, ChangeInsertBars, ChangeDeleteBars, ChangeEnsurePatternExists, ChangeNoteLength, ChangePaste, ChangeSetPatternInstruments, ChangeViewInstrument, ChangeModChannel, ChangeModInstrument, ChangeModSetting, ChangeModFilter, ChangePatternsPerChannel, ChangePatternRhythm, ChangePatternScale, ChangeTranspose, ChangeRhythm, comparePatternNotes, unionOfUsedNotes, generateScaleMap, discardInvalidPatternInstruments, patternsContainSameInstruments } from "./changes";
-import { ChangeMergeAcross, ChangeSegmentizeAcross, ChangeSpreadAcross, ChangeBridgeAcross, ChangeStretchHorizontal, ChangeMergeAcrossAdjacent, ChangeStretchVertical, ChangeStretchVerticalRelative, ChangeMirrorHorizontal, ChangeTapNotesAcross, ChangeStepAcross } from "./changesNoteOps";
+import { ChangeMergeAcross, ChangeSplitAcross, ChangeSpreadAcross, ChangeBridgeAcross, ChangeStretchHorizontal, ChangeMergeAcrossAdjacent, ChangeStretchVertical, ChangeStretchVerticalRelative, ChangeMirrorHorizontal, ChangeTapNotesAcross, ChangeStepAcross } from "./changesNoteOps";
 
 interface PatternCopy {
     instruments: number[];
@@ -958,36 +958,31 @@ export class Selection {
     /**
      * Separates at position x1 for a single cut, or evenly divided across the range defined by x1 and x2.
      * The range is optional, defaulting to selection or full sheet. If absolute, then cuts means a cut
-     * will be made every X units of time. If perNote, a copy of segmentize runs on each note.
+     * will be made every X units of time. If perNote, a copy of split runs on each note.
      */
-    public noteSegmentizeAcross(cuts: number, absolute?: boolean, perNote?: boolean): void {
+    public noteSplitAcross(cuts: number, absolute?: boolean, perNote?: boolean): void {
         this._changeNoteOperations = new ChangeGroup();
-        let x1 = 0;
-        let x2 = 0;
+        let x1 = this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionStart : 0;
+        let x2 = this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionEnd : this._doc.song.partsPerPattern;
 
-        // Instead of cuts-per-range, this makes a segment every {cut} units of time.
-        if (absolute || perNote) {
-            x1 = this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionStart : 0;
-            x2 = this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionEnd : this._doc.song.partsPerPattern;
-
-            if (absolute && !perNote) {
-                cuts = Math.max(Math.floor((x2 - x1) / cuts), 1);
-            }
+        // Instead of cuts-per-range, this makes a split every {cut} units of time.
+        if (absolute && !perNote) {
+            cuts = Math.max(Math.floor((x2 - x1) / cuts), 1);
         }
 
         for (const channelIndex of this._eachSelectedChannel()) {
             for (const pattern of this._eachSelectedPattern(channelIndex)) {
                 if (perNote) {
-                    const notesCopy = pattern.notes.concat() // prevents recursive segmentation
+                    const notesCopy = pattern.notes.concat() // prevents recursive splitting
                     for (const note of notesCopy) {
                         const adjustedX1 = Math.max(x1 as number, note.start);
                         const adjustedX2 = Math.min(x2 as number, note.end);
                         const adjustedCuts = absolute ? Math.max(Math.floor((adjustedX2 - adjustedX1) / cuts), 1) : cuts;
 
-                        this._changeNoteOperations.append(new ChangeSegmentizeAcross(this._doc, pattern, adjustedCuts, adjustedX1, adjustedX2));
+                        this._changeNoteOperations.append(new ChangeSplitAcross(this._doc, pattern, adjustedCuts, adjustedX1, adjustedX2));
                     }
                 } else {
-                    this._changeNoteOperations.append(new ChangeSegmentizeAcross(this._doc, pattern, cuts, x1, x2));
+                    this._changeNoteOperations.append(new ChangeSplitAcross(this._doc, pattern, cuts, x1, x2));
                 }
 			}
         }
@@ -997,9 +992,10 @@ export class Selection {
 
     /**
      * Flattens every note in the given range across the center of that note.
+     * @param perNote If true, flattens notes without averaging their base pitch between all notes.
      * @param fade If fade is in/out or both, the stretch changes from 1 to 0 across the range.
     */
-    public noteFlattenAcross(fade?: 'in'|'out'): void {
+    public noteFlattenAcross(perNote?: boolean, fade?: 'in'|'out'): void {
         const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeStretchVertical);
         this._changeStretchVertical = new ChangeGroup();
 
@@ -1009,7 +1005,7 @@ export class Selection {
         for (const channelIndex of this._eachSelectedChannel()) {
             if (this._doc.song.getChannelIsMod(channelIndex)) { continue; } // Mod channels unsupported.
             for (const pattern of this._eachSelectedPattern(channelIndex)) {
-                const bounds = this.getVerticalBounds(pattern.notes, x1, x2);
+                let bounds = perNote ? undefined : this.getVerticalBounds(pattern.notes, x1, x2);
                 let end = fade ? pattern.notes.filter((note) => note.end > x1 && note.start < x2).length - 1 : 0
 
                 for (let i = 0; i < pattern.notes.length; i++) {
@@ -1018,7 +1014,7 @@ export class Selection {
                         let multiplier =  (fade === 'in') ? i/end : (fade === 'out') ? 1 - i/end : 0;
 
                         this._changeStretchVertical.append(new ChangeStretchVerticalRelative(
-                            this._doc, channelIndex, pattern, multiplier, 0, false, note.start, note.end, bounds));
+                            this._doc, channelIndex, pattern, multiplier, 0, perNote, note.start, note.end, bounds));
                     }
                 }
 			}
@@ -1053,12 +1049,13 @@ export class Selection {
         this._doc.record(this._changeNoteOperations);
     }
 
+    /** Incrementally affects pitch note-by-note by adding the given value, which can be negative. */
     public noteStepAcross(): void {
         this._changeNoteOperations = new ChangeGroup();
 
         for (const channelIndex of this._eachSelectedChannel()) {
             for (const pattern of this._eachSelectedPattern(channelIndex)) {
-                this._changeNoteOperations.append(new ChangeStepAcross(this._doc, channelIndex, pattern, -1));
+                this._changeNoteOperations.append(new ChangeStepAcross(this._doc, channelIndex, pattern, 1));
 			}
         }
 

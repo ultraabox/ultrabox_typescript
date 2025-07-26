@@ -10,11 +10,17 @@ import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
 import { ChangeSequence, UndoableChange } from "./Change";
 import { ChangeVolume, FilterMoveData, ChangeTempo, ChangePan, ChangeReverb, ChangeDistortion, ChangeOperatorAmplitude, ChangeFeedbackAmplitude, ChangePulseWidth, ChangeDetune, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangePanDelay, ChangeChorus, ChangeEQFilterSimplePeak, ChangeNoteFilterSimplePeak, ChangeStringSustain, ChangeEnvelopeSpeed, ChangeSupersawDynamism, ChangeSupersawShape, ChangeSupersawSpread, ChangePitchShift, ChangeChannelBar, ChangeDragSelectedNotes, ChangeEnsurePatternExists, ChangeNoteTruncate, ChangeNoteAdded, ChangePatternSelection, ChangePinTime, ChangeSizeBend, ChangePitchBend, ChangePitchAdded, ChangeArpeggioSpeed, ChangeBitcrusherQuantization, ChangeBitcrusherFreq, ChangeEchoSustain, ChangeEQFilterSimpleCut, ChangeNoteFilterSimpleCut, ChangeFilterMovePoint, ChangeDuplicateSelectedReusedPatterns, ChangeHoldingModRecording, ChangeDecimalOffset } from "./changes";
 import { prettyNumber } from "./EditorConfig";
+import { ChangeStretchHorizontal } from "./changesNoteOps";
 
 function makeEmptyReplacementElement<T extends Node>(node: T): T {
     const clone: T = <T>node.cloneNode(false);
     node.parentNode!.replaceChild(clone, node);
     return clone;
+}
+
+export enum SelectionMode {
+    Move,
+    Stretch
 }
 
 class PatternCursor {
@@ -99,6 +105,8 @@ export class PatternEditor {
     private _draggingStartOfSelection: boolean = false;
     private _draggingEndOfSelection: boolean = false;
     private _draggingSelectionContents: boolean = false;
+    private _editSelectionMode = SelectionMode.Move;
+    private _selectionOriginalCoords = { start: 0, end: 0 };
     private _dragTime: number = 0;
     private _dragPitch: number = 0;
     private _dragSize: number = 0;
@@ -1749,10 +1757,33 @@ export class PatternEditor {
             const minDivision: number = this._getMinDivision();
             const currentPart: number = this._snapToMinDivision(this._mouseX / this._partWidth);
             if (this._draggingStartOfSelection) {
-                sequence.append(new ChangePatternSelection(this._doc, Math.max(0, Math.min(this._doc.song.partsPerPattern, currentPart)), this._doc.selection.patternSelectionEnd));
+                const newStart = Math.max(0, Math.min(this._doc.song.partsPerPattern, currentPart));
+                sequence.append(new ChangePatternSelection(this._doc, newStart, this._doc.selection.patternSelectionEnd));
+
+                if (this._editSelectionMode === SelectionMode.Stretch) {
+                    const pattern: Pattern | null = this._doc.getCurrentPattern(this._barOffset);
+                    if (pattern) {
+                        const stretch = new ChangeStretchHorizontal(this._doc, pattern,
+                            this._selectionOriginalCoords.start, this._selectionOriginalCoords.end,
+                            this._doc.selection.patternSelectionStart, this._doc.selection.patternSelectionEnd);
+                        sequence.append(stretch);
+                    }
+                }
+                
                 this._updateSelection();
             } else if (this._draggingEndOfSelection) {
-                sequence.append(new ChangePatternSelection(this._doc, this._doc.selection.patternSelectionStart, Math.max(0, Math.min(this._doc.song.partsPerPattern, currentPart))));
+                const newEnd = Math.max(0, Math.min(this._doc.song.partsPerPattern, currentPart));
+                sequence.append(new ChangePatternSelection(this._doc, this._doc.selection.patternSelectionStart, newEnd));
+
+                if (this._editSelectionMode === SelectionMode.Stretch) {
+                    const pattern: Pattern | null = this._doc.getCurrentPattern(this._barOffset);
+                    if (pattern) {
+                        const stretch = new ChangeStretchHorizontal(this._doc, pattern,
+                            this._selectionOriginalCoords.start, this._selectionOriginalCoords.end,
+                            this._doc.selection.patternSelectionStart, this._doc.selection.patternSelectionEnd);
+                        sequence.append(stretch);
+                    }
+                }
                 this._updateSelection();
             } else if (this._draggingSelectionContents) {
                 const pattern: Pattern | null = this._doc.getCurrentPattern(this._barOffset);
@@ -1832,7 +1863,6 @@ export class PatternEditor {
 
                 if (this._cursor.curNote == null) {
                     sequence.append(new ChangePatternSelection(this._doc, 0, 0));
-
 
                     let backwards: boolean;
                     let directLength: number;
@@ -2191,7 +2221,6 @@ export class PatternEditor {
         this._doc.record(this._changePatternSelection, this._lastChangeWasPatternSelection);
     }
 
-
     private _updatePreview(): void {
         if (this._usingTouch) {
             if (!this._mouseDown || !this._cursor.valid || !this._mouseDragging || !this._dragVisible || this._shiftHeld || this._draggingStartOfSelection || this._draggingEndOfSelection || this._draggingSelectionContents) {
@@ -2267,6 +2296,12 @@ export class PatternEditor {
     }
 
     private _updateSelection(): void {
+        if (this._editSelectionMode === SelectionMode.Move) {
+            this._selectionRect.setAttribute("fill", ColorConfig.boxSelectionFill);
+        } else if (this._editSelectionMode === SelectionMode.Stretch) {
+            this._selectionRect.setAttribute("fill", ColorConfig.fifthNote);
+        }
+
         if (this._doc.selection.patternSelectionActive) {
             this._selectionRect.setAttribute("visibility", "visible");
             this._selectionRect.setAttribute("x", String(this._partWidth * this._doc.selection.patternSelectionStart));
@@ -2619,5 +2654,15 @@ export class PatternEditor {
 
     private _pitchToPixelHeight(pitch: number): number {
         return this._pitchHeight * (this._pitchCount - (pitch) - 0.5);
+    }
+
+    public switchEditingMode(mode: SelectionMode): void {
+        if (this._editSelectionMode !== mode) {
+            this._editSelectionMode = mode;
+            this._selectionOriginalCoords.start = this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionStart : 0;
+            this._selectionOriginalCoords.end = this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionEnd : 0;
+        }
+
+        this._updateSelection();
     }
 }

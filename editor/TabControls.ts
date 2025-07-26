@@ -11,6 +11,6 @@ export type TabControl = {
 }
 
 export const TabControls: { [key: number]: TabControl } = {
-	[TabSettingType.EditInstrument]: { type: TabSettingType.EditInstrument, icon: '🎺' },
+	[TabSettingType.EditInstrument]: { type: TabSettingType.EditInstrument, icon: '🎺︎' },
 	[TabSettingType.EditSelection]: { type: TabSettingType.EditSelection, icon: '⬚' }
 }
