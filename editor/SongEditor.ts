@@ -34,7 +34,8 @@ import { MuteEditor } from "./MuteEditor";
 import { OctaveScrollBar } from "./OctaveScrollBar";
 import { MidiInputHandler } from "./MidiInput";
 import { KeyboardLayout } from "./KeyboardLayout";
-import { PatternEditor, SelectionMode } from "./PatternEditor";
+import { PatternEditor } from "./PatternEditor";
+import { EditorTabSelection } from './EditorTabSelection';
 import { Piano } from "./Piano";
 import { Prompt } from "./Prompt";
 import { SongDocument } from "./SongDocument";
@@ -56,7 +57,7 @@ import { AddSamplesPrompt } from "./AddSamplesPrompt";
 import { ShortenerConfigPrompt } from "./ShortenerConfigPrompt";
 import { TabControls, TabSettingType as TabSettingType } from "./TabControls";
 
-const { button, div, label, input, select, span, optgroup, option, canvas } = HTML;
+const { button, div, input, select, span, optgroup, option, canvas } = HTML;
 
 function buildOptions(menu: HTMLSelectElement, items: ReadonlyArray<string | number>): HTMLSelectElement {
     for (let index: number = 0; index < items.length; index++) {
@@ -732,6 +733,7 @@ export class SongEditor {
     private readonly _patternEditorPrev: PatternEditor = new PatternEditor(this._doc, false, -1);
     private readonly _patternEditor: PatternEditor = new PatternEditor(this._doc, true, 0);
     private readonly _patternEditorNext: PatternEditor = new PatternEditor(this._doc, false, 1);
+    private readonly _editorTabSelection = new EditorTabSelection(this._doc, this._patternEditor, this._openPrompt.bind(this));
     private readonly _trackEditor: TrackEditor = new TrackEditor(this._doc, this);
     private readonly _muteEditor: MuteEditor = new MuteEditor(this._doc, this);
     private readonly _loopEditor: LoopEditor = new LoopEditor(this._doc, this._trackEditor);
@@ -1343,84 +1345,13 @@ export class SongEditor {
         ),
     );
 
-    private readonly _selectionOpsDescription = div({ style: `padding: 3px 0; max-width: 15em; text-align: center; color: ${ColorConfig.secondaryText};` }, "Selection");
-    private readonly _selectionModeLabel = div({ style: `padding: 3px 0; color: ${ColorConfig.secondaryText};` }, "Move mode");
-    private readonly _selectionModeBtnMove = input({ type: "radio", name: "selection-mode-radio-group", class: "tab-settings-radio" });
-    private readonly _selectionModeMoveLabel = div({ class: "tab-settings-radio selected-tab" }, "↤");
-    private readonly _selectionModeBtnStretch = input({ type: "radio", name: "selection-mode-radio-group", class: "tab-settings-radio" });
-    private readonly _selectionModeStretchLabel = div({ class: "tab-settings-radio" }, "↔");
-    private readonly _selectionModeButtonsGroup: HTMLDivElement = div({ class: "tab-settings-buttons-group" },
-        div({ class: "tab-settings-radiodiv" }, this._selectionModeBtnMove, this._selectionModeMoveLabel),
-        div({ class: "tab-settings-radiodiv" }, this._selectionModeBtnStretch, this._selectionModeStretchLabel)
-    );
-    private readonly _selectionOpsMerge = button({ class: "selectionOps-actionbutton noteOpMerge" });
-    private readonly _selectionOpsMergeAll = input({ type: "checkbox", class: "selectionOps-checkbox"});
-    private readonly _selectionOpsBridge = button({ class: "selectionOps-actionbutton noteOpBridge" });
-    private readonly _selectionOpsBridgeBend = input({ type: "checkbox", class: "selectionOps-checkbox"});
-    private readonly _selectionOpsSpread = button({ class: "selectionOps-actionbutton noteOpSpread" });
-    private readonly _selectionOpsMirrorHorz = button({ class: "selectionOps-actionbutton noteOpMirror" });
-    private readonly _selectionOpsMirrorVert = button({ class: "selectionOps-actionbutton noteOpMirror", style: 'transform: rotate(90deg);' });
-    private readonly _selectionOpsFlatten = button({ class: "selectionOps-actionbutton noteOpFlatten" });
-    private readonly _selectionOpsFlattenAcross = input({ type: "checkbox", class: "selectionOps-checkbox"});
-    private readonly _selectionOpsSplit = button({ class: "selectionOps-actionbutton noteOpSplit" });
-    private readonly _selectionOpsSplitLabel = div({ class: "tip", onclick: () => this._openPrompt("selectionSplit") }, "");
-    private readonly _selectionOpsSplitSlider = new Slider(
-        input({ title: "cuts", style: "width: 6rem; flex-grow: 1; margin-left: 0.5rem;", type: "range", min: "1", max: String(Math.floor(this._doc.song.partsPerPattern / 2)), value: "1", step: "1" }), this._doc, null, false);
-    private readonly _selectionOpsSplitAcross = input({ type: "checkbox", class: "selectionOps-checkbox"});
-    private readonly _selectionOpsSplitAbsolute = input({ type: "checkbox", class: "selectionOps-checkbox"});
-    private readonly _selectionOpsRow1 = div({ class: "selectionOps-row"},
-        div({ class: "selectionOps-action"},
-            div({ class: "tip", onclick: () => this._openPrompt("selectionMerge") }, "Merge"),
-            div({ class: "selectionOps-action-controls"},
-                this._selectionOpsMerge,
-                label({ class: "checkbox-container" }, this._selectionOpsMergeAll, "All"))),
-        div({ class: "selectionOps-action"},
-            div({ class: "tip", onclick: () => this._openPrompt("selectionBridge") }, "Bridge"),
-            div({ class: "selectionOps-action-controls"},
-                this._selectionOpsBridge,
-                label({ class: "checkbox-container" }, this._selectionOpsBridgeBend, "Bend"))),
-        div({ class: "selectionOps-action"},
-            div({ class: "tip", onclick: () => this._openPrompt("selectionSpread") }, "Spread"),
-            div({ class: "selectionOps-action-controls"},
-                this._selectionOpsSpread))
-    );
-    private readonly _selectionOpsRow2 = div({ class: "selectionOps-row"},
-        div({ class: "selectionOps-action"},
-            div({ class: "tip", onclick: () => this._openPrompt("selectionMirror") }, "Mirror"),
-            div({ class: "selectionOps-row-inside"},
-                div({ class: "selectionOps-action-controls"}, this._selectionOpsMirrorHorz),
-                div({ class: "selectionOps-action-controls"}, this._selectionOpsMirrorVert))),
-        div({ class: "selectionOps-action"},
-            div({ class: "tip", onclick: () => this._openPrompt("selectionFlatten") }, "Flatten"),
-            div({ class: "selectionOps-action-controls"},
-                this._selectionOpsFlatten,
-                label({ class: "checkbox-container" }, this._selectionOpsFlattenAcross, "Across")))
-    );
-    private readonly _selectionOpsRow3 = div({ class: "selectionOps-row"},
-        div({ class: "selectionOps-action"},
-            this._selectionOpsSplitLabel,
-            div({ class: "selectionOps-action-controls"},
-                div({ class: "selectionOps-row-inside"},
-                    this._selectionOpsSplit,
-                    this._selectionOpsSplitSlider.container),
-                div({ class: "selectionOps-row-inside"},
-                    label({ class: "checkbox-container" }, this._selectionOpsSplitAcross, "Across"),
-                    label({ class: "checkbox-container" }, this._selectionOpsSplitAbsolute, "Absolute"))))
-    );
     private readonly _instrumentAndModulatorSettings: HTMLDivElement = div({ class: "instrument-settings" },
         this._instrumentSettingsGroup,
         this._modulatorGroup);
-    private readonly _selectionOps: HTMLDivElement = div({},
-        this._selectionOpsDescription,
-        this._selectionModeLabel,
-        this._selectionModeButtonsGroup,
-        this._selectionOpsRow1,
-        this._selectionOpsRow2,
-        this._selectionOpsRow3);
     private readonly _tabSettingsArea: HTMLDivElement = div({ class: 'tab-controls-area' },
         this._tabSettingsButtonsGroup,
         this._instrumentAndModulatorSettings,
-        this._selectionOps
+        this._editorTabSelection.htmlEntryPoint
     );
 
     public readonly _settingsArea: HTMLDivElement = div({ class: "settings-area noSelection" },
@@ -1670,15 +1601,6 @@ export class SongEditor {
         this._algorithmSelect.addEventListener("change", this._whenSetAlgorithm);
         this._tabButtonInstrument.addEventListener("change", () => this._whenSelectTab(TabSettingType.EditInstrument));
         this._tabButtonSelection.addEventListener("change", () => this._whenSelectTab(TabSettingType.EditSelection));
-        this._selectionModeBtnMove.addEventListener("change", () => this._whenSelectionModeChanged(SelectionMode.Move));
-        this._selectionModeBtnStretch.addEventListener("change", () => this._whenSelectionModeChanged(SelectionMode.Stretch));
-        [this._selectionOpsMerge, this._selectionOpsBridge, this._selectionOpsSpread, this._selectionOpsMirrorHorz, this._selectionOpsMirrorVert, this._selectionOpsFlatten, this._selectionOpsSplit]
-            .forEach((o) => { o.addEventListener("click", this._whenSettingButtonClicked); o.addEventListener("mouseenter", this._whenSettingButtonEnter); });
-        this._selectionOpsSplitSlider.input.addEventListener("input", this._updateSplitSliderLabel);
-        this._selectionOpsSplitSlider.input.addEventListener("change", this._updateSplitSliderLabel);
-        this._selectionOpsSplitAcross.addEventListener("change", this._updateSplitSliderLabel);
-        this._selectionOpsSplitAbsolute.addEventListener("change", this._updateSplitSliderLabel);
-        this._updateSplitSliderLabel(); // Initial label set
         this._instrumentsButtonBar.addEventListener("click", this._whenSelectInstrument);
         //this._customizeInstrumentButton.addEventListener("click", this._whenCustomizePressed);
         this._feedbackTypeSelect.addEventListener("change", this._whenSetFeedbackType);
@@ -2296,7 +2218,7 @@ export class SongEditor {
         this._instrumentCopyGroup.style.display = this._doc.prefs.instrumentCopyPaste ? "" : "none";
         this._instrumentExportGroup.style.display = this._doc.prefs.instrumentImportExport ? "" : "none";
         this._instrumentAndModulatorSettings.style.display = this._doc.viewedTab == TabControls[TabSettingType.EditInstrument] ? "" : "none";
-        this._selectionOps.style.display = this._doc.viewedTab === TabControls[TabSettingType.EditSelection] ? "" : "none";
+        this._editorTabSelection.htmlEntryPoint.style.display = this._doc.viewedTab === TabControls[TabSettingType.EditSelection] ? "" : "none";
         this._instrumentAndModulatorSettings.style.scrollbarWidth = this._doc.prefs.showInstrumentScrollbars ? "" : "none";
         if (document.getElementById('text-content'))
             document.getElementById('text-content')!.style.display = this._doc.prefs.showDescription ? "" : "none";
@@ -4914,64 +4836,6 @@ export class SongEditor {
         })
 
         this._doc.record(new ChangeViewedTab(this._doc, type))
-    }
-
-    private _whenSelectionModeChanged = (type: SelectionMode): void => {
-        [
-            {type: SelectionMode.Move, obj: this._selectionModeMoveLabel},
-            {type: SelectionMode.Stretch, obj: this._selectionModeStretchLabel}
-        ].forEach((entry) => {
-            if (type == entry.type) {
-                if (!entry.obj.classList.contains('selected-tab')) { entry.obj.classList.add('selected-tab') }
-            } else {
-                entry.obj.classList.remove('selected-tab')
-            }
-        })
-
-        this._patternEditor.switchEditingMode(type);
-        this._selectionModeLabel.innerText = (type === SelectionMode.Move) ? "Move mode" : "Stretch mode";
-    }
-
-    private _whenSettingButtonClicked = (event: MouseEvent): void => {
-        if (event.target === this._selectionOpsMerge) {
-            this._doc.selection.noteMerge(!this._selectionOpsMergeAll.checked);
-        } else if (event.target === this._selectionOpsBridge) {
-            this._doc.selection.noteBridge(this._selectionOpsBridgeBend.checked, false);
-        } else if (event.target === this._selectionOpsSpread) {
-            this._doc.selection.noteSpreadAcross();
-        } else if (event.target === this._selectionOpsFlatten) {
-            this._doc.selection.noteFlattenAcross(!this._selectionOpsFlattenAcross.checked);
-        } else if (event.target === this._selectionOpsMirrorHorz) {
-            this._doc.selection.noteMirrorAcross(false);
-        } else if (event.target === this._selectionOpsMirrorVert) {
-            this._doc.selection.noteMirrorAcross(true);
-        } else if (event.target === this._selectionOpsSplit) {
-            this._doc.selection.noteSplitAcross(Number(this._selectionOpsSplitSlider.input.value),
-            this._selectionOpsSplitAbsolute.checked, !this._selectionOpsSplitAcross.checked)
-        }
-
-        // Remove focus highlight on click (restored on mouse re-enter).
-        if (event.target instanceof HTMLButtonElement && !event.target.classList.contains("focus-hidden")) {
-            event.target.classList.add("focus-hidden");
-        }
-    }
-
-    private _whenSettingButtonEnter = (event: MouseEvent): void => {
-        if (event.target instanceof HTMLButtonElement && event.target.classList.contains("focus-hidden")) {
-            event.target.classList.remove("focus-hidden");
-        }
-    }
-
-    private _updateSplitSliderLabel = (): void => {
-        const num = this._selectionOpsSplitSlider.input.valueAsNumber;
-        this._selectionOpsSplitLabel.innerText =
-            this._selectionOpsSplitAcross.checked && !this._selectionOpsSplitAbsolute.checked
-                ? `Make ${num} cuts`:
-            !this._selectionOpsSplitAcross.checked && !this._selectionOpsSplitAbsolute.checked
-                ? `Cut each note ${num} times`:
-            !this._selectionOpsSplitAcross.checked && this._selectionOpsSplitAbsolute.checked
-                ? `Cut every ${num} parts for each note`:
-            `Cut every ${num} parts`;
     }
     
     private _whenSelectInstrument = (event: MouseEvent): void => {

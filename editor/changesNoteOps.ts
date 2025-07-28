@@ -362,7 +362,7 @@ export class ChangeStepAcross extends ChangeSequence {
     }
 }
 
-/** Spreads notes in range evenly across it. */
+/** Spreads notes in range evenly across it. Single notes get centered. */
 export class ChangeSpreadAcross extends ChangeSequence {
     constructor(doc: SongDocument, pattern: Pattern, x1?: number, x2?: number) {
         super();
@@ -413,10 +413,123 @@ export class ChangeSpreadAcross extends ChangeSequence {
             if (note.start < x2 && note.end > x1) {
                 if (firstIndex === -1) {
                     firstIndex = i;
+
+                    // Center an individual note, if only one.
+                    if (noteCount === 1) {
+                        note.start += Math.round(totalSpace / 2);
+                        note.end = note.start + note.pins[note.pins.length - 1].time;
+                        if (note.start !== 0) { note.continuesLastPattern = false; }
+                        break;
+                    }
                 } else {
                     note.start += Math.floor(spaceBetween * (i - firstIndex));
                     note.end = note.start + note.pins[note.pins.length - 1].time;
                 }
+            }
+        }
+
+        doc.notifier.changed();
+        this._didSomething();
+    }
+}
+
+/**
+ * Spreads the pitches of notes vertically in a de/crescendo (via detected slope) between detected bounds.
+ * The math in this operation sometimes causes adjacent pitch choruses in one note (where pitch is off by 1) to
+ * merge into one pitch due to rounding, due to the really high quantization beepbox requires of pitches. It's also
+ * "squishy" with chorused notes when they don't match the highest or lowest bound, as their position can change across
+ * multiple consecutive runs of the algorithm. I'm not sure why it's so off, but it's not very meaningful and the user
+ * can click a few times. It should be fixed eventually.
+*/
+export class ChangeSpreadVertical extends ChangeSequence {
+    constructor(doc: SongDocument, pattern: Pattern, x1?: number, x2?: number) {
+        super();
+
+        x1 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionStart : 0);
+        x2 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionEnd : doc.song.partsPerPattern);
+        if (x1 < 0 || x2 <= x1) { return; }
+        if (pattern.notes.length === 0) { return; }
+
+        this.append(new ChangeSplitNotesAtPoint(doc, pattern, x1));
+        this.append(new ChangeSplitNotesAtPoint(doc, pattern, x2));
+
+        // Get the note count, the min/max pitch of every note + overall min/max, and detect slope.
+        let noteCount = 0;
+        let indices: { start: number, end: number } = {} as any;
+        let vertBounds = { min: Number.MAX_VALUE, max: Number.MIN_VALUE };
+        let notePitches: { min: number, max: number }[] = [];
+        let slope = 0;
+
+        for (let i = 0; i < pattern.notes.length; i++) {
+            if (pattern.notes[i].start < x2 && pattern.notes[i].end > x1) {
+                noteCount++;
+                indices = { start: indices.start ?? i, end: i };
+
+                notePitches[i - indices.start] = doc.selection.getVerticalBounds([pattern.notes[i]],
+                    pattern.notes[i].start, pattern.notes[i].end);
+                vertBounds = {
+                    min: Math.min(vertBounds.min, notePitches[i - indices.start].min),
+                    max: Math.max(vertBounds.max, notePitches[i - indices.start].max)
+                };
+
+                // The trendline informs whether to force a crescendo (>=0), or a descendo (<0).
+                if (i - indices.start > 0) {
+                    const last = notePitches[i - indices.start - 1];
+                    const curr = notePitches[i - indices.start];
+                    const oldCenter = last.min + (last.max - last.min)/2;
+                    const center = curr.min + (curr.max - curr.min)/2;
+                    slope += center - oldCenter;
+                }
+            }
+        }
+
+        if (noteCount < 2) { return; }
+
+        // Get the total bounds.
+        const vertRange = vertBounds.max - vertBounds.min;
+        const verticalSpaceBetween = vertRange / (noteCount - 1);
+
+        // Set the new note pitches based on ratio of the ranges, following trendline.
+        for (let i = indices.start; i <= indices.end; i++) {
+            if (vertRange > 0) {
+                const targetPitch = slope >= 0
+                    ? vertBounds.min + verticalSpaceBetween * (i - indices.start)
+                    : vertBounds.max - verticalSpaceBetween * (i - indices.start);
+
+                let range = notePitches[i - indices.start];
+                const note = pattern.notes[i];
+
+                const centerPitch = range.min + (range.max - range.min)/2;
+                const nearestEdgeToTarget =
+                    ((range.min >= targetPitch) ? range.min
+                    : (targetPitch >= range.max) ? range.max
+                    : centerPitch);
+
+                const offset = targetPitch - nearestEdgeToTarget;
+
+                // Add offset to pitch. For some reason this results in mathematical anomalies
+                // at large range differences, which is compensated by bruteforce measure-and-fix :|
+                let overageLow = 0;
+                let overageHigh = 0;
+                note.pitches = note.pitches.map((pitch) =>
+                {
+                    pitch = Math.round(pitch + offset); 
+                    if (pitch > vertBounds.max) {
+                        overageHigh = Math.max(overageHigh, pitch - vertBounds.max);
+                        pitch = vertBounds.max;
+                    } else if (pitch < vertBounds.min) {
+                        overageLow = Math.max(overageLow, vertBounds.min - pitch);
+                        pitch = vertBounds.min;
+                    }
+
+                    return pitch;
+                });
+
+                // Apply measured fixes to the bad math to preserve expected range.
+                note.pitches = note.pitches.map((pitch) => {
+                    return pitch - overageHigh + overageLow;
+                });
+                note.pitches = [...new Set(note.pitches)].sort() // Keep it unique and sorted.
             }
         }
 
@@ -472,10 +585,14 @@ export class ChangeMirrorHorizontal extends ChangeSequence {
             this.append(new ChangeSplitNotesAtSelection(doc, pattern));
         }
 
+        const firstNote = pattern.notes[0].clone();
+
         for (let i = 0; i < pattern.notes.length; i++) {
             const note = pattern.notes[i];
 
             if (note.end > x1 && note.start < x2) {
+                note.continuesLastPattern = false;
+
                 for (let j = 0; j < note.pins.length; j++) {
                     note.pins[j].time = Math.abs(note.pins[j].time - note.pins[note.pins.length - 1].time);
                 }
@@ -496,6 +613,13 @@ export class ChangeMirrorHorizontal extends ChangeSequence {
             }
         }
         pattern.notes.sort((a, b) => a.start - b.start); // Keep it sorted.
+
+        // Restore last pattern continuation if the mirrored note starts at x=0 and has same pitches.
+        if (firstNote.start === 0
+            && pattern.notes[0].start === 0
+            && pattern.notes[0].pitches.every((pitch, index) => pitch === firstNote.pitches[index])) {
+            pattern.notes[0].continuesLastPattern = firstNote.continuesLastPattern;
+        }
 
         doc.notifier.changed();
         this._didSomething();

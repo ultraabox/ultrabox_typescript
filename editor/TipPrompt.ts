@@ -14,7 +14,7 @@ export class TipPrompt implements Prompt {
 		
 	constructor(private _doc: SongDocument, type: string) {
 		let message: HTMLDivElement;
-			
+
 		switch (type) {
 			case "scale": {
 				message = div(
@@ -26,8 +26,8 @@ export class TipPrompt implements Prompt {
 			case "selectionMerge": {
 				message = div(
 					h2("Merge"),
-					p("This combines adjacent, touching notes into one. If \"All\" is active, it works regardless of pitch and will even shift notes as needed to connect them."),
-					p("It affects only notes in the selected range, or all notes on the pattern(s) if none are selected.")
+					p("This makes notes that touch turn into one continuous note. If \"All\" is active, it will merge all notes no matter what, and will even shift notes if it helps to connect them."),
+					p("Merge affects on-screen notes that fit within your selection. It also works across channel selections.")
 				);
 				break;
 			}
@@ -42,29 +42,30 @@ export class TipPrompt implements Prompt {
 			case "selectionSpread": {
 				message = div(
 					h2("Spread"),
-					p("This redistributes the notes into the selection bounds with even spacing between them all."),
-					p("It affects only notes in the selected range, or all notes on the pattern(s) if none are selected.")
+					p("This spreads notes to be evenly-spaced in the selection. If only one note is selected, it centers it."),
+					p("If \"Pitch\" is active, it spreads the notes vertically like a staircase going up (crescendo) or down (decrescendo), whichever is closer."),
+					p("Spread affects on-screen notes that fit within your selection. It also works across channel selections.")
 				);
 			} break;
 			case "selectionMirror": {
 				message = div(
 					h2("Mirror"),
 					p("The mirror operations cause notes to appear at the opposite ends, proportionally, of the range. For vertical mirror, the range is detected as the distance from lowest and highest existing notes."),
-					p("It affects only notes in the selected range, or all notes on the pattern(s) if none are selected.")
+					p("Mirror affects on-screen notes that fit within your selection. It also works across channel selections.")
 				);
 			} break;
 			case "selectionFlatten": {
 				message = div(
 					h2("Flatten"),
-					p("This removes all pitch bends from notes. If \"Across\" is active, it also sets the notes to the average of their pitches."),
-					p("It affects only notes in the selected range, or all notes on the pattern(s) if none are selected.")
+					p("This removes all pitch bends from notes. If \"Pitch\" is active, it also sets the notes to the average of their pitches."),
+					p("Flatten affects on-screen notes that fit within your selection. It also works across channel selections.")
 				);
 			} break;
 			case "selectionSplit": {
 				message = div(
 					h2("Split"),
 					p("This makes a number of evenly-spaced cuts across the selected range, which separate notes."),
-					p("It affects only notes in the selected range, or all notes on the pattern(s) if none are selected.")
+					p("Split affects on-screen notes that fit within your selection. It also works across channel selections.")
 				);
 			} break;
 			case "key": {

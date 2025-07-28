@@ -6,7 +6,7 @@ import { SongDocument } from "./SongDocument";
 import { ChangeGroup } from "./Change";
 import { ColorConfig } from "./ColorConfig";
 import { ChangeTrackSelection, ChangeChannelBar, ChangeAddChannel, ChangeRemoveChannel, ChangeChannelOrder, ChangeDuplicateSelectedReusedPatterns, ChangeNoteAdded, ChangeNoteTruncate, ChangePatternNumbers, ChangePatternSelection, ChangeInsertBars, ChangeDeleteBars, ChangeEnsurePatternExists, ChangeNoteLength, ChangePaste, ChangeSetPatternInstruments, ChangeViewInstrument, ChangeModChannel, ChangeModInstrument, ChangeModSetting, ChangeModFilter, ChangePatternsPerChannel, ChangePatternRhythm, ChangePatternScale, ChangeTranspose, ChangeRhythm, comparePatternNotes, unionOfUsedNotes, generateScaleMap, discardInvalidPatternInstruments, patternsContainSameInstruments } from "./changes";
-import { ChangeMergeAcross, ChangeSplitAcross, ChangeSpreadAcross, ChangeBridgeAcross, ChangeStretchHorizontal, ChangeMergeAcrossAdjacent, ChangeStretchVertical, ChangeStretchVerticalRelative, ChangeMirrorHorizontal, ChangeTapNotesAcross, ChangeStepAcross } from "./changesNoteOps";
+import { ChangeMergeAcross, ChangeSplitAcross, ChangeBridgeAcross, ChangeStretchHorizontal, ChangeMergeAcrossAdjacent, ChangeStretchVertical, ChangeStretchVerticalRelative, ChangeMirrorHorizontal, ChangeTapNotesAcross, ChangeStepAcross, ChangeSpreadVertical, ChangeSpreadAcross } from "./changesNoteOps";
 
 interface PatternCopy {
     instruments: number[];
@@ -1023,13 +1023,17 @@ export class Selection {
         this._doc.record(this._changeStretchVertical, canReplaceLastChange);
     }
 
-    /** Sums the empty space between all notes in the selection bounds and gives them an even division of that space. */
-    public noteSpreadAcross(): void {
+    /** Spread notes horizontally or vertically. */
+    public noteSpreadAcross(spreadPitch: boolean): void {
         this._changeNoteOperations = new ChangeGroup();
 
         for (const channelIndex of this._eachSelectedChannel()) {
             for (const pattern of this._eachSelectedPattern(channelIndex)) {
-                this._changeNoteOperations.append(new ChangeSpreadAcross(this._doc, pattern));
+                if (spreadPitch) {
+                    this._changeNoteOperations.append(new ChangeSpreadVertical(this._doc, pattern));
+                } else {
+                    this._changeNoteOperations.append(new ChangeSpreadAcross(this._doc, pattern));
+                }
 			}
         }
 
