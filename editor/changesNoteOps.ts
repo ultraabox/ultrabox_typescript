@@ -1,50 +1,39 @@
 import { NotePin, Note, Pattern, Config } from "../synth/synth";
 import { ChangeSequence } from "./Change";
 import { SongDocument } from "./SongDocument";
-import { ChangeNoteAdded, ChangeNotesAdded, ChangeSplitNotesAtPoint, ChangeSplitNotesAtSelection } from "./changes";
+import { ChangeNoteAdded, ChangeNotesAdded, ChangeSplitNotesAtPoint } from "./changes";
 
 /** Merge notes that touch into one. */
 export class ChangeMergeAcrossAdjacent extends ChangeSequence {
-    constructor(doc: SongDocument, pattern: Pattern) {
+    constructor(doc: SongDocument, pattern: Pattern, x1?: number, x2?: number) {
         super();
 
-        if (pattern.notes.length === 0) {
-            return;
-        }
+        x1 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionStart : 0);
+        x2 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionEnd : doc.song.partsPerPattern);
+        if (x1 < 0 || x2 <= x1 || x2 > doc.song.partsPerPattern) { return; }
+        if (pattern.notes.length <= 1) { return; }
 
-        let found: boolean;
+        let note: Note;
+        let lastNote: Note | null = null;
+        for (let i = 0; i < pattern.notes.length; i++) {
+            note = pattern.notes[i];
 
-        do {
-            found = false;
-            for (let i = 0; i < pattern.notes.length; i++) {
-                const note = pattern.notes[i];
+            if (note.end <= x1) { continue; }
+            if (note.start >= x2) { break; }
 
-                // Note must be within selection bounds.
-                if (doc.selection.patternSelectionActive &&
-                    (note.end <= doc.selection.patternSelectionStart || note.start >= doc.selection.patternSelectionEnd)) {
-                    continue;
-                }
+            if (i > 0) {
+                lastNote ??= pattern.notes[i - 1];
+                if (lastNote.end <= x1 || lastNote.start >= x2) { continue; }
 
-                if (i > 0) {
-                    const lastNote = pattern.notes[i - 1];
-
-                    // Last note can't be compared if it's outside selection.
-                    if (doc.selection.patternSelectionActive &&
-                        (lastNote.end <= doc.selection.patternSelectionStart || lastNote.start >= doc.selection.patternSelectionEnd)) {
-                        continue;
-                    }
-
-                    // If this and last note are touching and have the same pitches, merges them.
-                    if (note.pitches[0] + note.pins[0].interval === lastNote.pitches[0] + lastNote.pins[lastNote.pins.length - 1].interval
-                        && note.start === lastNote.end
-                        && note.pitches.length === lastNote.pitches.length && note.pitches.every((pitch) => lastNote.pitches.includes(pitch))) {
-                        this.append(new ChangeMergeAcross(doc, pattern, lastNote.start, note.end));
-                        found = true;
-                        break;
-                    }
+                if (note.start === lastNote.end
+                    && note.pitches.length === lastNote.pitches.length
+                    && new Set(note.pitches).isSubsetOf(new Set(lastNote.pitches))) {
+                    this.append(new ChangeMergeAcross(doc, pattern, lastNote.start, note.end));
+                    lastNote = null;
+                    i -= 2; // TODO: what's the actual count, it could even be zero.
                 }
             }
-        } while (found);
+        }
 
         doc.notifier.changed();
         this._didSomething();
@@ -59,26 +48,27 @@ export class ChangeMergeAcross extends ChangeSequence {
         x1 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionStart : 0);
         x2 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionEnd : doc.song.partsPerPattern);
         if (x1 < 0 || x2 <= x1 || x2 > doc.song.partsPerPattern) { return; }
-        if (pattern.notes.length == 0) { return; }
+        if (pattern.notes.length <= 1) { return; }
 
         let firstNoteIndex = 0;
+        let note: Note;
         let firstNote: Note | null = null;
         let lastNote: Note | null = null;
+        let firstPitch = 0, notePitch = 0;
         const notesMergedOver: Note[] = [];
         let notePinList: NotePin[] = [];
 
         for (let i = 0; i < pattern.notes.length; i++) {
-            const note = pattern.notes[i];
-            if (note.end <= x1) {
-                continue;
-            }
-            if (note.start >= x2) {
-                break;
-            }
+            note = pattern.notes[i];
+
+            if (note.end <= x1) { continue; }
+            if (note.start >= x2) { break; }
 
             if (!firstNote) {
                 firstNote = note;
                 firstNoteIndex = i;
+                firstPitch = firstNote.pitches.reduce((a, b) => Math.min(a, b));
+
                 notesMergedOver.push(note);
                 notePinList = firstNote.pins;
             }
@@ -86,12 +76,17 @@ export class ChangeMergeAcross extends ChangeSequence {
             if (note.end <= x2 && (!lastNote || note.end > lastNote.end)) {
                 lastNote = note;
             }
-            
-            if (note != firstNote) {
+
+            if (note !== firstNote) {
+                notePitch = note.pitches.reduce((a, b) => Math.min(a, b));
+
                 // Accumulate pins across notes (adjust relative values based on first note)
+                let newPin: NotePin;
+                let lastPin = notePinList.length > 0 ? notePinList[notePinList.length - 1] : null;
+                let pinBeforeLast: NotePin | null;
                 for (const pin of note.pins) {
-                    const newPin = {
-                        interval: note.pitches[0] + pin.interval - firstNote.pitches[0],
+                    newPin = {
+                        interval: notePitch + pin.interval - firstPitch,
                         size: pin.size,
                         time: note.start - firstNote.start + pin.time
                     };
@@ -99,9 +94,8 @@ export class ChangeMergeAcross extends ChangeSequence {
                     // If the last note's ending pin is fully redundant with the start of the new note, or if it has
                     // a length of 1, delete the last note's ending pin. Else, if they have the same time but aren't
                     // identical, nudge the last note's end pin backwards 1 unit of time.
-                    if (notePinList.length > 0) {
-                        const lastPin = notePinList[notePinList.length - 1];
-                        const pinBeforeLast = notePinList.length > 1 ? notePinList[notePinList.length - 2] : null;
+                    if (lastPin) {
+                        pinBeforeLast = notePinList.length > 1 ? notePinList[notePinList.length - 2] : null;
                         if (newPin.time == lastPin.time) {
                             // Delete prior pin if it's fully redundant with this one.
                             // Delete prior pin if it can't be nudged back by 1 (time - 1 conflicts with pin before it).
@@ -156,29 +150,29 @@ export class ChangeBridgeAcross extends ChangeSequence {
         if (x1 < 0 || x2 <= x1 || x2 > doc.song.partsPerPattern) { return; }
         if (pattern.notes.length == 0) { return; }
 
+        if (x1 !== 0) { this.append(new ChangeSplitNotesAtPoint(doc, pattern, x1)); }
+        if (x2 !== doc.song.partsPerPattern) { this.append(new ChangeSplitNotesAtPoint(doc, pattern, x2)); }
+
         let note: Note;
         let prevNote: Note | null;
         let noteLeftOfSelection: number | null = null;
+        let startSize: number;
+        let newNote: Note;
         for (let i = 0; i < pattern.notes.length; i++) {
             note = pattern.notes[i];
 
             // Skip out-of-bounds notes
-            if (note.end <= x1) {
-                noteLeftOfSelection = i;
-                continue;
-            }
-            if (note.start >= x2) {
-                break;
-            }
+            if (note.end <= x1) { noteLeftOfSelection = i; continue; }
+            if (note.start >= x2) { break; }
 
             // Don't bridge from the note left of selection to first within.
-            if (doc.selection.patternSelectionActive && i - 1 == noteLeftOfSelection) { continue; }
+            if (i - 1 == noteLeftOfSelection) { continue; }
 
             if (i > 0) {
                 prevNote = pattern.notes[i - 1];
                 if (note.start - prevNote.end > 0) {
-                    const startSize = copyEnds ? prevNote.pins[0].size : prevNote.pins[prevNote.pins.length - 1].size;
-                    const newNote = new Note(-1, prevNote.end, note.start, startSize, false);
+                    startSize = copyEnds ? prevNote.pins[0].size : prevNote.pins[prevNote.pins.length - 1].size;
+                    newNote = new Note(-1, prevNote.end, note.start, startSize, false);
 
                     // Adjust pitch so first pin has 0 interval
                     newNote.pitches = [];
@@ -201,6 +195,7 @@ export class ChangeBridgeAcross extends ChangeSequence {
         if (this._notesInserted.length === 0) {
             return;
         }
+
         for (let i = 0; i < this._notesInserted.length; i++) {
             this.append(new ChangeNoteAdded(doc, pattern, this._notesInserted[i].note, this._notesInserted[i].insertAt + i, false));
         }
@@ -238,25 +233,26 @@ export class ChangeSplitAcross extends ChangeSequence {
 
         const range = x2 - x1;
         numCuts = Math.min(numCuts, x2 - x1 - 1);
-        if (numCuts < 1) { return; }
-        if (numCuts >= 1 && range <= 1) { return; }
+        if (numCuts < 1 || range <= 1) { return; }
 
         let cutIndices: number[] = [];
 
         if (numCuts === 1) { cutIndices.push(Math.round((x1 + x2) / 2)); }
         else {
             const chunk = Math.max(range / (numCuts + 1), 1); // Never less than 1 for time.
+            let cut: number;
             for (let i = 1; i < numCuts + 1; i++) {
                 // Always cut integer sizes or greater; never the same spot twice.
-                const cut = Math.round(x1 + chunk * i)
+                cut = Math.round(x1 + chunk * i);
                 if (cutIndices.length === 0 || cutIndices[cutIndices.length - 1] !== cut) {
                     cutIndices.push(cut)
                 }
             }
         }
 
+        let splitOp: ChangeSplitNotesAtPoint;
         for (let i = 0; i < cutIndices.length; i++) {
-            const splitOp = new ChangeSplitNotesAtPoint(doc, pattern, cutIndices[i]);
+            splitOp = new ChangeSplitNotesAtPoint(doc, pattern, cutIndices[i]);
             this.append(splitOp);
             this._splitNotes.push(splitOp.leftNote, splitOp.rightNote);
         }
@@ -298,29 +294,28 @@ export class ChangeStackLeftAcross extends ChangeSequence {
     constructor(doc: SongDocument, pattern: Pattern, x1?: number, x2?: number) {
         super();
 
-        if (doc.selection.patternSelectionActive) {
-            this.append(new ChangeSplitNotesAtPoint(doc, pattern, doc.selection.patternSelectionStart));
-        }
-
         x1 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionStart : 0);
         x2 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionEnd : doc.song.partsPerPattern);
-        if (x1 < 0 || x2 <= x1) { return; }
+        if (x1 < 0 || x2 <= x1 || x2 > doc.song.partsPerPattern) { return; }
         if (pattern.notes.length === 0) { return; }
+
+        if (x1 !== 0) { this.append(new ChangeSplitNotesAtPoint(doc, pattern, x1)); }
+        if (x2 !== doc.song.partsPerPattern) { this.append(new ChangeSplitNotesAtPoint(doc, pattern, x2)); }
 
         let firstNote = false;
         for (let i = 0; i < pattern.notes.length; i++) {
             const note = pattern.notes[i];
 
-            if (note.start < x2 && note.end > x1) {
-                if (!firstNote) {
-                    firstNote = true;
-                    note.start = x1;
-                    note.end = note.start + note.pins[note.pins.length - 1].time;
-                } else if (i > 0) {
-                    const prevNote = pattern.notes[i - 1];
-                    note.start = prevNote.end;
-                    note.end = note.start + note.pins[note.pins.length - 1].time;
-                }
+            if (note.end <= x1) { continue; }
+            if (note.start >= x2) { break; }
+
+            if (!firstNote) {
+                firstNote = true;
+                note.start = x1;
+                note.end = note.start + note.pins[note.pins.length - 1].time;
+            } else if (i > 0) {
+                note.start = pattern.notes[i - 1].end;
+                note.end = note.start + note.pins[note.pins.length - 1].time;
             }
         }
 
@@ -329,32 +324,31 @@ export class ChangeStackLeftAcross extends ChangeSequence {
     }
 }
 
-/** Cumulatively shifts every note up or down with an optional vertical multiplier. Makes crescendos and descendos. */
+/** Cumulatively shifts every note up or down by an amount. Makes crescendos and descendos. */
 export class ChangeStepAcross extends ChangeSequence {
     constructor(doc: SongDocument, channelIndex: number, pattern: Pattern, step?: number, x1?: number, x2?: number) {
         super();
 
-        if (doc.selection.patternSelectionActive) {
-            this.append(new ChangeSplitNotesAtPoint(doc, pattern, doc.selection.patternSelectionStart));
-        }
-
-        const pitchLimit = doc.song.getChannelIsNoise(channelIndex) ? Config.drumCount - 1 : Config.maxPitch;
-
+        step ??= 1;
         x1 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionStart : 0);
         x2 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionEnd : doc.song.partsPerPattern);
-        step ??= 1;
-
-        if (x1 < 0 || x2 <= x1) { return; }
+        if (x1 < 0 || x2 <= x1 || x2 > doc.song.partsPerPattern) { return; }
         if (pattern.notes.length === 0) { return; }
 
+        if (x1 !== 0) { this.append(new ChangeSplitNotesAtPoint(doc, pattern, x1)); }
+        if (x2 !== doc.song.partsPerPattern) { this.append(new ChangeSplitNotesAtPoint(doc, pattern, x2)); }
+
+        const pitchLimit = doc.song.getChannelIsNoise(channelIndex) ? Config.drumCount - 1 : Config.maxPitch;
+        let note: Note;
         let firstIndex = -1;
         for (let i = 0; i < pattern.notes.length; i++) {
-            const note = pattern.notes[i];
+            note = pattern.notes[i];
 
-            if (note.start < x2 && note.end > x1) {
-                if (firstIndex === -1) { firstIndex = i; }
-                note.pitches = note.pitches.map((pitch) => Math.min(Math.max(pitch + step * (i - firstIndex), 0), pitchLimit));
-            }
+            if (note.end <= x1) { continue; }
+            if (note.start >= x2) { break; }
+
+            if (firstIndex === -1) { firstIndex = i; }
+            note.pitches = note.pitches.map((pitch) => Math.min(Math.max(pitch + step * (i - firstIndex), 0), pitchLimit));
         }
 
         doc.notifier.changed();
@@ -369,31 +363,34 @@ export class ChangeSpreadAcross extends ChangeSequence {
 
         x1 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionStart : 0);
         x2 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionEnd : doc.song.partsPerPattern);
-        if (x1 < 0 || x2 <= x1) { return; }
+        if (x1 < 0 || x2 <= x1 || x2 > doc.song.partsPerPattern) { return; }
         if (pattern.notes.length === 0) { return; }
 
-        this.append(new ChangeSplitNotesAtPoint(doc, pattern, x1));
-        this.append(new ChangeSplitNotesAtPoint(doc, pattern, x2));
+        if (x1 !== 0) { this.append(new ChangeSplitNotesAtPoint(doc, pattern, x1)); }
+        if (x2 !== doc.song.partsPerPattern) { this.append(new ChangeSplitNotesAtPoint(doc, pattern, x2)); }
 
         // Get the total free space available and number of notes in the range.
         let firstNote = false;
+        let note: Note;
         let totalSpace = 0;
         let noteCount = 0;
+        let firstIndex = -1;
         let finalIndex = -1;
         for (let i = 0; i < pattern.notes.length; i++) {
-            const note = pattern.notes[i];
+            note = pattern.notes[i];
 
-            if (note.start < x2 && note.end > x1) {
-                noteCount++;
-                if (!firstNote) {
-                    firstNote = true;
-                    totalSpace += note.start - x1;
-                } else {
-                    totalSpace += note.start - pattern.notes[i - 1].end;
-                }
+            if (note.end <= x1) { continue; }
+            if (note.start >= x2) { break; }
 
-                finalIndex = i;
+            noteCount++;
+            if (!firstNote) {
+                firstNote = true;
+                totalSpace += note.start - x1;
+            } else {
+                totalSpace += note.start - pattern.notes[i - 1].end;
             }
+
+            finalIndex = i;
         }
         if (finalIndex > -1) {
             totalSpace += x2 - pattern.notes[finalIndex].end;
@@ -406,25 +403,25 @@ export class ChangeSpreadAcross extends ChangeSequence {
         this.append(new ChangeStackLeftAcross(doc, pattern, x1, x2));
 
         // Add space between.
-        let firstIndex = -1;
         for (let i = 0; i < pattern.notes.length; i++) {
-            const note = pattern.notes[i];
+            note = pattern.notes[i];
 
-            if (note.start < x2 && note.end > x1) {
-                if (firstIndex === -1) {
-                    firstIndex = i;
+            if (note.end <= x1) { continue; }
+            if (note.start >= x2) { break; }
 
-                    // Center an individual note, if only one.
-                    if (noteCount === 1) {
-                        note.start += Math.round(totalSpace / 2);
-                        note.end = note.start + note.pins[note.pins.length - 1].time;
-                        if (note.start !== 0) { note.continuesLastPattern = false; }
-                        break;
-                    }
-                } else {
-                    note.start += Math.floor(spaceBetween * (i - firstIndex));
+            if (firstIndex === -1) {
+                firstIndex = i;
+
+                // Center an individual note, if only one.
+                if (noteCount === 1) {
+                    note.start += Math.round(totalSpace / 2);
                     note.end = note.start + note.pins[note.pins.length - 1].time;
+                    if (note.start !== 0) { note.continuesLastPattern = false; }
+                    break;
                 }
+            } else {
+                note.start += Math.floor(spaceBetween * (i - firstIndex));
+                note.end = note.start + note.pins[note.pins.length - 1].time;
             }
         }
 
@@ -447,13 +444,14 @@ export class ChangeSpreadVertical extends ChangeSequence {
 
         x1 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionStart : 0);
         x2 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionEnd : doc.song.partsPerPattern);
-        if (x1 < 0 || x2 <= x1) { return; }
-        if (pattern.notes.length === 0) { return; }
+        if (x1 < 0 || x2 <= x1 || x2 > doc.song.partsPerPattern) { return; }
+        if (pattern.notes.length <= 1) { return; }
 
-        this.append(new ChangeSplitNotesAtPoint(doc, pattern, x1));
-        this.append(new ChangeSplitNotesAtPoint(doc, pattern, x2));
+        if (x1 !== 0) { this.append(new ChangeSplitNotesAtPoint(doc, pattern, x1)); }
+        if (x2 !== doc.song.partsPerPattern) { this.append(new ChangeSplitNotesAtPoint(doc, pattern, x2)); }
 
         // Get the note count, the min/max pitch of every note + overall min/max, and detect slope.
+        let note: Note;
         let noteCount = 0;
         let indices: { start: number, end: number } = {} as any;
         let vertBounds = { min: Number.MAX_VALUE, max: Number.MIN_VALUE };
@@ -461,76 +459,75 @@ export class ChangeSpreadVertical extends ChangeSequence {
         let slope = 0;
 
         for (let i = 0; i < pattern.notes.length; i++) {
-            if (pattern.notes[i].start < x2 && pattern.notes[i].end > x1) {
-                noteCount++;
-                indices = { start: indices.start ?? i, end: i };
+            note = pattern.notes[i];
 
-                notePitches[i - indices.start] = doc.selection.getVerticalBounds([pattern.notes[i]],
-                    pattern.notes[i].start, pattern.notes[i].end);
-                vertBounds = {
-                    min: Math.min(vertBounds.min, notePitches[i - indices.start].min),
-                    max: Math.max(vertBounds.max, notePitches[i - indices.start].max)
-                };
+            if (note.end <= x1) { continue; }
+            if (note.start >= x2) { break; }
 
-                // The trendline informs whether to force a crescendo (>=0), or a descendo (<0).
-                if (i - indices.start > 0) {
-                    const last = notePitches[i - indices.start - 1];
-                    const curr = notePitches[i - indices.start];
-                    const oldCenter = last.min + (last.max - last.min)/2;
-                    const center = curr.min + (curr.max - curr.min)/2;
-                    slope += center - oldCenter;
-                }
+            noteCount++;
+            indices = { start: indices.start ?? i, end: i };
+            notePitches[i - indices.start] = doc.selection.getVerticalBounds([note], note.start, note.end);
+            vertBounds = {
+                min: Math.min(vertBounds.min, notePitches[i - indices.start].min),
+                max: Math.max(vertBounds.max, notePitches[i - indices.start].max)
+            };
+
+            // The trendline informs whether to force a crescendo ( slope>=0), or a decrescendo.
+            if (i - indices.start > 0) {
+                const last = notePitches[i - indices.start - 1];
+                const curr = notePitches[i - indices.start];
+                const oldCenter = last.min + (last.max - last.min)/2;
+                const center = curr.min + (curr.max - curr.min)/2;
+                slope += center - oldCenter;
             }
         }
 
         if (noteCount < 2) { return; }
+        if (vertBounds.max === vertBounds.min) { return; }
 
         // Get the total bounds.
         const vertRange = vertBounds.max - vertBounds.min;
         const verticalSpaceBetween = vertRange / (noteCount - 1);
 
         // Set the new note pitches based on ratio of the ranges, following trendline.
+        let targetPitch: number;
+        let nearestEdgeToTarget: number;
+        let offset: number;
+
         for (let i = indices.start; i <= indices.end; i++) {
-            if (vertRange > 0) {
-                const targetPitch = slope >= 0
-                    ? vertBounds.min + verticalSpaceBetween * (i - indices.start)
-                    : vertBounds.max - verticalSpaceBetween * (i - indices.start);
+            note = pattern.notes[i];
+            targetPitch = slope >= 0
+                ? vertBounds.min + verticalSpaceBetween * (i - indices.start) //crescendo
+                : vertBounds.max - verticalSpaceBetween * (i - indices.start); //decrescendo
 
-                let range = notePitches[i - indices.start];
-                const note = pattern.notes[i];
+            let range = notePitches[i - indices.start];
+            nearestEdgeToTarget =
+                ((range.min >= targetPitch) ? range.min // bottom
+                : (targetPitch >= range.max) ? range.max // top
+                : range.min + (range.max - range.min)/2); // center
 
-                const centerPitch = range.min + (range.max - range.min)/2;
-                const nearestEdgeToTarget =
-                    ((range.min >= targetPitch) ? range.min
-                    : (targetPitch >= range.max) ? range.max
-                    : centerPitch);
+            offset = targetPitch - nearestEdgeToTarget;
 
-                const offset = targetPitch - nearestEdgeToTarget;
+            // Add offset to pitch. For some reason this results in mathematical anomalies
+            // at large range differences, which is compensated by bruteforce measure-and-fix :|
+            let overageLow = 0;
+            let overageHigh = 0;
+            note.pitches = note.pitches.map((pitch) =>
+            {
+                pitch = Math.round(pitch + offset); 
+                if (pitch > vertBounds.max) {
+                    overageHigh = Math.max(overageHigh, pitch - vertBounds.max);
+                    pitch = vertBounds.max;
+                } else if (pitch < vertBounds.min) {
+                    overageLow = Math.max(overageLow, vertBounds.min - pitch);
+                    pitch = vertBounds.min;
+                }
 
-                // Add offset to pitch. For some reason this results in mathematical anomalies
-                // at large range differences, which is compensated by bruteforce measure-and-fix :|
-                let overageLow = 0;
-                let overageHigh = 0;
-                note.pitches = note.pitches.map((pitch) =>
-                {
-                    pitch = Math.round(pitch + offset); 
-                    if (pitch > vertBounds.max) {
-                        overageHigh = Math.max(overageHigh, pitch - vertBounds.max);
-                        pitch = vertBounds.max;
-                    } else if (pitch < vertBounds.min) {
-                        overageLow = Math.max(overageLow, vertBounds.min - pitch);
-                        pitch = vertBounds.min;
-                    }
+                return pitch;
+            });
 
-                    return pitch;
-                });
-
-                // Apply measured fixes to the bad math to preserve expected range.
-                note.pitches = note.pitches.map((pitch) => {
-                    return pitch - overageHigh + overageLow;
-                });
-                note.pitches = [...new Set(note.pitches)].sort() // Keep it unique and sorted.
-            }
+            note.pitches = note.pitches.map((pitch) => pitch - overageHigh + overageLow);
+            note.pitches = [...new Set(note.pitches)]; // Keep unique.
         }
 
         doc.notifier.changed();
@@ -545,17 +542,22 @@ export class ChangeTapNotesAcross extends ChangeSequence {
 
         x1 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionStart : 0);
         x2 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionEnd : doc.song.partsPerPattern);
-        if (x1 < 0 || x2 <= x1) { return; }
+        if (x1 < 0 || x2 <= x1 || x2 > doc.song.partsPerPattern) { return; }
         if (pattern.notes.length === 0) { return; }
 
+        if (x1 !== 0) { this.append(new ChangeSplitNotesAtPoint(doc, pattern, x1)); }
+        if (x2 !== doc.song.partsPerPattern) { this.append(new ChangeSplitNotesAtPoint(doc, pattern, x2)); }
+
+        let canTapLeft: boolean;
+        let canTapRight: boolean;
         for (let i = 0; i < pattern.notes.length; i++) {
             const note = pattern.notes[i];
 
             if (note.start < x2 && note.end > x1) {
-                const canTapLeft = note.start > x1
+                canTapLeft = note.start > x1
                     && (i == 0 || note.start - pattern.notes[i - 1].end > 0);
 
-                const canTapRight = note.end < x2
+                canTapRight = note.end < x2
                     && note.end < doc.song.partsPerPattern
                     && (i === pattern.notes.length - 1 || pattern.notes[i + 1].start - note.end > 0);
 
@@ -576,43 +578,46 @@ export class ChangeMirrorHorizontal extends ChangeSequence {
 
         x1 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionStart : 0);
         x2 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionEnd : doc.song.partsPerPattern);
-        const center = (x1 + x2) / 2;
-        
-        if (x1 < 0 || x2 <= x1) { return; }
+        if (x1 < 0 || x2 <= x1 || x2 > doc.song.partsPerPattern) { return; }
         if (pattern.notes.length === 0) { return; }
 
-        if (doc.selection.patternSelectionActive) {
-            this.append(new ChangeSplitNotesAtSelection(doc, pattern));
-        }
+        if (x1 !== 0) { this.append(new ChangeSplitNotesAtPoint(doc, pattern, x1)); }
+        if (x2 !== doc.song.partsPerPattern) { this.append(new ChangeSplitNotesAtPoint(doc, pattern, x2)); }
 
+        let note: Note;
         const firstNote = pattern.notes[0].clone();
+        let startDist: number;
+        let endDist: number;
+
+        const center = (x1 + x2) / 2;
 
         for (let i = 0; i < pattern.notes.length; i++) {
-            const note = pattern.notes[i];
+            note = pattern.notes[i];
 
-            if (note.end > x1 && note.start < x2) {
-                note.continuesLastPattern = false;
+            if (note.end <= x1) { continue; }
+            if (note.start >= x2) { break; }
 
-                for (let j = 0; j < note.pins.length; j++) {
-                    note.pins[j].time = Math.abs(note.pins[j].time - note.pins[note.pins.length - 1].time);
+            note.continuesLastPattern = false;
+
+            for (let j = 0; j < note.pins.length; j++) {
+                note.pins[j].time = Math.abs(note.pins[j].time - note.pins[note.pins.length - 1].time);
+            }
+            note.pins.reverse();
+
+            // It's so simple...but it was too hard for me to compute. So here's 2 functions.
+            if (!inPlace) {
+                if (note.start < center) {
+                    endDist = center - note.end;
+                    note.start = center + endDist
+                } else {
+                    startDist = note.start - center;
+                    note.start = center - startDist - note.pins[note.pins.length - 1].time;
                 }
-                note.pins.reverse();
 
-                // It's so simple...but it was too hard for me to compute. So here's 2 functions.
-                if (!inPlace) {
-                    if (note.start < center) {
-                        const endDist = center - note.end;
-                        note.start = center + endDist
-                    } else {
-                        const startDist = note.start - center;
-                        note.start = center - startDist - note.pins[note.pins.length - 1].time;
-                    }
-
-                    note.end = note.start + note.pins[note.pins.length - 1].time;
-                }
+                note.end = note.start + note.pins[note.pins.length - 1].time;
             }
         }
-        pattern.notes.sort((a, b) => a.start - b.start); // Keep it sorted.
+        pattern.notes.sort((a, b) => a.start - b.start);
 
         // Restore last pattern continuation if the mirrored note starts at x=0 and has same pitches.
         if (firstNote.start === 0
@@ -628,32 +633,32 @@ export class ChangeMirrorHorizontal extends ChangeSequence {
 
 /** Stretch/shrink the selected range and transpose it to the new location. newX2 < newX1 can mirror notes. */
 export class ChangeStretchHorizontal extends ChangeSequence {
-    constructor(doc: SongDocument, pattern: Pattern, oldX1: number, oldX2: number, newX1: number, newX2: number) {
+    constructor(doc: SongDocument, pattern: Pattern, x1: number, x2: number, x1b: number, x2b: number) {
         super();
 
-        newX2 = Math.min(newX2, doc.song.partsPerPattern);
+        x2b = Math.min(x2b, doc.song.partsPerPattern);
 
-        if (oldX1 < 0 || oldX2 <= oldX1 || newX1 < 0 || newX2 < 0 || newX1 == newX2
-            || newX1 > doc.song.partsPerPattern || newX2 > doc.song.partsPerPattern
-            || (oldX1 === newX1 && oldX2 == newX2)) {
+        if (x1 < 0 || x2 <= x1 || x2 > doc.song.partsPerPattern
+            || x1b < 0 || x2b < 0 || x1b == x2b || x1b > doc.song.partsPerPattern || x2b > doc.song.partsPerPattern
+            || (x1 === x1b && x2 == x2b)) {
             return;
         }
 
-        if (doc.selection.patternSelectionActive) {
-            this.append(new ChangeSplitNotesAtSelection(doc, pattern));
-        }
+        if (x1 !== 0) { this.append(new ChangeSplitNotesAtPoint(doc, pattern, x1)); }
+        if (x2 !== doc.song.partsPerPattern) { this.append(new ChangeSplitNotesAtPoint(doc, pattern, x2)); }
 
-        if (newX2 < newX1) {
-            this.append(new ChangeMirrorHorizontal(doc, pattern, true, oldX1, oldX2));
-            [newX1, newX2] = [newX2, newX1] //swap
+        if (x2b < x1b) {
+            this.append(new ChangeMirrorHorizontal(doc, pattern, true, x1, x2));
+            [x1b, x2b] = [x2b, x1b] //swap
         }
 
         const newNotes: Note[] = [];
-        const scaleFactor = (newX2 - newX1) / (oldX2 - oldX1);
+        const scaleFactor = (x2b - x1b) / (x2 - x1);
 
         // Construct stretched notes
         let note: Note;
         let prevNote: Note | null = null;
+        let newNote: Note;
         let oldRangeStart = -1, oldRangeEnd = -1;
         let newRangeStart = -1, newRangeEnd = -1;
         let minCompressedSize = 0;
@@ -661,19 +666,20 @@ export class ChangeStretchHorizontal extends ChangeSequence {
             note = pattern.notes[i];
 
             // Track which notes are in the deletion ranges. All notes to be stretched will be in the old range.
-            if (note.end > newX1 && note.start < newX2) {
+            if (note.start >= x2 && note.start >= x2b) { break; }
+            if (note.end > x1b && note.start < x2b) {
                 if (newRangeStart === -1) { newRangeStart = i; }
             }
-            if (note.end > oldX1 && note.start < oldX2) {
+            if (note.end > x1 && note.start < x2) {
                 if (oldRangeStart === -1) { oldRangeStart = i; }
 
                 // The new range must be at least this big to avoid loss.
                 minCompressedSize += note.pins.length;
 
                 // transpose the note, then stretch it to hold at minimum its pins.
-                const newNote = note.clone();
-                newNote.start = Math.round(newNote.start + newX1 - oldX1);
-                newNote.end += newX1 - oldX1;
+                newNote = note.clone();
+                newNote.start = Math.round(newNote.start + x1b - x1);
+                newNote.end += x1b - x1;
 
                 let prevPin: NotePin | null = null;
                 for (const pin of newNote.pins) {
@@ -699,14 +705,14 @@ export class ChangeStretchHorizontal extends ChangeSequence {
                 prevNote = newNote;
             }
             
-            if (note.start >= oldX2 && oldRangeEnd === -1) { oldRangeEnd = i; }
-            if (note.start >= newX2 && newRangeEnd === -1) { newRangeEnd = i; }
+            if (note.start >= x2 && oldRangeEnd === -1) { oldRangeEnd = i; }
+            if (note.start >= x2b && newRangeEnd === -1) { newRangeEnd = i; }
         }
 
         // Do nothing if overly shrunk or out of bounds.
-        if (newX2 - newX1 < minCompressedSize ||
+        if (x2b - x1b < minCompressedSize ||
             newNotes.length === 0 ||
-            newNotes[newNotes.length - 1].end > newX2) {
+            newNotes[newNotes.length - 1].end > x2b) {
             return;
         }
 
@@ -733,26 +739,30 @@ export class ChangeStretchVerticalRelative extends ChangeSequence {
         const pitchLimit = doc.song.getChannelIsNoise(channelIndex) ? Config.drumCount - 1 : Config.maxPitch;
         x1 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionStart : 0);
         x2 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionEnd : doc.song.partsPerPattern);
-        if (x1 < 0 || x2 <= x1) { return; }
+        if (x1 < 0 || x2 <= x1 || x2 > doc.song.partsPerPattern) { return; }
         if (pattern.notes.length === 0) { return; }
 
         multBy ??= 1;
-        add ??= 0;        
+        add ??= 0;
 
-        const stretch = (notes: Note[], bounds?: { min: number, max: number }) => {
-            const newBounds = {...(bounds ?? yOrig ?? getVerticalBounds(notes, x1, x2))};
-            const halfDist = (newBounds.max - newBounds.min) / 2;
-            const center = newBounds.min + halfDist;
+        const stretch = (xStart: number, xEnd: number, yRange: { min: number, max: number }) => {
+            const halfDist = (yRange.max - yRange.min) / 2;
+            const center = yRange.min + halfDist;
             this.append(new ChangeStretchVertical(doc, channelIndex, pattern,
                 Math.max(center - (halfDist * multBy) - add/2, 0),
                 Math.min(center + (halfDist * multBy) + add/2, pitchLimit),
-                newBounds, x1, x2));
+                yRange, xStart, xEnd));
         }
 
         if (perNote) {
-            pattern.notes.forEach(note => stretch([note], yOrig ?? getVerticalBounds(pattern.notes, x1, x2)));
+            let note: Note;
+            for (note of pattern.notes) {
+                if (note.end <= x1) { continue; }
+                if (note.start >= x2) { break; }
+                stretch(note.start, note.end, yOrig ?? getVerticalBounds([note], x1, x2));
+            }
         } else {
-            stretch(pattern.notes);
+            stretch(x1, x2, yOrig ?? getVerticalBounds(pattern.notes, x1, x2));
         }
 
         doc.notifier.changed();
@@ -777,35 +787,35 @@ export class ChangeStretchVertical extends ChangeSequence {
         const pitchLimit = doc.song.getChannelIsNoise(channelIndex) ? Config.drumCount - 1 : Config.maxPitch;
         x1 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionStart : 0);
         x2 ??= (doc.selection.patternSelectionActive ? doc.selection.patternSelectionEnd : doc.song.partsPerPattern);
-        
-        if (x1 < 0 || x2 <= x1 || yMin < 0 || yMin > pitchLimit || yMax < 0 || yMax > pitchLimit) { return; }
+        if (x1 < 0 || x2 <= x1 || x2 > doc.song.partsPerPattern
+            || yMin < 0 || yMin > pitchLimit
+            || yMax < 0 || yMax > pitchLimit) { return; }
         if (pattern.notes.length === 0) { return; }
-
-        if (doc.selection.patternSelectionActive) {
-            this.append(new ChangeSplitNotesAtSelection(doc, pattern));
-        }
 
         const bounds = yOrig ?? getVerticalBounds(pattern.notes, x1, x2);
         let origRange = bounds.max - bounds.min;
         let newRange = yMax - yMin;
         if (origRange === 0) { origRange = 1; newRange = 1; } // only transpose if same-line.
 
+        let note: Note;
         for (let i = 0; i < pattern.notes.length; i++) {
-            const note = pattern.notes[i];
+            note = pattern.notes[i];
 
-            if (note.end > x1 && note.start < x2) {
-                // Pins are relative to pitches, so they'll fit when multiplied by the ratio of the ranges.
-                for (let j = 0; j < note.pins.length; j++) {
-                    note.pins[j].interval = Math.round(note.pins[j].interval * (newRange / origRange));
-                }
+            if (note.end <= x1) { continue; }
+            if (note.start >= x2) { break; }
 
-                // Pitches are set to a lerped position of new range based on their position in the old range.
-                for (let j = 0; j < note.pitches.length; j++) {
-                    const origDistance = (note.pitches[j] - bounds.min) / origRange;
-                    note.pitches[j] = Math.round(yMin + origDistance * newRange);
-                }
-                note.pitches = [...new Set(note.pitches)].sort() // Keep it unique and sorted.
+            // Pins are relative to pitches, so they'll fit when multiplied by the ratio of the ranges.
+            for (let j = 0; j < note.pins.length; j++) {
+                note.pins[j].interval = Math.round(note.pins[j].interval * (newRange / origRange));
             }
+
+            // Pitches are set to a lerped position of new range based on their position in the old range.
+            let origDistance: number;
+            for (let j = 0; j < note.pitches.length; j++) {
+                origDistance = (note.pitches[j] - bounds.min) / origRange;
+                note.pitches[j] = Math.round(yMin + origDistance * newRange);
+            }
+            note.pitches = [...new Set(note.pitches)].sort() // Keep it unique and sorted.
         }
 
         doc.notifier.changed();
@@ -819,26 +829,46 @@ function getVerticalBounds(notes: Note[], x1: number, x2: number) {
     let absoluteMin = Number.MAX_SAFE_INTEGER;
 
     for (let i = 0; i < notes.length; i++) {
-        const note = notes[i];
+        if (notes[i].end <= x1) { continue; }
+        if (notes[i].start >= x2) { break; }
 
         // For all notes in selection range
-        if (note.end > x1 && note.start < x2) {
-            let pinMax = 0;
-            let pinMin = Number.MAX_SAFE_INTEGER;
-    
-            // Find vertical min/max among pins.
-            for (let j = 0; j < note.pins.length; j++) {
-                pinMax = Math.max(pinMax, note.pins[j].interval);
-                pinMin = Math.min(pinMin, note.pins[j].interval);
-            }
-    
-            // The vertical min/max among pitches + pin min/max gives the highest/lowest points in a note.
-            for (let j = 0; j < note.pitches.length; j++) {
-                absoluteMax = Math.max(absoluteMax, note.pitches[j] + pinMax);
-                absoluteMin = Math.min(absoluteMin, note.pitches[j] + pinMin);
-            }
+        let pinMax = 0;
+        let pinMin = Number.MAX_SAFE_INTEGER;
+
+        // Find vertical min/max among pins.
+        for (let j = 0; j < notes[i].pins.length; j++) {
+            pinMax = Math.max(pinMax, notes[i].pins[j].interval);
+            pinMin = Math.min(pinMin, notes[i].pins[j].interval);
+        }
+
+        // The vertical min/max among pitches + pin min/max gives the highest/lowest points in a note.
+        for (let j = 0; j < notes[i].pitches.length; j++) {
+            absoluteMax = Math.max(absoluteMax, notes[i].pitches[j] + pinMax);
+            absoluteMin = Math.min(absoluteMin, notes[i].pitches[j] + pinMin);
         }
     }
 
     return { min: absoluteMin, max: absoluteMax };
+}
+
+/** Returns the start/end index info for the notes in range. */
+function getNoteIndices(notes: Note[], x1: number, x2: number, perNote?: (note: Note, index: number, sinceStart: number) => void) {
+    let start = -1;
+    let length = 0;
+
+    for (let i = 0; i < notes.length; i++) {
+        if (notes[i].end <= x1) { continue; }
+        if (notes[i].start >= x2) { break; }
+
+        if (start === -1) { start = i; }
+        length++;
+
+        perNote?.(notes[i], i, length);
+    }
+
+    return {
+        start: start,
+        end: start + length - 1
+    };
 }

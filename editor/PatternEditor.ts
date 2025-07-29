@@ -49,6 +49,8 @@ export class PatternEditor {
     private _svgNoteContainer: SVGSVGElement = SVG.svg();
     private readonly _svgPlayhead: SVGRectElement = SVG.rect({ x: "0", y: "0", width: "4", fill: ColorConfig.playhead, "pointer-events": "none" });
     private readonly _selectionRect: SVGRectElement = SVG.rect({ class: "dashed-line dash-move", fill: ColorConfig.boxSelectionFill, stroke: ColorConfig.hoverPreview, "stroke-width": 2, "stroke-dasharray": "5, 3", "fill-opacity": "0.4", "pointer-events": "none", visibility: "hidden" });
+    private readonly _selectionStretchLeft: SVGLineElement = SVG.line({ class: "dashed-line", stroke: ColorConfig.getChannelColor(this._doc.song, this._doc.channel), "stroke-width": 2, "pointer-events": "none", visibility: "hidden" });
+    private readonly _selectionStretchRight: SVGLineElement = SVG.line({ class: "dashed-line", stroke: ColorConfig.getChannelColor(this._doc.song, this._doc.channel), "stroke-width": 2, "pointer-events": "none", visibility: "hidden" });
     private readonly _svgPreview: SVGPathElement = SVG.path({ fill: "none", stroke: ColorConfig.hoverPreview, "stroke-width": "2", "pointer-events": "none" });
     public modDragValueLabel: HTMLDivElement = HTML.div({ width: "90", "text-anchor": "start", contenteditable: "true", style: "display: flex, justify-content: center; align-items:center; position:absolute; pointer-events: none;", "dominant-baseline": "central", });
     public _svg: SVGSVGElement = SVG.svg({ id:'firstImage', style: `background-image: url(${getLocalStorageItem("customTheme", "")}); background-repeat: no-repeat; background-size: 100% 100%; background-color: ${ColorConfig.editorBackground}; touch-action: none; position: absolute;`, width: "100%", height: "100%" },
@@ -59,6 +61,7 @@ export class PatternEditor {
         ),
         this._svgBackground,
         this._selectionRect,
+        this._selectionStretchLeft, this._selectionStretchRight,
         this._svgNoteContainer,
         this._svgPreview,
         this._svgPlayhead,
@@ -2168,6 +2171,10 @@ export class PatternEditor {
 
             } else if (this._draggingStartOfSelection || this._draggingEndOfSelection || this._shiftHeld) {
                 this._setPatternSelection(this._dragChange);
+                if (!this._draggingStartOfSelection && !this._draggingEndOfSelection) {
+                    this._selectionOriginalCoords.start = this._doc.selection.patternSelectionStart;
+                    this._selectionOriginalCoords.end = this._doc.selection.patternSelectionEnd;
+                }
                 this._dragChange = null;
             } else if (this._mouseDragging || this._cursor.curNote == null || !this._dragChange.isNoop() || this._draggingStartOfSelection || this._draggingEndOfSelection || this._draggingSelectionContents || this._shiftHeld) {
                 this._doc.record(this._dragChange);
@@ -2296,12 +2303,7 @@ export class PatternEditor {
     }
 
     private _updateSelection(): void {
-        if (this._editSelectionMode === SelectionMode.Move) {
-            this._selectionRect.setAttribute("fill", ColorConfig.boxSelectionFill);
-        } else if (this._editSelectionMode === SelectionMode.Stretch) {
-            this._selectionRect.setAttribute("fill", ColorConfig.fifthNote);
-        }
-
+        // Update selection visibility.
         if (this._doc.selection.patternSelectionActive) {
             this._selectionRect.setAttribute("visibility", "visible");
             this._selectionRect.setAttribute("x", String(this._partWidth * this._doc.selection.patternSelectionStart));
@@ -2309,6 +2311,25 @@ export class PatternEditor {
         } else {
             this._selectionRect.setAttribute("visibility", "hidden");
         }
+
+        // Update the color of the fill to indicate the selection mode.
+        if (this._editSelectionMode === SelectionMode.Move) {
+            this._selectionRect.setAttribute("fill", ColorConfig.boxSelectionFill);
+        } else if (this._editSelectionMode === SelectionMode.Stretch) {
+            this._selectionRect.setAttribute("fill", ColorConfig.fifthNote);
+        }
+
+        // Update original bound indicators when a stretch is in-progress.
+        const stretchActive = this._doc.selection.patternSelectionActive && this._editSelectionMode === SelectionMode.Stretch;
+        const stretchShowLeft = this._selectionOriginalCoords.start !== this._doc.selection.patternSelectionStart;
+        const stretchShowRight = this._selectionOriginalCoords.end !== this._doc.selection.patternSelectionEnd;
+
+        this._selectionStretchLeft.setAttribute("visibility", stretchActive && stretchShowLeft ? "visible" : "hidden");
+        this._selectionStretchRight.setAttribute("visibility", stretchActive && stretchShowRight ? "visible" : "hidden");
+        if (stretchActive && stretchShowLeft)
+            { this._selectionStretchLeft.setAttribute("x", String(this._partWidth * this._doc.selection.patternSelectionStart)); }
+        if (stretchActive && stretchShowRight)
+            { this._selectionStretchRight.setAttribute("x", String(this._partWidth * this._doc.selection.patternSelectionEnd)); }
     }
 
     public render(): void {
