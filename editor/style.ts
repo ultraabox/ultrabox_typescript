@@ -309,33 +309,36 @@ input.tab-settings-radio + div {
 	font-size: 1.5rem;
 }
 
-.beepboxEditor div.selectionOps-row {
-    display: flex;
-	margin-top: 10px;
-}
-
 .beepboxEditor div.selectionOps-row-inside {
     display: flex;
 }
 
-.beepboxEditor div.selectionOps-action-controls {
-	padding: 0.3rem;
+.beepboxEditor div.selectionOps-action {
+	display: flex;
+	align-items: center;
+	margin-bottom: 0.2rem;
 }
 
-.beepboxEditor .selectionOps-action {
-    text-align: center;
-}
-
-.beepboxEditor .selectionOps-action-controls .checkbox-container {
-    text-align: left;
-	margin-top: 0.3rem;
-}
-
-.beepboxEditor div.selectionOps-action button.selectionOps-actionbutton {
-    height: calc(1.5 * var(--button-size));
-	width: calc(1.5 * var(--button-size));
+.beepboxEditor button.selectionOps-actionbutton,
+.beepboxEditor button.selectionOps-actionbutton:focus {
+	font-size: 1rem;
+	width: var(--button-size) !important;
 	background-repeat: no-repeat;
 	background-position: center;
+}
+
+.beepboxEditor button.selectionOps-actionbutton:focus {
+    background-color: ${ColorConfig.uiWidgetFocus}
+}
+
+.beepboxEditor button.selectionOps-actionbutton + .tip,
+.beepboxEditor button.selectionOps-actionbutton + .selectionOps-actionbutton,
+.beepboxEditor .checkbox-container + .checkbox-container {
+	margin-left: 0.2rem;
+}
+
+.beepboxEditor .selectionOps-row-inside + .selectionOps-row-inside {
+	margin-top: 0.2rem;
 }
 
 .beepboxEditor .noteOpMerge { background-image: var(--internal-note-merge-symbol) !important; }

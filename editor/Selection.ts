@@ -967,7 +967,7 @@ export class Selection {
 
         // Instead of cuts-per-range, this makes a split every {cut} units of time.
         if (absolute && !perNote) {
-            cuts = Math.max(Math.floor((x2 - x1) / cuts), 1);
+            cuts = Math.max(Math.floor((x2 - x1) / cuts) - 1, 1);
         }
 
         for (const channelIndex of this._eachSelectedChannel()) {
@@ -977,7 +977,7 @@ export class Selection {
                     for (const note of notesCopy) {
                         const adjustedX1 = Math.max(x1 as number, note.start);
                         const adjustedX2 = Math.min(x2 as number, note.end);
-                        const adjustedCuts = absolute ? Math.max(Math.floor((adjustedX2 - adjustedX1) / cuts), 1) : cuts;
+                        const adjustedCuts = absolute ? Math.max(Math.floor((adjustedX2 - adjustedX1) / cuts) - 1, 1) : cuts;
 
                         this._changeNoteOperations.append(new ChangeSplitAcross(this._doc, pattern, adjustedCuts, adjustedX1, adjustedX2));
                     }
