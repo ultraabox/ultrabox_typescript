@@ -65,10 +65,11 @@ export class EditorTabSelection {
         this._flattenPitch = input({ type: "checkbox", class: "selectionOps-checkbox"});
         this._split = button({ class: "selectionOps-actionbutton noteOpSplit" });
         this._splitLabel = div({ class: "tip", onclick: () => tipHandler("selectionSplit") }, "");
+        this._splitDropdown = button({ style: "height:1.5em; width: 10px; padding: 0px; font-size: 8px; margin-left: 0.2rem;" }, "▼");
+
+        this._splitSliderInputBox = input({ type: "number", step: "1", min: 1, max: Math.floor(this._doc.song.partsPerPattern / 2), value: "1" });
         this._splitSlider = new Slider(
             input({ title: "cuts", style: "width: 6rem; flex-grow: 1; margin-left: 0.5rem;", type: "range", min: "1", max: String(Math.floor(this._doc.song.partsPerPattern / 2)), value: "1", step: "1" }), this._doc, null, false);
-        this._splitSliderInputBox = input({ type: "number", step: "1", min: 1, max: Math.floor(this._doc.song.partsPerPattern / 2), value: "1" });
-        this._splitDropdown = button({ style: "height:1.5em; width: 10px; padding: 0px; font-size: 8px; margin-left: 0.2rem;" }, "▼");
         this._splitAcross = input({ type: "checkbox", class: "selectionOps-checkbox"});
         this._splitAbsolute = input({ type: "checkbox", class: "selectionOps-checkbox"});
         this._splitDropdownGroup = div({ class: "editor-controls", style: "display: none;" },
@@ -158,7 +159,7 @@ export class EditorTabSelection {
         if (event.target === this._merge) {
             this._doc.selection.noteMerge(!this._mergeAll.checked);
         } else if (event.target === this._bridge) {
-            this._doc.selection.noteBridge(this._bridgeBend.checked, false);
+            this._doc.selection.noteBridge(this._bridgeBend.checked);
         } else if (event.target === this._spread) {
             this._doc.selection.noteSpreadAcross(this._spreadPitch.checked);
         } else if (event.target === this._flatten) {

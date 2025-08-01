@@ -4181,7 +4181,13 @@ export class ChangeNotesAdded extends UndoableChange {
 
     protected _doForwards(): void {
         this._pattern.notes = this._pattern.notes
-            .filter((note) => !this._oldNotes.includes(note))
+            .filter((note) => !this._oldNotes.some(old =>
+                old.continuesLastPattern === note.continuesLastPattern &&
+                old.start === note.start && old.end === note.end &&
+                old.pins.every((_, index) => old.pins[index].interval === note.pins[index].interval
+                    && old.pins[index].size === note.pins[index].size
+                    && old.pins[index].time === note.pins[index].time) &&
+                old.pitches.every((_, index) => old.pitches[index] === note.pitches[index])))
             .concat(this._newNotes);
 
         this._pattern.notes.sort(function (a, b) { return (a.start == b.start) ? a.pitches[0] - b.pitches[0] : a.start - b.start; })

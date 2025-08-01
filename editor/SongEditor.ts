@@ -792,9 +792,6 @@ export class SongEditor {
         option({ value: "duplicatePatterns" }, "Duplicate Reused Patterns (D)"),
         option({ value: "transposeUp" }, "Move Notes Up (+ or ⇧+)"),
         option({ value: "transposeDown" }, "Move Notes Down (- or ⇧-)"),
-        option({ value: "stretchNotes" }, "Stretch Notes Horz"),
-        option({ value: "stretchNotesVertical" }, "Stretch Notes Vert"),
-        option({ value: "stutterNotes"}, "Stutter Notes"),
         option({ value: "moveNotesSideways" }, "Move All Notes Sideways... (W)"),
 	    option({ value: "generateEuclideanRhythm" }, "Generate Euclidean Rhythm... (E)"),
         option({ value: "beatsPerBar" }, "Change Beats Per Bar... (⇧B)"),
@@ -5114,15 +5111,6 @@ export class SongEditor {
                 break;
             case "transposeDown":
                 this._doc.selection.transpose(false, false);
-                break;
-            case "stretchNotes":
-                this._doc.selection.noteStretchHorizontal(this._doc.selection.patternSelectionStart, this._doc.selection.patternSelectionEnd);
-                break;
-            case "stretchNotesVertical":
-                this._doc.selection.noteStretchVertical(this._doc.selection.patternSelectionStart, this._doc.selection.patternSelectionEnd);
-                break;
-            case "stutterNotes":
-                this._doc.selection.noteStutterAcross();
                 break;
             case "selectAll":
                 this._doc.selection.selectAll();

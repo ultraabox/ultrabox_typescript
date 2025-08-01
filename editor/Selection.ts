@@ -6,7 +6,7 @@ import { SongDocument } from "./SongDocument";
 import { ChangeGroup } from "./Change";
 import { ColorConfig } from "./ColorConfig";
 import { ChangeTrackSelection, ChangeChannelBar, ChangeAddChannel, ChangeRemoveChannel, ChangeChannelOrder, ChangeDuplicateSelectedReusedPatterns, ChangeNoteAdded, ChangeNoteTruncate, ChangePatternNumbers, ChangePatternSelection, ChangeInsertBars, ChangeDeleteBars, ChangeEnsurePatternExists, ChangeNoteLength, ChangePaste, ChangeSetPatternInstruments, ChangeViewInstrument, ChangeModChannel, ChangeModInstrument, ChangeModSetting, ChangeModFilter, ChangePatternsPerChannel, ChangePatternRhythm, ChangePatternScale, ChangeTranspose, ChangeRhythm, comparePatternNotes, unionOfUsedNotes, generateScaleMap, discardInvalidPatternInstruments, patternsContainSameInstruments } from "./changes";
-import { ChangeMergeAcross, ChangeSplitAcross, ChangeBridgeAcross, ChangeStretchHorizontal, ChangeMergeAcrossAdjacent, ChangeStretchVertical, ChangeStretchVerticalRelative, ChangeMirrorHorizontal, ChangeTapNotesAcross, ChangeStepAcross, ChangeSpreadVertical, ChangeSpreadAcross } from "./changesNoteOps";
+import { ChangeMergeAcross, ChangeSplitAcross, ChangeBridgeAcross, ChangeStretchHorizontal, ChangeMergeAcrossAdjacent, ChangeStretchVertical, ChangeStretchVerticalRelative, ChangeMirrorHorizontal, ChangeTapNotesAcross, ChangeSpreadVertical, ChangeSpreadAcross, getVerticalBounds, IStepData, ChangeStepAcross } from "./changesNoteOps";
 
 interface PatternCopy {
     instruments: number[];
@@ -98,36 +98,6 @@ export class Selection {
     public scrollToEndOfSelection(): void {
         this._doc.barScrollPos = Math.min(this.boxSelectionX1, Math.max(this.boxSelectionX1 - (this._doc.trackVisibleBars - 1), this._doc.barScrollPos));
         this._doc.channelScrollPos = Math.min(this.boxSelectionY1, Math.max(this.boxSelectionY1 - (this._doc.trackVisibleChannels - 1), this._doc.channelScrollPos));
-    }
-
-    /** Returns the pitches of the lowest and highest point among all notes in the given range. */
-    public getVerticalBounds(notes: Note[], x1: number, x2: number) {
-    let absoluteMax = 0;
-    let absoluteMin = Number.MAX_SAFE_INTEGER;
-
-    for (let i = 0; i < notes.length; i++) {
-        const note = notes[i];
-
-        // For all notes in selection range
-        if (note.end > x1 && note.start < x2) {
-            let pinMax = 0;
-            let pinMin = Number.MAX_SAFE_INTEGER;
-    
-            // Find vertical min/max among pins.
-            for (let j = 0; j < note.pins.length; j++) {
-                pinMax = Math.max(pinMax, note.pins[j].interval);
-                pinMin = Math.min(pinMin, note.pins[j].interval);
-            }
-    
-            // The vertical min/max among pitches + pin min/max gives the highest/lowest points in a note.
-            for (let j = 0; j < note.pitches.length; j++) {
-                absoluteMax = Math.max(absoluteMax, note.pitches[j] + pinMax);
-                absoluteMin = Math.min(absoluteMin, note.pitches[j] + pinMin);
-            }
-        }
-    }
-
-    return { min: absoluteMin, max: absoluteMax };
     }
 
     public setChannelBar(channelIndex: number, bar: number): void {
@@ -913,9 +883,10 @@ export class Selection {
         this._doc.record(this._changeTrack, canReplaceLastChange);
     }
 
-    /**
-     * All notes in selection are replaced by one note of the same length, containing their pins. Only pitches of the first note are used.
-     * This can optionally be limited to only adjacent touching notes with the same pitches.
+    /** Merges notes, optionally only adjacent ones.
+     * 
+     * See the merge functions in changesNoteOps.ts.
+     * @param adjacentOnly If true, uses adjacent merge, else uses normal merge.
      */
     public noteMerge(adjacentOnly: boolean): void {
         this._changeNoteOperations = new ChangeGroup();
@@ -935,19 +906,21 @@ export class Selection {
         this._doc.record(this._changeNoteOperations);
     }
 
-    /**
-     * Creates notes in the space between other notes, starting where the previous note ends. The notes "extend" it,
-     * having the same pitch/size the last note ended on. When doBends is true, the notes will end with the same
-     * pitch/size of the next note. When copyEnds is true, the notes will start with the same size as the last note,
-     * and end with the same size that last note did. If both are on, doBends takes precedence on end note size.
+    /** Creates notes between notes.
+     * 
+     * See the bridge function in changesNoteOps.ts.
+     * @param doBends Copy pitch/volume of adjacent following note
+     * @param copyEnds Copy volume of start & end of previous note. If not provided, this defaults to true when it's a
+     * noise channel, because that is extremely common (and in-line with how noise channels work), else false.
      */
-    public noteBridge(doBends: boolean, copyEnds: boolean): void {
+    public noteBridge(doBends: boolean): void {
         this._changeNoteOperations = new ChangeGroup();
 
         for (const channelIndex of this._eachSelectedChannel()) {
             if (this._doc.song.getChannelIsMod(channelIndex)) { continue; }
+            const isNoise = this._doc.song.getChannelIsNoise(channelIndex);
             for (const pattern of this._eachSelectedPattern(channelIndex)) {
-                const bridgeOp = new ChangeBridgeAcross(this._doc, pattern, doBends, copyEnds);
+                const bridgeOp = new ChangeBridgeAcross(this._doc, pattern, doBends, isNoise);
                 this._changeNoteOperations.append(bridgeOp);
 			}
         }
@@ -955,10 +928,12 @@ export class Selection {
         this._doc.record(this._changeNoteOperations);
     }
 
-    /**
-     * Separates at position x1 for a single cut, or evenly divided across the range defined by x1 and x2.
-     * The range is optional, defaulting to selection or full sheet. If absolute, then cuts means a cut
-     * will be made every X units of time. If perNote, a copy of split runs on each note.
+    /** Splits at regular intervals.
+     * 
+     * See the split function in changesNoteOps.ts.
+     * @param cuts The number of cuts (not absolute), or, how many parts between each cut (absolute).
+     * @param absolute See cuts.
+     * @param perNote If perNote, a copy of split runs per-note.
      */
     public noteSplitAcross(cuts: number, absolute?: boolean, perNote?: boolean): void {
         this._changeNoteOperations = new ChangeGroup();
@@ -990,10 +965,11 @@ export class Selection {
         this._doc.record(this._changeNoteOperations);
     }
 
-    /**
-     * Flattens every note in the given range across the center of that note.
+    /** Eliminates pitch bends and optionally, sets to an averaged pitch.
+     * 
+     * See the stretch vertical relative function in changesNoteOps.ts.
      * @param perNote If true, flattens notes without averaging their base pitch between all notes.
-     * @param fade If fade is in/out or both, the stretch changes from 1 to 0 across the range.
+     * @param fade If fade is in/out, the stretch changes from 0 to 1 or vice versa across the range.
     */
     public noteFlattenAcross(perNote?: boolean, fade?: 'in'|'out'): void {
         const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeStretchVertical);
@@ -1005,7 +981,7 @@ export class Selection {
         for (const channelIndex of this._eachSelectedChannel()) {
             if (this._doc.song.getChannelIsMod(channelIndex)) { continue; } // Mod channels unsupported.
             for (const pattern of this._eachSelectedPattern(channelIndex)) {
-                let bounds = perNote ? undefined : this.getVerticalBounds(pattern.notes, x1, x2);
+                let bounds = perNote ? undefined : getVerticalBounds(pattern.notes, x1, x2);
                 let end = fade ? pattern.notes.filter((note) => note.end > x1 && note.start < x2).length - 1 : 0
 
                 for (let i = 0; i < pattern.notes.length; i++) {
@@ -1023,7 +999,11 @@ export class Selection {
         this._doc.record(this._changeStretchVertical, canReplaceLastChange);
     }
 
-    /** Spread notes horizontally or vertically. */
+    /** Spread notes evenly across a horizontal range, or vertical detected pitch bounds.
+     * 
+     * See the spread horizontal/vertical functions in changesNoteOps.ts.
+     * @param spreadPitch Performs a pitch spread instead of regular spread.
+    */
     public noteSpreadAcross(spreadPitch: boolean): void {
         this._changeNoteOperations = new ChangeGroup();
 
@@ -1040,8 +1020,11 @@ export class Selection {
         this._doc.record(this._changeNoteOperations);
     }
 
-    /** Shifts notes slightly by 1 time left or right at random, if there's space. */
-    public noteStutterAcross(): void {
+    /** Shifts notes by 1 unit of time left or right at random, if there's space.
+     * 
+     * See the tap function in changesNoteOps.ts.
+    */
+    public noteTapAcross(): void {
         this._changeNoteOperations = new ChangeGroup();
 
         for (const channelIndex of this._eachSelectedChannel()) {
@@ -1053,20 +1036,42 @@ export class Selection {
         this._doc.record(this._changeNoteOperations);
     }
 
-    /** Incrementally affects pitch note-by-note by adding the given value, which can be negative. */
-    public noteStepAcross(): void {
+    // Presets for noteStepAcross.
+    private stepAcrossPresets = {
+        'invert volume': { volAdd: { array: [Config.noteSizeMax + ' - x'], per: 'pin', type: 'cycle' }},
+        'volume up': { volAdd: { array: [1 / Config.noteSizeMax], per: 'note', type: 'cycle' }},
+        'volume down': { volAdd: { array: [-1 / Config.noteSizeMax], per: 'note', type: 'cycle' }},
+        'stagger volume': { volMult: { array: [1, 0.5], per: 'note', type: 'cycle' } },
+        'volume staccato': { volMult: { array: [1, 0], per: 'time', type: 'cycle' }, insertPinsEvery: 2 },
+        'volume staccato2': { volMult: { array: [1, 0], per: 'time', type: 'cycle' }, insertPinsEvery: 1 },
+        'volume interrupt': { volMult: { array: ['round(random() * 10) === 0 ? 0 : 1'], per: 'time', type: 'cycle' } },
+        'fade in': { volMult: { array: [0, 1], per: 'time', type: 'normal' } },
+        'fade out': { volMult: { array: [1, 0], per: 'time', type: 'normal' } },
+    }
+
+    /** Cumulatively performs volume/pitch changes to existing and/or new pins.
+     * 
+     * See the step function in changesNoteOps.ts.
+     * @param data The arrays and how they interact.
+    */
+    public noteStepAcross(data: (keyof typeof this.stepAcrossPresets | IStepData)): void {
         this._changeNoteOperations = new ChangeGroup();
 
         for (const channelIndex of this._eachSelectedChannel()) {
             for (const pattern of this._eachSelectedPattern(channelIndex)) {
-                this._changeNoteOperations.append(new ChangeStepAcross(this._doc, channelIndex, pattern, 1));
+                this._changeNoteOperations.append(new ChangeStepAcross(this._doc, channelIndex, pattern,
+                    typeof data !== 'string' ? data : this.stepAcrossPresets[data] as IStepData));
 			}
         }
 
         this._doc.record(this._changeNoteOperations);
     }
 
-    /** Mirrors notes in the selection horizontally within the selection bounds, or vertically between min and max configured pitch. */
+    /** Mirrors notes horizontally/vertically within the horizontal selection or vertical detected bounds.
+     * 
+     * See the mirror horizontal function, or relative vertical stretch function in changesNoteOps.ts.
+     * @param isVertical If true, mirrors the selection vertically, else horizontally.
+     */
     public noteMirrorAcross(isVertical: boolean): void {
         this._changeNoteOperations = new ChangeGroup();
 
@@ -1078,7 +1083,7 @@ export class Selection {
         for (const channelIndex of this._eachSelectedChannel()) {
             if (this._doc.song.getChannelIsMod(channelIndex)) { continue; } // mod channels aren't supported
             for (const pattern of this._eachSelectedPattern(channelIndex)) {
-                const vertRange = this._doc.selection.getVerticalBounds(pattern.notes, range.start, range.end);
+                const vertRange = getVerticalBounds(pattern.notes, range.start, range.end);
 
                 if (isVertical) {
                     this._changeNoteOperations.append(new ChangeStretchVertical(this._doc, channelIndex, pattern, vertRange.max, vertRange.min));
@@ -1091,30 +1096,28 @@ export class Selection {
         this._doc.record(this._changeNoteOperations);
     }
 
-    /**
-     * Stretches/shrinks all note start/end and pins horizontally from the given range to the new range, with maximum
-     * stretch being the size of the bar sheet and minimum being the number of note pins. Notes are deleted from the
-     * original and new ranges, and the edited notes are reconstructed into the new range.
+    /** Stretches all notes in the horizontal selection to fit the new selection defined by newX1, newX2.
+     * 
+     * See the horizontal stretch function in changesNoteOps.ts.
      */
     public noteStretchHorizontal(newX1: number, newX2: number): void {
         const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._ChangeStretchHorizontal);
         this._ChangeStretchHorizontal = new ChangeGroup();
 
-        const bounds = {
-            start: this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionStart : 0,
-            end: this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionEnd : this._doc.song.partsPerPattern
-        };
-
         for (const channelIndex of this._eachSelectedChannel()) {
             for (const pattern of this._eachSelectedPattern(channelIndex)) {
-                this._ChangeStretchHorizontal.append(new ChangeStretchHorizontal(this._doc, pattern, bounds.start, bounds.end, newX1, newX2));
+                this._ChangeStretchHorizontal.append(new ChangeStretchHorizontal(this._doc, pattern, newX1, newX2));
             }
         }
 
         this._doc.record(this._ChangeStretchHorizontal, canReplaceLastChange);
     }
 
-    /** Stretches/shrinks all notes vertically to fit a new vertical range. */
+    /** Stretches all notes in the horizontal selection from their detected vertical bounds to fit the new vertical
+     * range defined by yMin, yMax.
+     * 
+     * See the stretch vertical function in changesNoteOps.ts.
+    */
     public noteStretchVertical(yMin: number, yMax: number): void {
         const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeStretchVertical);
         this._changeStretchVertical = new ChangeGroup();
