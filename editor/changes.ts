@@ -134,7 +134,7 @@ export function generateScaleMap(oldScaleFlags: ReadonlyArray<boolean>, newScale
     return fullPitchMap;
 }
 
-function removeRedundantPins(pins: NotePin[]): void {
+export function removeRedundantPins(pins: NotePin[]): void {
     for (let i: number = 1; i < pins.length - 1;) {
         if (pins[i - 1].interval == pins[i].interval &&
             pins[i].interval == pins[i + 1].interval &&

@@ -25,6 +25,7 @@ export class EditorTabSelection {
     private _spreadPitch : HTMLInputElement;
     private _flatten : HTMLButtonElement;
     private _flattenPitch : HTMLInputElement;
+    private _flattenVolume : HTMLInputElement;
     private _mirrorH : HTMLButtonElement;
     private _mirrorV : HTMLButtonElement;
     private _split : HTMLButtonElement;
@@ -63,6 +64,7 @@ export class EditorTabSelection {
         this._mirrorV = button({ class: "selectionOps-actionbutton noteOpMirror", style: 'transform: rotate(90deg);' });
         this._flatten = button({ class: "selectionOps-actionbutton noteOpFlatten" });
         this._flattenPitch = input({ type: "checkbox", class: "selectionOps-checkbox"});
+        this._flattenVolume = input({ type: "checkbox", class: "selectionOps-checkbox"});
         this._split = button({ class: "selectionOps-actionbutton noteOpSplit" });
         this._splitLabel = div({ class: "tip", onclick: () => tipHandler("selectionSplit") }, "");
         this._splitDropdown = button({ style: "height:1.5em; width: 10px; padding: 0px; font-size: 8px; margin-left: 0.2rem;" }, "▼");
@@ -103,7 +105,8 @@ export class EditorTabSelection {
             div({ class: "selectionOps-action"},
                 this._flatten,
                 div({ class: "tip", onclick: () => tipHandler("selectionFlatten") }, "Flatten"),
-                label({ class: "checkbox-container" }, this._flattenPitch, "Pitch"))
+                label({ class: "checkbox-container" }, this._flattenPitch, "Pitch"),
+                label({ class: "checkbox-container" }, this._flattenVolume, "Vol"))
         ];
 
         const _selectionOpsRow3 = [
@@ -163,7 +166,7 @@ export class EditorTabSelection {
         } else if (event.target === this._spread) {
             this._doc.selection.noteSpreadAcross(this._spreadPitch.checked);
         } else if (event.target === this._flatten) {
-            this._doc.selection.noteFlattenAcross(!this._flattenPitch.checked);
+            this._doc.selection.noteFlattenAcross(!this._flattenPitch.checked, this._flattenVolume.checked);
         } else if (event.target === this._mirrorH) {
             this._doc.selection.noteMirrorAcross(false);
         } else if (event.target === this._mirrorV) {

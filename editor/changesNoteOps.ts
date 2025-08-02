@@ -1,7 +1,7 @@
 import { NotePin, Note, Pattern, Config } from "../synth/synth";
 import { ChangeSequence } from "./Change";
 import { SongDocument } from "./SongDocument";
-import { ChangeNotesAdded, ChangeSplitNotesAtPoint } from "./changes";
+import { ChangeNotesAdded, ChangeSplitNotesAtPoint, removeRedundantPins } from "./changes";
 
 /** Merges adjacent notes that share the same pitches in the given range.
  * 
@@ -367,22 +367,13 @@ export interface IStepData {
     insertPinsEvery?: number
 }
 
-/** Adjusts volume/pitch across the given range using arrays for add and multiply.
+/** Adjusts volume/pitch across the given range using arrays of expressions & numbers to add and multiply.
  * 
- * You supply value(s) to multiply
- * or add, in that order, and they're applied according to the interpretation behavior, multiplied by current/total
- * fraction. To e.g. dip volume at the midpoint, set volMult to [1, 0, 1] and "lerp" type per note or time. To e.g. add
- * a value that shifts between 0 and 1 
+ * You supply value(s) to multiply or add, in that order, and they're applied according to the interpretation behavior,
+ * multiplied by current/total fraction. See stepAcrossPresets in Selection.ts for many examples.
+ * See IStepData and IStepArray for details.
  * 
- * x1, x2 defaults to active selection and are intended to be overridden to control where the operation works.
- * @param data Any of a few arrays to multiply or add (in that order) volume and pitch, where "normal" will linearly
- * interpolate to the values across a percentile range, "across" is similar but picks leftmost index instead of
- * interpolating, and "cycle" provides the values in-order, one for each note, then starts
- * over. These values are progressed by a ratio of current / total, which can be based on the note/count, pin/count, or
- * the time across the selection. The values themselves can be expression strings that get eval'd, allowing Math
- * functions and injecting x, i, len as variables for the current value, current index, and total length of the ratio
- * used. Normally pins are manipulated without making new ones, but insertPinEvery enables regular pins to be made if
- * not present, which helps with effects like staccato.
+ * @param data Any of a few arrays to multiply or add (in that order) volume and pitch.
 */
 export class ChangeStepAcross extends ChangeSequence {
     constructor(doc: SongDocument, channelIndex: number, pattern: Pattern, data: IStepData, x1?: number, x2?: number) {
@@ -394,13 +385,13 @@ export class ChangeStepAcross extends ChangeSequence {
         if (x1 < 0 || x2 <= x1 || x2 > doc.song.partsPerPattern) { return; }
         if (pattern.notes.length === 0) { return; }
 
-        if (x1 !== 0) { this.append(new ChangeSplitNotesAtPoint(doc, pattern, x1)); }
-        if (x2 !== doc.song.partsPerPattern) { this.append(new ChangeSplitNotesAtPoint(doc, pattern, x2)); }
+        // Split now and re-merge later if needed.
+        let intersects = getIntersects(doc, pattern, x1, x2, this);
 
         // Find the start/end indices to find how many notes are in range.
         let note: Note;
-        let firstIndex = -1;
-        let endIndex = -1;
+        let firstIndex = intersects.L !== -1 ? intersects.L + 1 : -1;
+        let endIndex = intersects.R !== -1 ? intersects.R - 1 : -1;
         for (let i = 0; i < pattern.notes.length; i++) {
             note = pattern.notes[i];
 
@@ -504,14 +495,14 @@ export class ChangeStepAcross extends ChangeSequence {
                 lengths = [noteCount, note.pins.length, pattern.notes[endIndex].end - pattern.notes[firstIndex].start]
                 for (let j = 0; j < note.pins.length; j++) {
                     notePinOrPitchRatio = j / lengths[1];
-                    timeRatio = (note.start - pattern.notes[firstIndex].start + note.pins[note.pins.length].time) / lengths[2];
+                    timeRatio = (note.start - pattern.notes[firstIndex].start + note.pins[note.pins.length - 1].time) / lengths[2];
                     ratios = [noteRatio, notePinOrPitchRatio, timeRatio];
     
                     volMultValue = getArrayValue(note.pins[j].size, j, ratios, lengths, data.volMult) ?? volMultValue;
                     volAddValue = getArrayValue(note.pins[j].size, j, ratios, lengths, data.volAdd) ?? volAddValue;
     
                     // Perform.
-                    note.pins[j].size *= volMultValue * Config.noteSizeMax;
+                    note.pins[j].size *= volMultValue;
                     note.pins[j].size = Math.round(note.pins[j].size + volAddValue * Config.noteSizeMax);
                     note.pins[j].size = Math.max(Math.min(note.pins[j].size, Config.noteSizeMax), 0);
                 }
@@ -537,6 +528,22 @@ export class ChangeStepAcross extends ChangeSequence {
                 note.pitches = [...new Set(note.pitches)]; // Keep unique.
                 const highestPitch = note.pitches.reduce((prev, curr) => Math.max(prev, curr));
                 note.pins.forEach(pin => pin.interval = Math.max(Math.min(highestPitch + pin.interval, pitchLimit), 0));    
+            }
+
+            // If pins were interacted with, remove excess pins to avoid creating UI frustrations later.
+            if (data.insertPinsEvery || data.volAdd || data.volMult) {
+                removeRedundantPins(note.pins);
+            }
+        }
+
+        // Notes should only remain split if pitch was edited, otherwise re-merge them.
+        if (!data.pitchAdd && !data.pitchMult) {
+            if (intersects.L !== -1) {
+                this.append(new ChangeMergeAcross(doc, pattern, pattern.notes[intersects.L].start, pattern.notes[intersects.L + 1].end))
+                intersects.R--;
+            }
+            if (intersects.R > -1) {
+                this.append(new ChangeMergeAcross(doc, pattern, pattern.notes[intersects.R - 1].start, pattern.notes[intersects.R].end))
             }
         }
 
@@ -1055,4 +1062,36 @@ export function getVerticalBounds(notes: Note[], x1: number, x2: number) {
     }
 
     return { min: absoluteMin, max: absoluteMax };
+}
+
+/** For the given range, returns the indices of the notes that cross the boundaries on left and right. -1 indicates
+ * that side does not cross boundaries. x1,x2 define the range.
+ * @param appendSplits Splits at the bounds for convenience, and adjusts indices.R accordingly.
+ */
+export function getIntersects(doc: SongDocument, pattern: Pattern, x1: number, x2: number, appendSplits?: ChangeSequence) {
+    const indices = {L: -1, R: -1};
+    for (let i = 0; i < pattern.notes.length; i++) {
+        if (indices.L === -1 && (pattern.notes[i].start < x1 && pattern.notes[i].end > x1)) {
+            indices.L = i;
+        }
+        if (indices.R === -1 && (pattern.notes[i].start < x2 && pattern.notes[i].end > x2)) {
+            indices.R = i;
+            break;
+        }
+    }
+
+    if (appendSplits) {
+        if (indices.L !== -1) {
+            appendSplits.append(new ChangeSplitNotesAtPoint(doc, pattern, x1));
+        }
+        if (indices.R !== -1) {
+            appendSplits.append(new ChangeSplitNotesAtPoint(doc, pattern, x2));
+        }
+        // Rightmost index moves due to split operation(s).
+        if (indices.R !== -1) {
+            indices.R += (indices.L !== -1) ? 2 : 1;
+        }
+    }
+
+    return indices;
 }

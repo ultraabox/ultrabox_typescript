@@ -39,7 +39,7 @@ export class Selection {
     private _changeTranspose: ChangeGroup | null = null;
     private _changeNoteOperations: ChangeGroup | null = null;
     private _ChangeStretchHorizontal: ChangeGroup | null = null;
-    private _changeStretchVertical: ChangeGroup | null = null;
+    private _changeFlatten: ChangeGroup | null = null;
     private _changeTrack: ChangeGroup | null = null;
     private _changeInstrument: ChangeGroup | null = null;
     private _changeReorder: ChangeGroup | null = null;
@@ -965,15 +965,15 @@ export class Selection {
         this._doc.record(this._changeNoteOperations);
     }
 
-    /** Eliminates pitch bends and optionally, sets to an averaged pitch.
+    /** Eliminates pitch bends and optionally, sets to an averaged pitch or sets volume to 1.
      * 
      * See the stretch vertical relative function in changesNoteOps.ts.
-     * @param perNote If true, flattens notes without averaging their base pitch between all notes.
-     * @param fade If fade is in/out, the stretch changes from 0 to 1 or vice versa across the range.
+     * @param avgPitch If true, flattens notes without averaging their base pitch between all notes.
+     * @param vol If true, flattens the volume to full (100%) which is considered the most useful behavior.
     */
-    public noteFlattenAcross(perNote?: boolean, fade?: 'in'|'out'): void {
-        const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeStretchVertical);
-        this._changeStretchVertical = new ChangeGroup();
+    public noteFlattenAcross(avgPitch?: boolean, vol?: boolean): void {
+        const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeFlatten);
+        this._changeFlatten = new ChangeGroup();
 
         const x1 = (this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionStart : 0);
         const x2 = (this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionEnd : this._doc.song.partsPerPattern);
@@ -981,22 +981,24 @@ export class Selection {
         for (const channelIndex of this._eachSelectedChannel()) {
             if (this._doc.song.getChannelIsMod(channelIndex)) { continue; } // Mod channels unsupported.
             for (const pattern of this._eachSelectedPattern(channelIndex)) {
-                let bounds = perNote ? undefined : getVerticalBounds(pattern.notes, x1, x2);
-                let end = fade ? pattern.notes.filter((note) => note.end > x1 && note.start < x2).length - 1 : 0
+                let bounds = avgPitch ? undefined : getVerticalBounds(pattern.notes, x1, x2);
 
                 for (let i = 0; i < pattern.notes.length; i++) {
                     const note = pattern.notes[i];
                     if (note.end > x1 && note.start < x2) {
-                        let multiplier =  (fade === 'in') ? i/end : (fade === 'out') ? 1 - i/end : 0;
-
-                        this._changeStretchVertical.append(new ChangeStretchVerticalRelative(
-                            this._doc, channelIndex, pattern, multiplier, 0, perNote, note.start, note.end, bounds));
+                        this._changeFlatten.append(new ChangeStretchVerticalRelative(
+                            this._doc, channelIndex, pattern, 0, 0, avgPitch, note.start, note.end, bounds));
+                        if (vol) {
+                            this._changeFlatten.append(new ChangeStepAcross(this._doc, channelIndex, pattern,
+                                this.stepAcrossPresets["volume max"] as IStepData
+                            ))
+                        }
                     }
                 }
 			}
         }
 
-        this._doc.record(this._changeStretchVertical, canReplaceLastChange);
+        this._doc.record(this._changeFlatten, canReplaceLastChange);
     }
 
     /** Spread notes evenly across a horizontal range, or vertical detected pitch bounds.
@@ -1038,9 +1040,10 @@ export class Selection {
 
     // Presets for noteStepAcross.
     private stepAcrossPresets = {
-        'invert volume': { volAdd: { array: [Config.noteSizeMax + ' - x'], per: 'pin', type: 'cycle' }},
+        'invert volume': { volAdd: { array: ['1 - x'], per: 'pin', type: 'cycle' }},
         'volume up': { volAdd: { array: [1 / Config.noteSizeMax], per: 'note', type: 'cycle' }},
         'volume down': { volAdd: { array: [-1 / Config.noteSizeMax], per: 'note', type: 'cycle' }},
+        'volume max': { volAdd: { array: [1], per: 'note', type: 'cycle' }},
         'stagger volume': { volMult: { array: [1, 0.5], per: 'note', type: 'cycle' } },
         'volume staccato': { volMult: { array: [1, 0], per: 'time', type: 'cycle' }, insertPinsEvery: 2 },
         'volume staccato2': { volMult: { array: [1, 0], per: 'time', type: 'cycle' }, insertPinsEvery: 1 },
@@ -1119,8 +1122,8 @@ export class Selection {
      * See the stretch vertical function in changesNoteOps.ts.
     */
     public noteStretchVertical(yMin: number, yMax: number): void {
-        const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeStretchVertical);
-        this._changeStretchVertical = new ChangeGroup();
+        const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeFlatten);
+        this._changeFlatten = new ChangeGroup();
 
         const bounds = {
             start: this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionStart : 0,
@@ -1130,12 +1133,12 @@ export class Selection {
         for (const channelIndex of this._eachSelectedChannel()) {
             if (this._doc.song.getChannelIsMod(channelIndex)) { continue; } // mod channels aren't supported
             for (const pattern of this._eachSelectedPattern(channelIndex)) {
-                this._changeStretchVertical.append(new ChangeStretchVertical(
+                this._changeFlatten.append(new ChangeStretchVertical(
                     this._doc, channelIndex, pattern, yMin, yMax, undefined, bounds.start, bounds.end));
             }
         }
 
-        this._doc.record(this._changeStretchVertical, canReplaceLastChange);
+        this._doc.record(this._changeFlatten, canReplaceLastChange);
     }
 
     /** Moves notes left and right (or up/down) by a full step (or octave). */
