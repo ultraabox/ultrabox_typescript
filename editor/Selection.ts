@@ -972,7 +972,6 @@ export class Selection {
      * @param vol If true, flattens the volume to full (100%) which is considered the most useful behavior.
     */
     public noteFlattenAcross(avgPitch?: boolean, vol?: boolean): void {
-        const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeFlatten);
         this._changeFlatten = new ChangeGroup();
 
         const x1 = (this._doc.selection.patternSelectionActive ? this._doc.selection.patternSelectionStart : 0);
@@ -986,19 +985,26 @@ export class Selection {
                 for (let i = 0; i < pattern.notes.length; i++) {
                     const note = pattern.notes[i];
                     if (note.end > x1 && note.start < x2) {
-                        this._changeFlatten.append(new ChangeStretchVerticalRelative(
-                            this._doc, channelIndex, pattern, 0, 0, avgPitch, note.start, note.end, bounds));
                         if (vol) {
-                            this._changeFlatten.append(new ChangeStepAcross(this._doc, channelIndex, pattern,
-                                this.stepAcrossPresets["volume max"] as IStepData
-                            ))
+                            if (this._doc.song.getChannelIsNoise(channelIndex)) {
+                                this._changeFlatten.append(new ChangeStepAcross(this._doc, channelIndex, pattern,
+                                    { volAdd: { array: ['1 - 2 * num/len'], per: 'pin' } }
+                                ))
+                            } else {
+                                this._changeFlatten.append(new ChangeStepAcross(this._doc, channelIndex, pattern,
+                                    this.stepAcrossPresets["volume max"] as IStepData
+                                ))
+                            }
+                        } else {
+                            this._changeFlatten.append(new ChangeStretchVerticalRelative(
+                                this._doc, channelIndex, pattern, 0, 0, avgPitch, note.start, note.end, bounds));
                         }
                     }
                 }
 			}
         }
 
-        this._doc.record(this._changeFlatten, canReplaceLastChange);
+        this._doc.record(this._changeFlatten);
     }
 
     /** Spread notes evenly across a horizontal range, or vertical detected pitch bounds.

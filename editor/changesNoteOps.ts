@@ -405,19 +405,21 @@ export class ChangeStepAcross extends ChangeSequence {
         // for convenience. This doesn't strip non-alphanumeric characters, so exploits may be possible and this is ok
         // as long as it remains a user-only operation (no cross-user or server sharing).
         const matchVariables = new RegExp('(?<!\w)([a-zA-Z]+)\w*', 'gm')
-        const resolve = (entry: string | number, val: number, index: number, length: number) => {
+        const resolve = (entry: string | number, val: number, index: number, endNum: number) => {
             if (typeof entry === 'number') { return entry; }
 
             try {
-                entry = +eval(entry.replaceAll(matchVariables, match => {
-                        match = match.trim().toLowerCase();
+                const resolution = entry.replaceAll(matchVariables, match => {
+                    match = match.trim().toLowerCase();
 
-                        return Object.hasOwn(Math, match) ? `Math.${match}`
-                            : Object.hasOwn(Math, match.toUpperCase()) ? `Math.${match.toUpperCase()}`
-                            : match === 'x' ? String(val)
-                            : match === 'i' ? String(index)
-                            : match === 'len' ? String(length)
-                            : ''}));
+                    return Object.hasOwn(Math, match) ? `Math.${match}`
+                        : Object.hasOwn(Math, match.toUpperCase()) ? `Math.${match.toUpperCase()}`
+                        : match === 'x' ? String(val)
+                        : match === 'num' ? String(index + 1)
+                        : match === 'len' ? String(endNum + 1)
+                        : ''});
+                debugger;
+                entry = +eval(resolution);
 
                 return (typeof entry === 'number' && !isNaN(entry) && isFinite(entry)) ? entry : 0;
             } catch {
@@ -436,9 +438,9 @@ export class ChangeStepAcross extends ChangeSequence {
 
                 if (stepArray.type !== 'cycle') {
                     const numbersLR = [
-                        resolve(stepArray.array[Math.floor(ratios[slot] * stepArray.array.length)], val, index, lengths[slot]),
-                        resolve(stepArray.array[Math.ceil(ratios[slot] * stepArray.array.length)], val, index, lengths[slot])];
-                    let fraction = ratios[slot] * stepArray.array.length - Math.floor(ratios[slot] * stepArray.array.length)
+                        resolve(stepArray.array[Math.floor(ratios[slot] * (stepArray.array.length - 1))], val, index, lengths[slot]),
+                        resolve(stepArray.array[Math.ceil(ratios[slot] * (stepArray.array.length - 1))], val, index, lengths[slot])];
+                    let fraction = ratios[slot] * (stepArray.array.length - 1) - Math.floor(ratios[slot] * (stepArray.array.length - 1))
                     return stepArray.type === 'step' ? numbersLR[0] : numbersLR[0] + fraction * (numbersLR[1] - numbersLR[0])
                 }
                 
@@ -449,7 +451,7 @@ export class ChangeStepAcross extends ChangeSequence {
         }
 
         const pitchLimit = doc.song.getChannelIsNoise(channelIndex) ? Config.drumCount - 1 : Config.maxPitch;
-        const noteCount = endIndex - firstIndex + 1;
+        const noteEndNum = endIndex - firstIndex;
         let volMultValue = 1;
         let volAddValue = 0;
         let pitchMultValue = 1;
@@ -458,12 +460,13 @@ export class ChangeStepAcross extends ChangeSequence {
         let noteRatio: number;
         let notePinOrPitchRatio: number;
         let timeRatio: number;
-        let lengths: number[];
+        let endNums: number[];
         let ratios: number[];
         
         for (let i = firstIndex; i < endIndex + 1; i++) {
             note = pattern.notes[i];
-            noteRatio = (i - firstIndex) / noteCount;
+
+            noteRatio = noteEndNum === 0 ? 1 : (i - firstIndex) / noteEndNum;
 
             // Insert first
             if (data.insertPinsEvery && data.insertPinsEvery > 0) {
@@ -492,14 +495,14 @@ export class ChangeStepAcross extends ChangeSequence {
 
             // Pins
             if (data.volAdd || data.volMult) {
-                lengths = [noteCount, note.pins.length, pattern.notes[endIndex].end - pattern.notes[firstIndex].start]
+                endNums = [noteEndNum, note.pins.length - 1, pattern.notes[endIndex].end - pattern.notes[firstIndex].start - 1]
                 for (let j = 0; j < note.pins.length; j++) {
-                    notePinOrPitchRatio = j / lengths[1];
-                    timeRatio = (note.start - pattern.notes[firstIndex].start + note.pins[note.pins.length - 1].time) / lengths[2];
+                    notePinOrPitchRatio = j / endNums[1];
+                    timeRatio = (note.start - pattern.notes[firstIndex].start + note.pins[note.pins.length - 1].time) / endNums[2];
                     ratios = [noteRatio, notePinOrPitchRatio, timeRatio];
     
-                    volMultValue = getArrayValue(note.pins[j].size, j, ratios, lengths, data.volMult) ?? volMultValue;
-                    volAddValue = getArrayValue(note.pins[j].size, j, ratios, lengths, data.volAdd) ?? volAddValue;
+                    volMultValue = getArrayValue(note.pins[j].size, j, ratios, endNums, data.volMult) ?? volMultValue;
+                    volAddValue = getArrayValue(note.pins[j].size, j, ratios, endNums, data.volAdd) ?? volAddValue;
     
                     // Perform.
                     note.pins[j].size *= volMultValue;
@@ -510,14 +513,14 @@ export class ChangeStepAcross extends ChangeSequence {
 
             // Pitches
             if (data.pitchAdd || data.pitchMult) {
-                lengths = [noteCount, note.pitches.length, pattern.notes[endIndex].end - pattern.notes[firstIndex].start]
-                timeRatio = (note.start - pattern.notes[firstIndex].start) / lengths[2];
+                endNums = [noteEndNum, note.pitches.length - 1, pattern.notes[endIndex].end - pattern.notes[firstIndex].start - 1]
+                timeRatio = (note.start - pattern.notes[firstIndex].start) / endNums[2];
                 for (let j = 0; j < note.pitches.length; j++) {
-                    notePinOrPitchRatio = j / lengths[1];
+                    notePinOrPitchRatio = j / endNums[1];
                     ratios = [noteRatio, notePinOrPitchRatio, timeRatio];
     
-                    pitchMultValue = getArrayValue(note.pitches[j], j, ratios, lengths, data.pitchMult) ?? pitchMultValue;
-                    pitchAddValue = getArrayValue(note.pitches[j], j, ratios, lengths, data.pitchAdd) ?? pitchAddValue;
+                    pitchMultValue = getArrayValue(note.pitches[j], j, ratios, endNums, data.pitchMult) ?? pitchMultValue;
+                    pitchAddValue = getArrayValue(note.pitches[j], j, ratios, endNums, data.pitchAdd) ?? pitchAddValue;
     
                     // Perform.
                     note.pitches[j] = note.pitches[j] * (pitchMultValue * Config.noteSizeMax);
@@ -527,7 +530,7 @@ export class ChangeStepAcross extends ChangeSequence {
     
                 note.pitches = [...new Set(note.pitches)]; // Keep unique.
                 const highestPitch = note.pitches.reduce((prev, curr) => Math.max(prev, curr));
-                note.pins.forEach(pin => pin.interval = Math.max(Math.min(highestPitch + pin.interval, pitchLimit), 0));    
+                note.pins.forEach(pin => pin.interval = Math.max(Math.min(highestPitch + pin.interval, pitchLimit), 0));
             }
 
             // If pins were interacted with, remove excess pins to avoid creating UI frustrations later.
