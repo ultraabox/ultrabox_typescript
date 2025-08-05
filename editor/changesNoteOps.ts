@@ -401,25 +401,28 @@ export class ChangeStepAcross extends ChangeSequence {
         }
         if (endIndex === -1) { endIndex = pattern.notes.length - 1; }
 
-        // Runs unsafe eval on user-provided expressions in the array, substituting math and injecting for x, i, len
-        // for convenience. This doesn't strip non-alphanumeric characters, so exploits may be possible and this is ok
-        // as long as it remains a user-only operation (no cross-user or server sharing).
-        const matchVariables = new RegExp('(?<!\w)([a-zA-Z]+)\w*', 'gm')
+        // Runs guaranteed-safe eval on expressions in the array with variable substitutions.
+        // whitelist is 0-9A-Za-z space and .!&|+-*/%=<>?:,() except the function sequences () and =>.
+        const matchVariables = /(?<!\w)([a-zA-Z]+)\w*/g
+        const matchNotWhitelist = /[^0-9A-Za-z. !&|+\-*\/%=<>?:,()]|=\s*>/g
         const resolve = (entry: string | number, val: number, index: number, endNum: number) => {
             if (typeof entry === 'number') { return entry; }
 
             try {
-                const resolution = entry.replaceAll(matchVariables, match => {
-                    match = match.trim().toLowerCase();
+                entry = entry
+                    .replaceAll(matchVariables, match => {
+                        match = match.trim().toLowerCase();
 
-                    return Object.hasOwn(Math, match) ? `Math.${match}`
-                        : Object.hasOwn(Math, match.toUpperCase()) ? `Math.${match.toUpperCase()}`
-                        : match === 'x' ? String(val)
-                        : match === 'num' ? String(index + 1)
-                        : match === 'len' ? String(endNum + 1)
-                        : ''});
-                debugger;
-                entry = +eval(resolution);
+                        // Allow members named in Math. Add the prefix automatically
+                        return Object.hasOwn(Math, match) ? `Math.${match}`
+                            : Object.hasOwn(Math, match.toUpperCase()) ? `Math.${match.toUpperCase()}`
+                            // Allow x, num and len and substitute current values for usage
+                            : match === 'x' ? String(val)
+                            : match === 'num' ? String(index)
+                            : match === 'len' ? String(endNum === 0 ? 1 : endNum)
+                            : ''});
+                entry = entry.replaceAll(matchNotWhitelist, ''); // symbols except +-*/?:!()%&|. Clears () and =>
+                entry = +(Function('return ' + entry)()); // Execute. Same as eval without the warning
 
                 return (typeof entry === 'number' && !isNaN(entry) && isFinite(entry)) ? entry : 0;
             } catch {
@@ -444,7 +447,7 @@ export class ChangeStepAcross extends ChangeSequence {
                     return stepArray.type === 'step' ? numbersLR[0] : numbersLR[0] + fraction * (numbersLR[1] - numbersLR[0])
                 }
                 
-                return resolve(stepArray.array[lengths[slot] % stepArray.array.length], val, index, lengths[slot]);
+                return resolve(stepArray.array[index % stepArray.array.length], val, index, lengths[slot]);
             }
 
             return undefined;
@@ -478,10 +481,11 @@ export class ChangeStepAcross extends ChangeSequence {
                     pin = note.pins[j];
                     prevPin = note.pins[j - 1];
                     timeSince = pin.time - prevPin.time;
-                    for (let k = 0; k < timeSince; k++) {
+
+                    for (let k = 1; k < timeSince; k++) {
                         if ((prevPin.time + k) % data.insertPinsEvery === 0) {
                             lerpTime = k/timeSince;
-                            note.pins.splice(j - 1, 0, {
+                            note.pins.splice(j, 0, {
                                 ...prevPin,
                                 interval: Math.round(prevPin.interval + lerpTime * (pin.interval - prevPin.interval)),
                                 size: Math.round(prevPin.size + lerpTime * (pin.size - prevPin.size)),
@@ -495,14 +499,14 @@ export class ChangeStepAcross extends ChangeSequence {
 
             // Pins
             if (data.volAdd || data.volMult) {
-                endNums = [noteEndNum, note.pins.length - 1, pattern.notes[endIndex].end - pattern.notes[firstIndex].start - 1]
+                endNums = [noteEndNum, note.pins.length - 1, pattern.notes[endIndex].end - pattern.notes[firstIndex].start]
                 for (let j = 0; j < note.pins.length; j++) {
                     notePinOrPitchRatio = j / endNums[1];
                     timeRatio = (note.start - pattern.notes[firstIndex].start + note.pins[note.pins.length - 1].time) / endNums[2];
                     ratios = [noteRatio, notePinOrPitchRatio, timeRatio];
     
-                    volMultValue = getArrayValue(note.pins[j].size, j, ratios, endNums, data.volMult) ?? volMultValue;
-                    volAddValue = getArrayValue(note.pins[j].size, j, ratios, endNums, data.volAdd) ?? volAddValue;
+                    volMultValue = getArrayValue(note.pins[j].size / Config.noteSizeMax, j, ratios, endNums, data.volMult) ?? volMultValue;
+                    volAddValue = getArrayValue(note.pins[j].size / Config.noteSizeMax, j, ratios, endNums, data.volAdd) ?? volAddValue;
     
                     // Perform.
                     note.pins[j].size *= volMultValue;
@@ -513,7 +517,7 @@ export class ChangeStepAcross extends ChangeSequence {
 
             // Pitches
             if (data.pitchAdd || data.pitchMult) {
-                endNums = [noteEndNum, note.pitches.length - 1, pattern.notes[endIndex].end - pattern.notes[firstIndex].start - 1]
+                endNums = [noteEndNum, note.pitches.length - 1, pattern.notes[endIndex].end - pattern.notes[firstIndex].start]
                 timeRatio = (note.start - pattern.notes[firstIndex].start) / endNums[2];
                 for (let j = 0; j < note.pitches.length; j++) {
                     notePinOrPitchRatio = j / endNums[1];

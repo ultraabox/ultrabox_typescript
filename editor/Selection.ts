@@ -986,15 +986,19 @@ export class Selection {
                     const note = pattern.notes[i];
                     if (note.end > x1 && note.start < x2) {
                         if (vol) {
-                            if (this._doc.song.getChannelIsNoise(channelIndex)) {
+                            this._changeFlatten.append(new ChangeStepAcross(this._doc, channelIndex, pattern,
+                                this.stepAcrossPresets['volume reverb'] as IStepData
+                            ))
+
+                            /*if (this._doc.song.getChannelIsNoise(channelIndex)) {
                                 this._changeFlatten.append(new ChangeStepAcross(this._doc, channelIndex, pattern,
-                                    { volAdd: { array: ['1 - 2 * num/len'], per: 'pin' } }
+                                    this.stepAcrossPresets['volume max-min'] as IStepData
                                 ))
                             } else {
                                 this._changeFlatten.append(new ChangeStepAcross(this._doc, channelIndex, pattern,
-                                    this.stepAcrossPresets["volume max"] as IStepData
+                                    this.stepAcrossPresets['volume max'] as IStepData
                                 ))
-                            }
+                            }*/
                         } else {
                             this._changeFlatten.append(new ChangeStretchVerticalRelative(
                                 this._doc, channelIndex, pattern, 0, 0, avgPitch, note.start, note.end, bounds));
@@ -1046,14 +1050,18 @@ export class Selection {
 
     // Presets for noteStepAcross.
     private stepAcrossPresets = {
-        'invert volume': { volAdd: { array: ['1 - x'], per: 'pin', type: 'cycle' }},
+        'volume invert': { volAdd: { array: ['1 - 2*x'], per: 'pin', type: 'cycle' }},
         'volume up': { volAdd: { array: [1 / Config.noteSizeMax], per: 'note', type: 'cycle' }},
         'volume down': { volAdd: { array: [-1 / Config.noteSizeMax], per: 'note', type: 'cycle' }},
         'volume max': { volAdd: { array: [1], per: 'note', type: 'cycle' }},
-        'stagger volume': { volMult: { array: [1, 0.5], per: 'note', type: 'cycle' } },
-        'volume staccato': { volMult: { array: [1, 0], per: 'time', type: 'cycle' }, insertPinsEvery: 2 },
-        'volume staccato2': { volMult: { array: [1, 0], per: 'time', type: 'cycle' }, insertPinsEvery: 1 },
-        'volume interrupt': { volMult: { array: ['round(random() * 10) === 0 ? 0 : 1'], per: 'time', type: 'cycle' } },
+        'volume max-min': { volAdd: { array: [1, 0], per: 'note' } },
+        'volume staccato': { volMult: { array: [1, 0.5], per: 'time', type: 'cycle' }, insertPinsEvery: 2 },
+        'volume staccato2': { volMult: { array: [1, 0.5], per: 'time', type: 'cycle' }, insertPinsEvery: 1 },
+        'volume wave': { volMult: { array: ['(sin(pi/16 * num) + 1) / 2'], per: 'time' }, insertPinsEvery: 1 },
+        'volume wave2': { volMult: { array: ['(sin(pi/8 * num) + 1) / 2'], per: 'time' }, insertPinsEvery: 1 },
+        'volume wave3': { volMult: { array: ['(sin(pi/4 * num) + 1) / 2'], per: 'time' }, insertPinsEvery: 1 },
+        'volume reverb': { volMult: { array: ['1 + ((x % i) '], per: 'pin' }, type: 'cycle', insertPinsEvery: 2 },
+        'volume interrupt': { volMult: { array: ['floor(random() * 1.5 + 0.5) === 0 ? 0 : 1'], per: 'time' }, insertPinsEvery: 1 },
         'fade in': { volMult: { array: [0, 1], per: 'time', type: 'normal' } },
         'fade out': { volMult: { array: [1, 0], per: 'time', type: 'normal' } },
     }
