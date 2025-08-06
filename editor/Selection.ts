@@ -987,7 +987,7 @@ export class Selection {
                     if (note.end > x1 && note.start < x2) {
                         if (vol) {
                             this._changeFlatten.append(new ChangeStepAcross(this._doc, channelIndex, pattern,
-                                this.stepAcrossPresets['volume reverb'] as IStepData
+                                this.stepAcrossPresets['volume alternate'] as IStepData
                             ))
 
                             /*if (this._doc.song.getChannelIsNoise(channelIndex)) {
@@ -1049,21 +1049,39 @@ export class Selection {
     }
 
     // Presets for noteStepAcross.
+    private multWave = (freqFrom: number, freqTo: number, amplitude: number) => `(sin(pi/(${freqFrom} + num/len*(${freqTo}-${freqFrom})) * num)*${amplitude} + 1) / 2`;
+    private multStagger = (num1: number, t: number, num2: number, t2: number) => {
+        const arr = [];
+        for (let i = 0; i < t; i++) { arr[i] = num1; }
+        for (let i = 0; i < t2; i++) { arr[t+i] = num2; }
+        return arr;
+    }
+    private multRepeat = (array: number[], repeats: number, multFunc: (val: number, ind: number) => number) => {
+        const arr = [];
+        for (let i = 0; i < repeats; i++)
+            for (let j = 0; j < array.length; j++)
+                arr.push(multFunc(array[j], j));
+
+        return array;
+    }
     private stepAcrossPresets = {
-        'volume invert': { volAdd: { array: ['1 - 2*x'], per: 'pin', type: 'cycle' }},
-        'volume up': { volAdd: { array: [1 / Config.noteSizeMax], per: 'note', type: 'cycle' }},
-        'volume down': { volAdd: { array: [-1 / Config.noteSizeMax], per: 'note', type: 'cycle' }},
+        'fade in': { volMult: { array: [0, 1], per: 'time' } },
+        'fade out': { volMult: { array: [1, 0], per: 'time' } },
+        'studio fade in': { volMult: { array: [0, 0.03125, 0.0625, 0.125, 0.25, 0.5, 1], per: 'time' } },
+        'studio fade out': { volMult: { array: [1, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0], per: 'time' } },
+        'volume up': { volAdd: { array: [1 / Config.noteSizeMax], per: 'note' }},
+        'volume down': { volAdd: { array: [-1 / Config.noteSizeMax], per: 'note' }},
         'volume max': { volAdd: { array: [1], per: 'note', type: 'cycle' }},
         'volume max-min': { volAdd: { array: [1, 0], per: 'note' } },
-        'volume staccato': { volMult: { array: [1, 0.5], per: 'time', type: 'cycle' }, insertPinsEvery: 2 },
-        'volume staccato2': { volMult: { array: [1, 0.5], per: 'time', type: 'cycle' }, insertPinsEvery: 1 },
-        'volume wave': { volMult: { array: ['(sin(pi/16 * num) + 1) / 2'], per: 'time' }, insertPinsEvery: 1 },
-        'volume wave2': { volMult: { array: ['(sin(pi/8 * num) + 1) / 2'], per: 'time' }, insertPinsEvery: 1 },
-        'volume wave3': { volMult: { array: ['(sin(pi/4 * num) + 1) / 2'], per: 'time' }, insertPinsEvery: 1 },
-        'volume reverb': { volMult: { array: ['1 + ((x % i) '], per: 'pin' }, type: 'cycle', insertPinsEvery: 2 },
-        'volume interrupt': { volMult: { array: ['floor(random() * 1.5 + 0.5) === 0 ? 0 : 1'], per: 'time' }, insertPinsEvery: 1 },
-        'fade in': { volMult: { array: [0, 1], per: 'time', type: 'normal' } },
-        'fade out': { volMult: { array: [1, 0], per: 'time', type: 'normal' } },
+        'invert volume': { volAdd: { array: ['1 - 2*x'], per: 'pin' }},
+        'wobble fast': { volMult: { array: [this.multWave(4, 4, 0.5)], per: 'time' }, insertPinsEvery: 1 },
+        'wobble med': { volMult: { array: [this.multWave(8, 8, 0.5)], per: 'time' }, insertPinsEvery: 1 },
+        'wobble slow': { volMult: { array: [this.multWave(16, 16, 0.5)], per: 'time' }, insertPinsEvery: 1 },
+        'wobble slow-fast': { volMult: { array: [this.multWave(16, 4, 0.5)], per: 'time' }, insertPinsEvery: 1 },
+        'volume alternate': { volAdd: { array: [1 / Config.noteSizeMax, -1 / Config.noteSizeMax], per: 'note', type: 'cycle' }},
+        'gain start': { volMult: { array: [2, 1], per: 'time' }},
+        'gain end': { volMult: { array: [1, 2], per: 'time' }},
+        'volume interrupt': { volMult: { array: ['floor(random() * 1.5 + 0.5) === 0 ? 0.5 : 1'], per: 'time' }, insertPinsEvery: 1 },
     }
 
     /** Cumulatively performs volume/pitch changes to existing and/or new pins.

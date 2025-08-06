@@ -36,6 +36,8 @@ export class EditorTabSelection {
     private _splitAbsolute : HTMLInputElement;
     private _splitAcross : HTMLInputElement;
     private _splitLabel : HTMLDivElement;
+    private _stepFunctionSelect: HTMLSelectElement;
+    
 
     constructor(doc: SongDocument, patternEditor: PatternEditor, tipHandler: TipHandler) {
         this._doc = doc;
@@ -68,6 +70,7 @@ export class EditorTabSelection {
         this._split = button({ class: "selectionOps-actionbutton noteOpSplit" });
         this._splitLabel = div({ class: "tip", onclick: () => tipHandler("selectionSplit") }, "");
         this._splitDropdown = button({ style: "height:1.5em; width: 10px; padding: 0px; font-size: 8px; margin-left: 0.2rem;" }, "▼");
+        this._stepFunctionSelect = buildOptions(select(), Config.chipWaves.map(wave => wave.name));
 
         this._splitSliderInputBox = input({ type: "number", step: "1", min: 1, max: Math.floor(this._doc.song.partsPerPattern / 2), value: "1" });
         this._splitSlider = new Slider(
