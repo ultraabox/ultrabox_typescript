@@ -3075,6 +3075,8 @@ export class SongEditor {
                             }
                             if (effectsIncludePitchShift(channel.instruments[instrumentIndex].effects)) {
                                 anyInstrumentPitchShifts = true;
+                            } else {
+                                allInstrumentPitchShifts = false;
                             }
                             if (effectsIncludeDetune(channel.instruments[instrumentIndex].effects)) {
                                 anyInstrumentDetunes = true;
