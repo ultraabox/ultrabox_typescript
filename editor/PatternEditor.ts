@@ -321,7 +321,7 @@ export class PatternEditor {
                     this._modDragNote = this._cursor.curNote;
                     this._modDragPin = this._cursor.curNote.pins[pinIdx];
                     this._modDragLowerBound = Config.modulators[setting].convertRealFactor;
-                    this._modDragUpperBound = Config.modulators[setting].convertRealFactor + Config.modulators[setting].maxRawVol;
+                    this._modDragUpperBound = Config.modulators[setting].convertRealFactor + this._doc.song.getVolumeCapForSetting(true, setting, this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument(this._barOffset)].modFilterTypes[mod]);
                     this._modDragSetting = setting;
 
                     this.modDragValueLabel.style.setProperty("left", "" + this._modDragValueLabelLeft + "px");
@@ -1341,9 +1341,15 @@ export class PatternEditor {
                                 }
                                 else {
                                     instrument.modChannels[mod] = this._doc.channel;
-                                    // Set these new ones to "active" modulation for the most flexibility, if there's more one instrument in the channel.
-                                    if (this._doc.song.channels[this._doc.channel].instruments.length > 1)
-                                        instrument.modInstruments[mod] = this._doc.song.channels[this._doc.channel].instruments.length + 1;
+                                    
+                                    if (this._doc.song.channels[this._doc.channel].instruments.length > 1) {
+                                        // Ctrl key or Shift key: set the new mod target to "active" modulation for the most flexibility, if there's more than one instrument in the channel.
+                                        if (!this.controlMode || !this.shiftMode)
+                                            instrument.modInstruments[mod] = this._doc.song.channels[this._doc.channel].instruments.length + 1;
+                                        // Control+Shift key: Set the new mod target to the currently viewed instrument only.
+                                        else
+                                            instrument.modInstruments[mod] = this._doc.getCurrentInstrument();
+                                    }
                                     else
                                         instrument.modInstruments[mod] = 0;
 
@@ -2423,7 +2429,7 @@ export class PatternEditor {
         if (this._doc.prefs.showChannels) {
             if (!this._doc.song.getChannelIsMod(this._doc.channel)) {
                 let noteFlashColor: string = "#ffffff77";
-                    if (this._doc.prefs.notesFlashWhenPlayed) noteFlashColor = ColorConfig.getComputed("--note-flash-secondary") !== "" ? "var(--note-flash-secondary)" : "#ffffff77";
+                    if (this._doc.prefs.notesFlashWhenPlayed) noteFlashColor = ColorConfig.getComputed("--note-flash-secondary");
                 for (let channel: number = this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount - 1; channel >= 0; channel--) {
                     if (channel == this._doc.channel) continue;
                     if (this._doc.song.getChannelIsNoise(channel) != this._doc.song.getChannelIsNoise(this._doc.channel)) continue;
@@ -2466,7 +2472,7 @@ export class PatternEditor {
             const transition: Transition = instrument.getTransition();
             const displayNumberedChords: boolean = chord.customInterval || chord.arpeggiates || chord.strumParts > 0 || transition.slides;
             let noteFlashColor: string = "#ffffff";
-                if (this._doc.prefs.notesFlashWhenPlayed) noteFlashColor = ColorConfig.getComputed("--note-flash") !== "" ? "var(--note-flash)" : "#ffffff";
+                if (this._doc.prefs.notesFlashWhenPlayed) noteFlashColor = ColorConfig.getComputed("--note-flash");
             for (const note of this._pattern.notes) {
                 let disabled: boolean = false;
                 if (this._doc.song.getChannelIsMod(this._doc.channel)) {

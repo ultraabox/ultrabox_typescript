@@ -10,8 +10,11 @@ export class Box {
 	private readonly _label: HTMLElement = HTML.div({class: "channelBoxLabel"}, this._text);
 	public readonly container: HTMLElement = HTML.div({class: "channelBox", style: `margin: 1px; height: ${ChannelRow.patternHeight - 2}px;`}, this._label);
 	private _renderedIndex: number = -1;
-    private _renderedLabelColor: string = "?";
-    private _renderedBackgroundColor: string = "?";
+	private _renderedLabelColor: string = "?";
+	private _renderedVisibility: string = "?";
+	private _renderedBorderLeft: string = "?";
+	private _renderedBorderRight: string = "?";
+	private _renderedBackgroundColor: string = "?";
 	constructor(channel: number, color: string) {
 		this.container.style.background = ColorConfig.uiWidgetBackground;
 		this._label.style.color = color;
@@ -56,6 +59,26 @@ export class Box {
 		if (this._renderedBackgroundColor != color) {
 			this.container.style.background = color;
 			this._renderedBackgroundColor = color;
+		}
+	}
+	// These cache the value given to them, since they're apparently quite
+	// expensive to set.
+	public setVisibility(visibility: string): void {
+		if (this._renderedVisibility != visibility) {
+			this.container.style.visibility = visibility;
+			this._renderedVisibility = visibility;
+		}
+	}
+	public setBorderLeft(borderLeft: string): void {
+		if (this._renderedBorderLeft != borderLeft) {
+			this.container.style.setProperty("border-left", borderLeft);
+			this._renderedBorderLeft = borderLeft;
+		}
+	}
+	public setBorderRight(borderRight: string): void {
+		if (this._renderedBorderRight != borderRight) {
+			this.container.style.setProperty("border-right", borderRight);
+			this._renderedBorderRight = borderRight;
 		}
 	}
 }
@@ -112,21 +135,21 @@ export class ChannelRow {
 				const colors: ChannelColors = ColorConfig.getChannelColor(this._doc.song, this.index);
 				box.setIndex(this._doc.song.channels[this.index].bars[i], selected, dim, dim && !selected ? colors.secondaryChannel : colors.primaryChannel,
 					this.index >= this._doc.song.pitchChannelCount && this.index < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount, this.index >= this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount);
-				box.container.style.visibility = "visible";
+				box.setVisibility("visible");
 			} else {
-				box.container.style.visibility = "hidden";
+				box.setVisibility("hidden");
 			}
 			if (i == this._doc.synth.loopBarStart) {
-				box.container.style.setProperty("border-left", `1px dashed ${ColorConfig.uiWidgetFocus}`);
+				box.setBorderLeft(`1px dashed ${ColorConfig.uiWidgetFocus}`);
 			}
 			else {
-				box.container.style.setProperty("border-left", "none");
+				box.setBorderLeft("none");
             }
 			if (i == this._doc.synth.loopBarEnd) {
-				box.container.style.setProperty("border-right", `1px dashed ${ColorConfig.uiWidgetFocus}`);
+				box.setBorderRight(`1px dashed ${ColorConfig.uiWidgetFocus}`);
 			}
 			else {
-				box.container.style.setProperty("border-right", "none");
+				box.setBorderRight("none");
             }
 		}
 	}

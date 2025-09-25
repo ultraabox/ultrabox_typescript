@@ -116,7 +116,7 @@ export class TipPrompt implements Prompt {
 				message = div(
 					h2("Instrument Type"),
 					p("UltraBox comes with many instrument presets, try them out! You can also create your own custom instruments!"),
-					p("There are also options for copying and pasting instrument settings and for generating random instruments at the top of the instrument type menu."),
+					p("There are also buttons for copying and pasting instruments at the bottom of the instrument settings tab, and for generating random instruments in the \"Randomize\" category in the instrument type menu."),
 				);
 			} break;
 			case "eqFilter": {
@@ -526,7 +526,6 @@ export class TipPrompt implements Prompt {
 				message = div(
 					h2("Unison Spread"),
 					p("This setting controls the distance between the two voices, in semitones. A small amount of spread causes the voice's waves to shift in and out from each other, causing a shimmering effect. Larger spread will cause the voices to act like separate notes."),
-					p("This setting will only work correctly with two voices."),
 				);
 			} break;
 			case "unisonOffset": {
@@ -537,8 +536,9 @@ export class TipPrompt implements Prompt {
 			} break;
 			case "unisonExpression": {
 				message = div(
-					h2("Unison Expression"),
+					h2("Unison Volume"),
 					p("This setting controls the unison volume. Use this if the unison makes your instrument too loud in comparison to other instruments."),
+					p("If this is set to a negative value, it will invert the wave!"),
 				);
 			} break;
 			case "unisonSign": {

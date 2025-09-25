@@ -19,10 +19,10 @@ export class RecordingSetupPrompt implements Prompt {
 	private readonly _keyboardLayout: HTMLSelectElement = select({style: "width: 100%;"},
 		option({value: "wickiHayden"}, "Wicki-Hayden"),
 		option({value: "songScale"}, "selected song scale"),
-		option({value: "pianoAtC"}, "piano starting at C :)"),
-		option({value: "pianoAtA"}, "piano starting at A :("),
-		option({value: "pianoTransposingC"}, "piano transposing C :) to song key"),
-		option({value: "pianoTransposingA"}, "piano transposing A :( to song key"),
+		option({value: "pianoAtC"}, "piano starting at C"),
+		option({value: "pianoAtA"}, "piano starting at A"),
+		option({value: "pianoTransposingC"}, "piano transposing C to song key"),
+		option({value: "pianoTransposingA"}, "piano transposing A to song key"),
 	);
 	private readonly _bassOffset: HTMLSelectElement = select({style: "width: 100%;"},
 		option({value: "0"}, "disabled"),
@@ -152,7 +152,7 @@ export class RecordingSetupPrompt implements Prompt {
 			this._keyboardLayoutPreview.removeChild(this._keyboardLayoutPreview.firstChild);
 		}
 		const rowLengths: number[] = [12, 12, 11, 10];
-		const scale: ReadonlyArray<boolean> = Config.scales[this._doc.song.scale].flags;
+		const scale: ReadonlyArray<boolean> = this._doc.song.scale == Config.scales.dictionary["Custom"].index ? this._doc.song.scaleCustom : Config.scales[this._doc.song.scale].flags;
 		for (let rowIndex: number = 0; rowIndex < 4; rowIndex++) {
 			const row: HTMLDivElement = div({style: "display: flex;"});
 			this._keyboardLayoutPreview.appendChild(row);

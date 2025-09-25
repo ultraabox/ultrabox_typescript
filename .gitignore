@@ -2,7 +2,6 @@
 .DS_Store
 .vs
 /node_modules
-offline/node_modules
 /website/**/beepbox*.js
 /website/**/beepbox*.js.map
 /website/beepbox_offline.html
@@ -16,20 +15,4 @@ offline/node_modules
 /**/*.ts.bak
 /**/*.html.bak
 /build
-
-/offline/*.js
-/offline/*.png
-!/offline/index.html
-!/offline/main.js
-!/offline/preload.js
-!/offline/jquery-3.4.1.min.js
-!/offline/select2.min.js
-!/offline/select2.min.css
-!/offline/icon.png
-!/offline/icon.ico
-!/offline/*.json
-!/offline/*.woff2
-/offline/theme_resources/*
-/offline/player/*
-!/offline/player/index.html
-/offline/UltraBox Offline*
+/to_deploy/

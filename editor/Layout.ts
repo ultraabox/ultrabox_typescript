@@ -13,6 +13,7 @@ export class Layout {
 				#beepboxEditorContainer {
 					max-width: initial;
 					height: 100vh;
+					padding-top: 0px;
 				}
 				.beepboxEditor {
 					width: 100%;
@@ -66,9 +67,6 @@ export class Layout {
 				.beepboxEditor.selectRow {
 					height: 2em;
 				}
-				.beepboxEditor .operatorRow {
-					heiht: 2em;
-				}
 				.beepboxEditor .trackAndMuteContainer {
 					max-height: 446px;
 				}
@@ -78,7 +76,6 @@ export class Layout {
 				}
 				.beepboxEditor .trackAndMuteContainer {
 					scrollbar-width: auto;
-					scrollbar-color: ${ColorConfig.uiWidgetBackground} ${ColorConfig.editorBackground};
 				}
 				.beepboxEditor .trackAndMuteContainer::-webkit-scrollbar {
 					width: 20px;
@@ -102,6 +99,7 @@ export class Layout {
 				#beepboxEditorContainer {
 					max-width: initial;
 					height: 100vh;
+					padding-top: 0px;
 				}
 				.beepboxEditor {
 					width: 100%;
@@ -175,7 +173,6 @@ export class Layout {
 				}
 				.beepboxEditor .trackAndMuteContainer {
 					scrollbar-width: auto;
-					scrollbar-color: ${ColorConfig.uiWidgetBackground} ${ColorConfig.editorBackground};
 				}
 				.beepboxEditor .trackAndMuteContainer::-webkit-scrollbar {
 					width: 20px;
@@ -199,6 +196,7 @@ export class Layout {
 				#beepboxEditorContainer {
 					max-width: initial;
 					height: 100vh;
+					padding-top: 0px;
 				}
 				.beepboxEditor {
 					width: 100%;
@@ -281,6 +279,7 @@ export class Layout {
 				#beepboxEditorContainer {
 					max-width: initial;
 					height: 100vh;
+					padding-top: 0px;
 				}
 				.beepboxEditor {
 					width: 100%;
@@ -334,9 +333,6 @@ export class Layout {
 				.beepboxEditor.selectRow {
 					height: 2em;
 				}
-				.beepboxEditor .operatorRow {
-					heiht: 2em;
-				}
 				.beepboxEditor .trackAndMuteContainer {
 					max-height: 446px;
 				}
@@ -346,7 +342,6 @@ export class Layout {
 				}
 				.beepboxEditor .trackAndMuteContainer {
 					scrollbar-width: auto;
-					scrollbar-color: ${ColorConfig.uiWidgetBackground} ${ColorConfig.editorBackground};
 				}
 				.beepboxEditor .trackAndMuteContainer::-webkit-scrollbar {
 					width: 20px;
@@ -370,17 +365,21 @@ export class Layout {
 				#beepboxEditorContainer {
 					max-width: initial;
 					height: 100vh;
+					padding-top: 0px;
 				}
 				.beepboxEditor {
 					width: 100%;
 					height: 100vh;
 					grid-template-columns: minmax(0, 1fr) 390px; /* minmax(0, 1fr) min-content; Chrome 80 grid layout regression. https://bugs.chromium.org/p/chromium/issues/detail?id=1050307 */
 					grid-template-rows: minmax(481px, 1fr) minmax(0, min-content);
-					grid-template-areas: "pattern-area settings-area" "track-area";
+					grid-template-areas: "pattern-area settings-area" "track-area settings-area";
 				}
 				.beepboxEditor .pattern-area {
 					width: 100%;
 					height: 100%;
+				}
+				.beepboxEditor .track-area {
+					display: flex;
 				}
 				.beepboxEditor .trackAndMuteContainer {
 					width: 100%;
@@ -418,9 +417,6 @@ export class Layout {
 				.beepboxEditor.selectRow {
 					height: 2em;
 				}
-				.beepboxEditor .operatorRow {
-					heiht: 2em;
-				}
 				.beepboxEditor .trackAndMuteContainer {
 					max-height: 446px;
 				}
@@ -430,7 +426,6 @@ export class Layout {
 				}
 				.beepboxEditor .trackAndMuteContainer {
 					scrollbar-width: auto;
-					scrollbar-color: ${ColorConfig.uiWidgetBackground} ${ColorConfig.editorBackground};
 				}
 				.beepboxEditor .trackAndMuteContainer::-webkit-scrollbar {
 					width: 20px;
@@ -455,17 +450,21 @@ export class Layout {
 				#beepboxEditorContainer {
 					max-width: initial;
 					height: 100vh;
+					padding-top: 0px;
 				}
 				.beepboxEditor {
 					width: 100%;
 					height: 100vh;
 					grid-template-columns: minmax(0, 1fr) 190px; 
 					grid-template-rows: minmax(481px, 1fr) minmax(0, min-content);
-					grid-template-areas: "pattern-area settings-area" "track-area";
+					grid-template-areas: "pattern-area settings-area" "track-area settings-area";
 				}
 				.beepboxEditor .pattern-area {
 					width: 100%;
 					height: 100%;
+				}
+				.beepboxEditor .track-area {
+					display: flex;
 				}
 				.beepboxEditor .trackAndMuteContainer {
 					width: 100%;
@@ -487,7 +486,7 @@ export class Layout {
 					position: absolute;
 					width: 100%;
 				}
-				
+
 				.beepboxEditor .settings-area {
 					width: 100%;
 					position: relative;
@@ -507,9 +506,6 @@ export class Layout {
 				.beepboxEditor.selectRow {
 					height: 2em;
 				}
-				.beepboxEditor .operatorRow {
-					heiht: 2em;
-				}
 				.beepboxEditor .trackAndMuteContainer {
 					max-height: 446px;
 				}
@@ -519,7 +515,6 @@ export class Layout {
 				}
 				.beepboxEditor .trackAndMuteContainer {
 					scrollbar-width: auto;
-					scrollbar-color: ${ColorConfig.uiWidgetBackground} ${ColorConfig.editorBackground};
 				}
 				.beepboxEditor .trackAndMuteContainer::-webkit-scrollbar {
 					width: 20px;

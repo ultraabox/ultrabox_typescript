@@ -1,6 +1,7 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
 import {Scale, Config} from "../synth/SynthConfig";
+import {ColorConfig} from "../editor/ColorConfig";
 
 export class Preferences {
 	public static readonly defaultVisibleOctaves: number = 3;
@@ -40,7 +41,9 @@ export class Preferences {
 	public showOscilloscope: boolean;
 	public showSampleLoadingStatus: boolean;
 	public showDescription: boolean;
+	public showInstrumentScrollbars: boolean;
 	public closePromptByClickoff: boolean;
+	public frostedGlassBackground: boolean;
 	
 	constructor() {
 		this.reload();
@@ -56,11 +59,11 @@ export class Preferences {
 		this.showChannels = window.localStorage.getItem("showChannels") == "true";
 		this.showScrollBar = window.localStorage.getItem("showScrollBar") != "false";
 		this.alwaysFineNoteVol = window.localStorage.getItem("alwaysFineNoteVol") == "true";
-		this.displayVolumeBar = window.localStorage.getItem("displayVolumeBar") == "true";
+		this.displayVolumeBar = window.localStorage.getItem("displayVolumeBar") != "false";
 		this.instrumentCopyPaste = window.localStorage.getItem("instrumentCopyPaste") != "false";
 		this.instrumentImportExport = window.localStorage.getItem("instrumentImportExport") == "true";
 		this.instrumentButtonsAtTop = window.localStorage.getItem("instrumentButtonsAtTop") == "true"
-		this.enableChannelMuting = window.localStorage.getItem("enableChannelMuting") == "true";
+		this.enableChannelMuting = window.localStorage.getItem("enableChannelMuting") != "false";
 		this.displayBrowserUrl = window.localStorage.getItem("displayBrowserUrl") != "false";
 		this.pressControlForShortcuts = window.localStorage.getItem("pressControlForShortcuts") == "true";
 		this.enableMidi = window.localStorage.getItem("enableMidi") != "false";
@@ -70,14 +73,16 @@ export class Preferences {
 		this.metronomeCountIn = window.localStorage.getItem("metronomeCountIn") != "false";
 		this.metronomeWhileRecording = window.localStorage.getItem("metronomeWhileRecording") != "false";
 		this.notesFlashWhenPlayed = window.localStorage.getItem("notesFlashWhenPlayed") == "true";
-		this.showOscilloscope = window.localStorage.getItem("showOscilloscope") != "false";
+		this.showOscilloscope = window.localStorage.getItem("showOscilloscope") == "true";
 		this.showSampleLoadingStatus = window.localStorage.getItem("showSampleLoadingStatus") != "false";
 		this.showDescription = window.localStorage.getItem("showDescription") != "false";
+		this.showInstrumentScrollbars = window.localStorage.getItem("showInstrumentScrollbars") == "true";
 		this.closePromptByClickoff = window.localStorage.getItem("closePromptByClickoff") == "true";
-		this.keyboardLayout = window.localStorage.getItem("keyboardLayout") || "wickiHayden";
+		this.frostedGlassBackground = window.localStorage.getItem("frostedGlassBackground") == "true";
+		this.keyboardLayout = window.localStorage.getItem("keyboardLayout") || "pianoTransposingC";
 		this.bassOffset = (+(<any>window.localStorage.getItem("bassOffset"))) || 0;
 		this.layout = window.localStorage.getItem("layout") || "small";
-		this.colorTheme = window.localStorage.getItem("colorTheme") || "dark classic";
+		this.colorTheme = window.localStorage.getItem("colorTheme") || ColorConfig.defaultTheme;
 		this.customTheme = window.localStorage.getItem("customTheme");
         this.customTheme2 = window.localStorage.getItem("customTheme2");
 		this.visibleOctaves = ((<any>window.localStorage.getItem("visibleOctaves")) >>> 0) || Preferences.defaultVisibleOctaves;
@@ -93,6 +98,7 @@ export class Preferences {
 			if (window.localStorage.getItem("fullScreen") == "true") this.layout = "long";
 			window.localStorage.removeItem("fullScreen");
 		}
+		
 	}
 	
 	public save(): void {
@@ -123,14 +129,17 @@ export class Preferences {
 		window.localStorage.setItem("showOscilloscope", this.showOscilloscope ? "true" : "false");
 		window.localStorage.setItem("showSampleLoadingStatus", this.showSampleLoadingStatus ? "true" : "false");
 		window.localStorage.setItem("showDescription", this.showDescription ? "true" : "false");
+		window.localStorage.setItem("showInstrumentScrollbars", this.showInstrumentScrollbars ? "true" : "false");
 		window.localStorage.setItem("closePromptByClickoff", this.closePromptByClickoff ? "true" : "false");
+		window.localStorage.setItem("frostedGlassBackground", this.frostedGlassBackground ? "true" : "false");
 		window.localStorage.setItem("keyboardLayout", this.keyboardLayout);
 		window.localStorage.setItem("bassOffset", String(this.bassOffset));
 		window.localStorage.setItem("layout", this.layout);
 		window.localStorage.setItem("colorTheme", this.colorTheme);
 		window.localStorage.setItem("customTheme", this.customTheme!);
-                window.localStorage.setItem("customTheme2", this.customTheme2!);
+		window.localStorage.setItem("customTheme2", this.customTheme2!);
 		window.localStorage.setItem("volume", String(this.volume));
 		window.localStorage.setItem("visibleOctaves", String(this.visibleOctaves));
+		
 	}
 }

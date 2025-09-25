@@ -1,7 +1,7 @@
 {
-	"name": "BeepBox",
-	"short_name": "BeepBox",
-	"description": "BeepBox is a tool for sketching and sharing instrumental melodies.",
+	"name": "UltraBox",
+	"short_name": "UltraBox",
+	"description": "UltraBox is a mod of BeepBox that aims to combine every other beepmod into one.",
 	"scope": "/",
 	"start_url": ".",
 	"display": "browser",

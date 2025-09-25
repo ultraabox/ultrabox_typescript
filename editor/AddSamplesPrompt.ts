@@ -96,8 +96,11 @@ export class AddSamplesPrompt {
             "As for where to upload your samples, here are some suggestions:",
             ul({ style: "text-align: left;" },
                 li(a({ href: "https://filegarden.com" }, "File Garden")),
-                li(a({ href: "https://catbox.moe/" }, "Catbox")),
+
+                // there's no guarantee this will continue to work; dropbox has changed their URL formatting at least once in the past
                 li(a({ href: "https://www.dropbox.com" }, "Dropbox"), " (domain needs to be ", code("https://dl.dropboxusercontent.com"), ")"),
+
+                // discord is not a file storage site. files expire after a month if shared outside of discord
                 //li(a({ href: "https://discord.com" }, "Discord"), " (domain needs to be ", code("https://media.discordapp.net"), ")")
             )
         ),

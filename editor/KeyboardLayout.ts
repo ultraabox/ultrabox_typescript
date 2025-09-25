@@ -25,7 +25,7 @@ export class KeyboardLayout {
 				pitchOffset = y * 5 + x * 2 - 2;
 				break;
 			case "songScale":
-				const scaleFlags: ReadonlyArray<boolean> = Config.scales[doc.song.scale].flags;
+				const scaleFlags: ReadonlyArray<boolean> = doc.song.scale == Config.scales.dictionary["Custom"].index ? doc.song.scaleCustom : Config.scales[doc.song.scale].flags;
 				const scaleIndices: number[] = <number[]> scaleFlags.map((flag, index) => flag ? index : null).filter((index) => index != null);
 				pitchOffset = (y - 1 + Math.floor(x / scaleIndices.length)) * Config.pitchesPerOctave + scaleIndices[(x + scaleIndices.length) % scaleIndices.length];
 				break;

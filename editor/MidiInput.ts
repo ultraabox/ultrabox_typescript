@@ -6,7 +6,7 @@ import {AnalogousDrum, analogousDrumMap, MidiEventType} from "./Midi";
 
 declare global {
 	interface Navigator {
-		requestMIDIAccess?(): Promise<any>;
+		requestMIDIAccess(): Promise<any>;
 	}
 }
 
