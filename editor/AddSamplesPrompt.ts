@@ -5,7 +5,7 @@ import { ColorConfig } from "./ColorConfig";
 import { EditorConfig } from "./EditorConfig";
 import { SongDocument } from "./SongDocument";
 
-const { div, input, button, a, code, textarea, details, summary, span, ul, li, select, option, h2 } = HTML;
+const { div, input, button, a, code, textarea, details, summary, span, ul, li, select, option, h2, p } = HTML;
 
 interface SampleEntry {
     url: string;
@@ -45,21 +45,23 @@ export class AddSamplesPrompt {
         this._addSampleButton,
         this._addMultipleSamplesButton
     );
-    private readonly _instructionsLink: HTMLAnchorElement = a({ href: "#" }, "Here's more information and some instructions on how to use custom samples in UltraBox.");
+    private readonly _instructionsLink: HTMLAnchorElement = a({ href: "#", style:"color:var(--loop-accent, red); font-weight:bold;"}, "> Click Here for instructions on adding samples <");
     private readonly _description: HTMLDivElement = div(
         div({ style: "margin-bottom: 0.5em; -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; cursor: text;" },
             "In order to use the old UltraBox samples, you should add ",
             code("legacySamples"),
-            " as an URL. You can also use ",
+            " for the PaandorasBox Samples.",
+            p({}),
+            "You can also use ",
             code("nintariboxSamples"),
             " and ",
             code("marioPaintboxSamples"),
             " for more built-in sample packs."
         ),
         div({ style: "margin-bottom: 0.5em;" },
-            "The order of these samples is important - if you change it you'll break your song!"
+            "The order of these samples is important - if you change their order or remove them you'll break your song!"
         ),
-        div({ style: "margin-bottom: 0.5em;" },
+        div({ style: "margin-bottom: 0.5em; font-size: 17px;" },
             this._instructionsLink,
         )
     );
@@ -85,7 +87,10 @@ export class AddSamplesPrompt {
                 " This is always an issue with servers: it may run out of space,",
                 " stop working, and so on. With arbitrary URLs, you can always ",
                 " change them to different ones if they stop working."
-            )
+            ),
+            p({}),
+            "Simply go and upload your samples to a website we suggest down below, once you do that you can copy that URL and paste it into the text input you can find after pressing the 'Add Sample' button.",
+            "You know the sample works once you see the name of the sample appear above the text input! Then just press 'Okay' and your sample will appear! To use samples just change your instrument to a chip wave instrument type and scroll down until you find the samples.",
         ),
         div({ style: "margin-top: 0.5em; margin-bottom: 0.5em;" },
             "As for where to upload your samples, here are some suggestions:",
