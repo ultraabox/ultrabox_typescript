@@ -11153,8 +11153,8 @@ export class Synth {
                     useSpreadEnd = (this.getModValue(Config.modulators.dictionary["spread"].index, channelIndex, tone.instrumentIndex, true)) / Config.supersawSpreadMax;
                 }
 
-				const spreadSliderStart: number = useSpreadStart * envelopeStarts[EnvelopeComputeIndex.supersawSpread];
-				const spreadSliderEnd:   number = useSpreadEnd * envelopeEnds[  EnvelopeComputeIndex.supersawSpread];
+				const spreadSliderStart: number = Math.max(0, useSpreadStart) * envelopeStarts[EnvelopeComputeIndex.supersawSpread];
+				const spreadSliderEnd:   number = Math.max(0, useSpreadEnd) * envelopeEnds[EnvelopeComputeIndex.supersawSpread];
 				// Just use the average detune for the current tick in the below loop.
 				const averageSpreadSlider: number = (spreadSliderStart + spreadSliderEnd) * 0.5;
 				const curvedSpread: number = Math.pow(1.0 - Math.sqrt(Math.max(0.0, 1.0 - averageSpreadSlider)), 1.75);

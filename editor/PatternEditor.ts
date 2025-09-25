@@ -321,7 +321,7 @@ export class PatternEditor {
                     this._modDragNote = this._cursor.curNote;
                     this._modDragPin = this._cursor.curNote.pins[pinIdx];
                     this._modDragLowerBound = Config.modulators[setting].convertRealFactor;
-                    this._modDragUpperBound = Config.modulators[setting].convertRealFactor + Config.modulators[setting].maxRawVol;
+                    this._modDragUpperBound = Config.modulators[setting].convertRealFactor + this._doc.song.getVolumeCapForSetting(true, setting, this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument(this._barOffset)].modFilterTypes[mod]);
                     this._modDragSetting = setting;
 
                     this.modDragValueLabel.style.setProperty("left", "" + this._modDragValueLabelLeft + "px");
