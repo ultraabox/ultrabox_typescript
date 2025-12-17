@@ -9119,7 +9119,7 @@ export class Synth {
         this.tickSampleCountdown = samplesPerTick;
 	    this.isAtStartOfTick = true;
 
-        if (this.loopRepeatCount != 0 && this.bar == Math.max(this.song.loopStart + this.song.loopLength, this.loopBarEnd)) {
+        if (this.loopRepeatCount != 0 && this.bar == Math.max(this.song.loopStart + this.song.loopLength, this.loopBarEnd + 1)) {
             this.bar = this.song.loopStart;
             if (this.loopBarStart != -1)
                 this.bar = this.loopBarStart;
