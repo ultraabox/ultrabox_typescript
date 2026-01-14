@@ -7,6 +7,7 @@ sed \
 	-e '/INSERT_JQUERY_MIN_JS_HERE/{r website/offline/jquery-3.4.1.min.js' -e 'd' -e '}' \
 	-e '/INSERT_SELECT2_MIN_JS_HERE/{r website/offline/select2.min.js' -e 'd' -e '}' \
 	-e '/INSERT_SELECT2_CSS_HERE/{r website/offline/select2.min.css' -e 'd' -e '}' \
+	-e '/INSERT_DRUMSAMPLES_SCRIPT_HERE/{r website/drumsamples.js' -e 'd' -e '}' \
 	-e '/INSERT_KIRBYSAMPLES_SCRIPT_HERE/{r website/kirby_samples.js' -e 'd' -e '}' \
 	-e '/INSERT_SAMPLES_SCRIPT_HERE/{r website/samples.js' -e 'd' -e '}' \
 	-e '/INSERT_SAMPLES2_SCRIPT_HERE/{r website/samples2.js' -e 'd' -e '}' \

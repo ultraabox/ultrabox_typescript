@@ -490,18 +490,24 @@ declare global {
 
 function loadScript(url: string): Promise<void> {
     const result: Promise<void> = new Promise((resolve, reject) => {
-	if (!Config.willReloadForCustomSamples) {
-	    const script = document.createElement("script");
-	    script.src = url;
-	    document.head.appendChild(script);
-	    script.addEventListener("load", (event) => {
-		resolve();
-	    });
-	} else {
-	    // There's not really any errors that show up if the loading for
-	    // this script is stopped early, but it won't really do anything
-	    // particularly useful either in that case.
-	}
+        if ((window as any)["HTML_OFFLINE"] === true) {
+            // In this case, these scripts will be bundled within the html file
+            // with all the code, so we don't need to do anything.
+            resolve();
+        } else {
+            if (!Config.willReloadForCustomSamples) {
+                const script = document.createElement("script");
+                script.src = url;
+                document.head.appendChild(script);
+                script.addEventListener("load", (event) => {
+                    resolve();
+                });
+            } else {
+                // There's not really any errors that show up if the loading for
+                // this script is stopped early, but it won't really do anything
+                // particularly useful either in that case.
+            }
+        }
     });
     return result;
 }

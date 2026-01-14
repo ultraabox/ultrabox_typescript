@@ -24,7 +24,10 @@ jobs:
       - name: Install dependencies
         run: |
           npm ci
-      - name: Build
+      - name: Build (necessary for the offline html version)
+        run: |
+          npm run build
+      - name: Build offline version
         run: |
           npm run build-offline
       - name: Package
