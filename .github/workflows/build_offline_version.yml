@@ -1,0 +1,74 @@
+name: Build offline version
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: 'Source code branch to build'
+        required: true
+        type: string
+        default: 'main'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the specified branch of this repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_branch }}
+      - name: Install Node.js and NPM
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: |
+          npm ci
+      - name: Build
+        run: |
+          npm run build-offline
+      - name: Package
+        run: |
+          npm run package
+      - name: Bundle and compress win32-ia32 build
+        run: |
+          7z a -t7z -m0=lzma2 -mx=9 UltraBox-win32-ia32.7z ./UltraBox-win32-ia32/*
+      - name: Bundle and compress win32-x64 build
+        run: |
+          7z a -t7z -m0=lzma2 -mx=9 UltraBox-win32-x64.7z ./UltraBox-win32-x64/*
+      - name: Bundle and compress darwin-x64 build
+        run: |
+          7z a -t7z -m0=lzma2 -mx=9 UltraBox-darwin-x64.7z ./UltraBox-darwin-x64/*
+      - name: Bundle and compress linux-x64 build
+        run: |
+          7z a -t7z -m0=lzma2 -mx=9 UltraBox-linux-x64.7z ./UltraBox-linux-x64/*
+      - name: Make artifact for win32-ia32 build
+        uses: actions/upload-artifact@v4
+        with:
+          name: UltraBox-win32-ia32
+          path: ./UltraBox-win32-ia32.7z
+          compression-level: 0
+      - name: Make artifact for win32-x64 build
+        uses: actions/upload-artifact@v4
+        with:
+          name: UltraBox-win32-x64
+          path: ./UltraBox-win32-x64.7z
+          compression-level: 0
+      - name: Make artifact for darwin-x64 build
+        uses: actions/upload-artifact@v4
+        with:
+          name: UltraBox-darwin-x64
+          path: ./UltraBox-darwin-x64.7z
+          compression-level: 0
+      - name: Make artifact for linux-x64 build
+        uses: actions/upload-artifact@v4
+        with:
+          name: UltraBox-linux-x64
+          path: ./UltraBox-linux-x64.7z
+          compression-level: 0
+      - name: Make artifact for html build
+        uses: actions/upload-artifact@v4
+        with:
+          name: UltraBox-html
+          path: ./to_deploy/ultrabox-HTML.html
+          compression-level: 0
