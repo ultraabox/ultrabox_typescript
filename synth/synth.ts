@@ -11672,7 +11672,7 @@ export class Synth {
                     if (chipWaveCompletionB > 0) {
                         inputSample += lastWaveB * completionFadeB;
                     } else {
-                        inputSample += waveB;
+                        inputSample += waveB * unisonSign;
                     }
                 }
                 else {
