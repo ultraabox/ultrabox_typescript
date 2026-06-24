@@ -1,6 +1,6 @@
-mkdir to_deploy -p
-mkdir to_deploy/player -p
-mkdir to_deploy/theme_resources -p
+mkdir -p to_deploy
+mkdir -p to_deploy/player
+mkdir -p to_deploy/theme_resources
 
 cp website/beepbox_editor.min.js to_deploy/
 # TODO: see if something can be done about the bugs the service worker causes
@@ -36,5 +36,5 @@ cp website/sample_extractor.html to_deploy/
 cp website/beepbox_synth.min.js to_deploy/
 cp website/synth_example.html to_deploy/
 
-cp website/player/* to_deploy/player/ -r
-cp website/theme_resources/* to_deploy/theme_resources/ -r
+cp -R website/player/* to_deploy/player/
+cp -R website/theme_resources/* to_deploy/theme_resources/
