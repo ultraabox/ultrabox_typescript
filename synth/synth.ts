@@ -8743,8 +8743,28 @@ export class Synth {
                                         foundMod = true;
                                         // Need to re-sort the notes by start time to make the next part much less painful.
                                         pattern.notes.sort(function (a, b) { return (a.start == b.start) ? a.pitches[0] - b.pitches[0] : a.start - b.start; });
-                                        for (const note of pattern.notes) {
+                                        for (let noteIndex: number = 0; noteIndex < pattern.notes.length; noteIndex++) {
+                                            const note: Note = pattern.notes[noteIndex];
                                             if (note.pitches[0] == (Config.modCount - 1 - mod)) {
+                                                if (
+                                                    noteIndex + 1 < pattern.notes.length
+                                                    && note.pitches[0] === pattern.notes[noteIndex + 1].pitches[0]
+                                                    && note.start === pattern.notes[noteIndex + 1].start
+                                                ) {
+                                                    // TODO: This is a kludge to prevent the computed song length from becoming negative.
+                                                    //
+                                                    // The assumption in the addition below is that `currentPart <= note.start`, but it won't be the case if there are
+                                                    // e.g. two notes on top of each other at the same pitch, which was present in at least one issue report we've seen.
+                                                    //
+                                                    // At the time of writing this comment, the cause for that note overlap is unknown (presumably some issue in the editor).
+                                                    // In the meantime, it's easy to paper over this, and crucially, it won't destructively change any songs out there.
+                                                    // Once the actual issue is fixed, overlaps like this probably should be normalized away at song reading/writing time instead.
+                                                    //
+                                                    // This is likely an issue in JummBox as well, though there it doesn't seem to prevent audio exporting,
+                                                    // presumably because of the higher minimum value for tempo.
+                                                    continue;
+                                                }
+
                                                 // Compute samples up to this note
                                                 totalSamples += (Math.min(partsInBar - currentPart, note.start - currentPart)) * Config.ticksPerPart * this.getSamplesPerTickSpecificBPM(prevTempo);
 
