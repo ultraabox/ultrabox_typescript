@@ -11,7 +11,12 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - platform: 'ubuntu-latest'
+          - platform: 'macos-latest'
+    runs-on: ${{ matrix.platform }}
     steps:
       - name: Check out the specified branch of this repository
         uses: actions/checkout@v4
@@ -34,51 +39,62 @@ jobs:
         run: |
           npm run package
       - name: Bundle and compress win32-ia32 build
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
           7z a -t7z -m0=lzma2 -mx=9 UltraBox-win32-ia32.7z ./UltraBox-win32-ia32/*
       - name: Bundle and compress win32-x64 build
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
           7z a -t7z -m0=lzma2 -mx=9 UltraBox-win32-x64.7z ./UltraBox-win32-x64/*
       - name: Bundle and compress darwin-x64 build
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
           7z a -t7z -m0=lzma2 -mx=9 UltraBox-darwin-x64.7z ./UltraBox-darwin-x64/*
       - name: Bundle and compress darwin-arm64 build
+        if: ${{ matrix.platform == 'macos-latest' }}
         run: |
           7z a -t7z -m0=lzma2 -mx=9 UltraBox-darwin-arm64.7z ./UltraBox-darwin-arm64/*
       - name: Bundle and compress linux-x64 build
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
           7z a -t7z -m0=lzma2 -mx=9 UltraBox-linux-x64.7z ./UltraBox-linux-x64/*
       - name: Make artifact for win32-ia32 build
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
         uses: actions/upload-artifact@v4
         with:
           name: UltraBox-win32-ia32
           path: ./UltraBox-win32-ia32.7z
           compression-level: 0
       - name: Make artifact for win32-x64 build
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
         uses: actions/upload-artifact@v4
         with:
           name: UltraBox-win32-x64
           path: ./UltraBox-win32-x64.7z
           compression-level: 0
       - name: Make artifact for darwin-x64 build
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
         uses: actions/upload-artifact@v4
         with:
           name: UltraBox-darwin-x64
           path: ./UltraBox-darwin-x64.7z
           compression-level: 0
       - name: Make artifact for darwin-arm64 build
+        if: ${{ matrix.platform == 'macos-latest' }}
         uses: actions/upload-artifact@v4
         with:
           name: UltraBox-darwin-arm64
           path: ./UltraBox-darwin-arm64.7z
           compression-level: 0
       - name: Make artifact for linux-x64 build
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
         uses: actions/upload-artifact@v4
         with:
           name: UltraBox-linux-x64
           path: ./UltraBox-linux-x64.7z
           compression-level: 0
       - name: Make artifact for html build
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
         uses: actions/upload-artifact@v4
         with:
           name: UltraBox-html
