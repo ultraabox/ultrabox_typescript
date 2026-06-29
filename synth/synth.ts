@@ -1818,8 +1818,10 @@ export class Instrument {
         }
         if (effectsIncludeChord(this.effects)) {
             instrumentObject["chord"] = this.getChord().name;
-            instrumentObject["fastTwoNoteArp"] = this.fastTwoNoteArp;
-            instrumentObject["arpeggioSpeed"] = this.arpeggioSpeed;
+            if (this.getChord() === Config.chords.dictionary["arpeggio"]) {
+                instrumentObject["fastTwoNoteArp"] = this.fastTwoNoteArp;
+                instrumentObject["arpeggioSpeed"] = this.arpeggioSpeed;
+            }
         }
         if (effectsIncludePitchShift(this.effects)) {
             instrumentObject["pitchShiftSemitones"] = this.pitchShift;
@@ -1982,7 +1984,9 @@ export class Instrument {
             }
         } else if (this.type == InstrumentType.fm || this.type == InstrumentType.fm6op) {
             const operatorArray: Object[] = [];
-            for (const operator of this.operators) {
+            const operatorCount: number = Config.operatorCount + (this.type === InstrumentType.fm6op ? 2 : 0);
+            for (let operatorIndex: number = 0; operatorIndex < operatorCount; operatorIndex++) {
+                const operator: Operator = this.operators[operatorIndex];
                 operatorArray.push({
                     "frequency": Config.operatorFrequencies[operator.frequency].name,
                     "amplitude": operator.amplitude,
