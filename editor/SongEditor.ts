@@ -1419,6 +1419,10 @@ export class SongEditor {
             this._fileMenu.removeChild(this._fileMenu.querySelector("[value='shareUrl']")!);
         }
 
+        if (OFFLINE) {
+            this._fileMenu.appendChild(option({ value: "toggleElectronMenu" }, "Toggle Electron Menu"));
+        }
+
         this._scaleSelect.appendChild(optgroup({ label: "Edit" },
             option({ value: "forceScale" }, "Snap Notes To Scale"),
             option({ value: "customize" }, "Edit Custom Scale"),
@@ -5002,6 +5006,10 @@ export class SongEditor {
                 break;
             case "songRecovery":
                 this._openPrompt("songRecovery");
+                break;
+            case "toggleElectronMenu":
+                // TODO: Ideally I'd write actual types for this, but it doesn't matter that much.
+                (window as any).toggleElectronMenu?.();
                 break;
         }
         this._fileMenu.selectedIndex = 0;
