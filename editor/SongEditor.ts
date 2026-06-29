@@ -5008,8 +5008,9 @@ export class SongEditor {
                 this._openPrompt("songRecovery");
                 break;
             case "toggleElectronMenu":
-                // TODO: Ideally I'd write actual types for this, but it doesn't matter that much.
-                (window as any).toggleElectronMenu?.();
+                if (OFFLINE) {
+                    toggleElectronMenu();
+                }
                 break;
         }
         this._fileMenu.selectedIndex = 0;

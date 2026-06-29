@@ -398,6 +398,7 @@ declare global {
     const OFFLINE: boolean; // for UB offline
     const getDirname: () => Promise<string>; // for UB offline
     const pathJoin: (...parts: string[]) => Promise<string>; // for UB offline
+    const toggleElectronMenu: () => Promise<void>; // for UB offline
     const kicksample: number[];
     const snaresample: number[];
     const pianosample: number[];
