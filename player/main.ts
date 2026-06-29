@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { Dictionary, DictionaryArray, EnvelopeType, InstrumentType, Transition, Chord, Envelope, Config } from "../synth/SynthConfig";
+import { Dictionary, DictionaryArray, EnvelopeType, InstrumentType, Transition, Chord, Envelope, Config, sampleLoadEvents, SampleLoadedEvent } from "../synth/SynthConfig";
 import { ColorConfig } from "../editor/ColorConfig";
 import { NotePin, Note, Pattern, Instrument, Channel, Synth } from "../synth/synth";
 import { oscilloscopeCanvas } from "../global/Oscilloscope";
@@ -220,6 +220,14 @@ const volumeBarContainer: SVGSVGElement = SVG.svg({ style: `touch-action: none; 
 	outVolumeBar,
 	outVolumeCap,
 );
+
+const sampleLoadingBar: HTMLDivElement = div({ style: `width: 0%; height: 100%; background-color: ${ColorConfig.sampleLoaded};` });
+const sampleFailedBar: HTMLDivElement = div({ style: `width: 0%; height: 100%; background-color: ${ColorConfig.sampleFailed};` });
+const sampleLoadingBarContainer: HTMLDivElement = div({ style: `overflow: hidden; margin: auto; width: 90%; height: 5px; display: flex; background-color: ${ColorConfig.indicatorSecondary};` },
+	sampleLoadingBar,
+	sampleFailedBar,
+);
+
 document.body.appendChild(visualizationContainer);
 document.body.appendChild(
 		div({style: `flex-shrink: 0; height: 20vh; min-height: 22px; max-height: 70px; display: flex; align-items: center;`},
@@ -228,7 +236,10 @@ document.body.appendChild(
 		volumeIcon,
 		volumeSlider,
 		zoomButton,
-		volumeBarContainer,
+		div({ style: "display: flex; flex-direction: column;" },
+			volumeBarContainer,
+			sampleLoadingBarContainer,
+		),
 		oscilloscope.canvas, //make it auto remove itself later
 		titleText,
 		editLink,
@@ -392,6 +403,12 @@ function volumeUpdate(): void {
 function animateVolume(useOutVolumeCap: number, historicOutCap: number): void {
 	outVolumeBar.setAttribute("width", "" + Math.min(144, useOutVolumeCap * 144));
 	outVolumeCap.setAttribute("x", "" + (8 + Math.min(144, historicOutCap * 144)));
+}
+
+function updateSampleLoadingBar(e: SampleLoadedEvent): void {
+	sampleLoadingBar.style.width = `${e.computeSamplesLoadedPercentage()}%`;
+	sampleFailedBar.style.width = `${e.computeSamplesFailedPercentage()}%`;
+	sampleLoadingBarContainer.title = `Out of ${e.totalSamples} samples, ${e.samplesLoaded} loaded, and ${e.samplesFailed} did not load`;
 }
 
 function onTogglePlay(): void {
@@ -764,6 +781,7 @@ zoomButton.addEventListener("click", onToggleZoom);
 copyLink.addEventListener("click", onCopyClicked);
 shareLink.addEventListener("click", onShareClicked);
 window.addEventListener("hashchange", hashUpdatedExternally);
+sampleLoadEvents.addEventListener("sampleloaded", (event) => updateSampleLoadingBar(event));
 
 hashUpdatedExternally();
 renderLoopIcon();

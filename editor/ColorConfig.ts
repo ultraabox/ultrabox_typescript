@@ -5717,6 +5717,8 @@ export class ColorConfig {
     public static readonly modLabelPrimaryText: string = "var(--mod-label-primary-text, black)";
     public static readonly disabledNotePrimary: string = "var(--disabled-note-primary, #999)";
     public static readonly disabledNoteSecondary: string = "var(--disabled-note-secondary, #666)";
+	public static readonly sampleLoaded: string = "var(--indicator-primary, #74f)"; // TODO: New variable for this?
+	public static readonly sampleFailed: string = "var(--sample-failed, #f00)";
 
 	public static c_pitchSecondaryChannelHue: number = 0;
 	public static c_pitchSecondaryChannelHueScale: number = 0;

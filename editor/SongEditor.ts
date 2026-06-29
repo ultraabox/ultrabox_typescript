@@ -1274,8 +1274,9 @@ export class SongEditor {
         ),
     );
 
-    private readonly _sampleLoadingBar: HTMLDivElement = div({ style: `width: 0%; height: 100%; background-color: ${ColorConfig.indicatorPrimary};` });
-    private readonly _sampleLoadingBarContainer: HTMLDivElement = div({ style: `width: 80%; height: 4px; overflow: hidden; margin-left: auto; margin-right: auto; margin-top: 0.5em; cursor: pointer; background-color: ${ColorConfig.indicatorSecondary};` }, this._sampleLoadingBar);
+    private readonly _sampleLoadingBar: HTMLDivElement = div({ style: `width: 0%; height: 100%; background-color: ${ColorConfig.sampleLoaded};` });
+    private readonly _sampleFailedBar: HTMLDivElement = div({ style: `width: 0%; height: 100%; background-color: ${ColorConfig.sampleFailed};` });
+    private readonly _sampleLoadingBarContainer: HTMLDivElement = div({ style: `width: 80%; height: 4px; overflow: hidden; margin-left: auto; margin-right: auto; margin-top: 0.5em; cursor: pointer; display: flex; background-color: ${ColorConfig.indicatorSecondary};` }, this._sampleLoadingBar, this._sampleFailedBar);
     private readonly _sampleLoadingStatusContainer: HTMLDivElement = div({ style: "cursor: pointer;" },
         div({ style: `margin-top: 0.5em; text-align: center; color: ${ColorConfig.secondaryText};` }, "Sample Loading Status"),
         div({ class: "selectRow", style: "height: 6px; margin-bottom: 0.5em;" },
@@ -1723,15 +1724,9 @@ export class SongEditor {
         this._openPrompt("sampleLoadingStatus");
     }
 
-    private _updateSampleLoadingBar(_e: Event): void {
-        // @TODO: Avoid this cast and type EventTarget/Event properly.
-        const e: SampleLoadedEvent = <SampleLoadedEvent>_e;
-        const percent: number = (
-            e.totalSamples === 0
-            ? 0
-            : Math.floor((e.samplesLoaded / e.totalSamples) * 100)
-        );
-        this._sampleLoadingBar.style.width = `${percent}%`;
+    private _updateSampleLoadingBar(e: SampleLoadedEvent): void {
+        this._sampleLoadingBar.style.width = `${e.computeSamplesLoadedPercentage()}%`;
+        this._sampleFailedBar.style.width = `${e.computeSamplesFailedPercentage()}%`;
     }
 
     private _toggleAlgorithmCanvas(e:Event):void {

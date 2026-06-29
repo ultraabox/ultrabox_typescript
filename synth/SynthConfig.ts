@@ -286,12 +286,14 @@ export class SampleLoadingState {
     public urlTable: Dictionary<string>;
     public totalSamples: number;
     public samplesLoaded: number;
+    public samplesFailed: number;
 
     constructor() {
-	this.statusTable = {};
-	this.urlTable = {};
-	this.totalSamples = 0;
-	this.samplesLoaded = 0;
+        this.statusTable = {};
+        this.urlTable = {};
+        this.totalSamples = 0;
+        this.samplesLoaded = 0;
+        this.samplesFailed = 0;
     }
 }
 
@@ -300,16 +302,41 @@ export const sampleLoadingState: SampleLoadingState = new SampleLoadingState();
 export class SampleLoadedEvent extends Event {
     public readonly totalSamples: number;
     public readonly samplesLoaded: number;
+    public readonly samplesFailed: number;
 
-    constructor(totalSamples: number, samplesLoaded: number) {
-	super("sampleloaded");
-	this.totalSamples = totalSamples;
-	this.samplesLoaded = samplesLoaded;
+    constructor(totalSamples: number, samplesLoaded: number, samplesFailed: number) {
+        super("sampleloaded");
+        this.totalSamples = totalSamples;
+        this.samplesLoaded = samplesLoaded;
+        this.samplesFailed = samplesFailed;
+    }
+
+    computeSamplesLoadedPercentage(): number {
+        return (
+            this.totalSamples === 0
+            ? 0
+            : Math.round((this.samplesLoaded / this.totalSamples) * 100)
+        );
+    }
+
+    computeSamplesFailedPercentage(): number {
+        return (
+            this.totalSamples === 0
+            ? 0
+            : Math.round((this.samplesFailed / this.totalSamples) * 100)
+        );
     }
 }
 
 export interface SampleLoadEventMap {
     "sampleloaded": SampleLoadedEvent;
+}
+
+export interface SampleLoadEvents extends EventTarget {
+    addEventListener<K extends keyof SampleLoadEventMap>(type: K, listener: (this: SampleLoadEvents, ev: SampleLoadEventMap[K]) => void, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+    removeEventListener<K extends keyof SampleLoadEventMap>(type: K, listener: (this: SampleLoadEvents, ev: SampleLoadEventMap[K]) => void, options?: boolean | EventListenerOptions): void;
+    removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
 }
 
 export class SampleLoadEvents extends EventTarget {
@@ -367,7 +394,8 @@ export async function startLoadingSample(url: string, chipWaveIndex: number, pre
 	sampleLoadingState.statusTable[chipWaveIndex] = SampleLoadingStatus.loaded;
 	sampleLoadEvents.dispatchEvent(new SampleLoadedEvent(
 	    sampleLoadingState.totalSamples,
-	    sampleLoadingState.samplesLoaded
+	    sampleLoadingState.samplesLoaded,
+        sampleLoadingState.samplesFailed
 	));
 	if (!closedSampleLoaderAudioContext) {
 	    closedSampleLoaderAudioContext = true;
@@ -376,7 +404,13 @@ export async function startLoadingSample(url: string, chipWaveIndex: number, pre
     }).catch((error) => {
 	//console.error(error);
 	sampleLoadingState.statusTable[chipWaveIndex] = SampleLoadingStatus.error;
-	alert("Failed to load " + url + ":\n" + error);
+    sampleLoadingState.samplesFailed++;
+    sampleLoadEvents.dispatchEvent(new SampleLoadedEvent(
+	    sampleLoadingState.totalSamples,
+	    sampleLoadingState.samplesLoaded,
+        sampleLoadingState.samplesFailed
+	));
+	console.log("Failed to load " + url + ":\n" + error);
 	if (!closedSampleLoaderAudioContext) {
 	    closedSampleLoaderAudioContext = true;
 	    sampleLoaderAudioContext.close();
@@ -522,324 +556,265 @@ export function loadBuiltInSamples(set: number): void {
     const defaultIntegratedSamples: Float32Array = Config.chipWaves[defaultIndex].samples;
     const defaultSamples: Float32Array = Config.rawRawChipWaves[defaultIndex].samples;
 
-    if (set == 0) {
-	// Create chip waves with the wrong sound.
-	const chipWaves = [
-	    { name: "paandorasbox kick", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-	    { name: "paandorasbox snare", expression: 3.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-	    { name: "paandorasbox piano1", expression: 3.0, isSampled: true, isPercussion: false, extraSampleDetune: 2 },
-	    { name: "paandorasbox WOW", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: 0 },
-	    { name: "paandorasbox overdrive", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -2 },
-	    { name: "paandorasbox trumpet", expression: 3.0, isSampled: true, isPercussion: false, extraSampleDetune: 1.2 },
-	    { name: "paandorasbox saxophone", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -5 },
-	    { name: "paandorasbox orchestrahit", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 4.2 },
-	    { name: "paandorasbox detatched violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 4.2 },
-	    { name: "paandorasbox synth", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -0.8 },
-	    { name: "paandorasbox sonic3snare", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-	    { name: "paandorasbox come on", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 0 },
-	    { name: "paandorasbox choir", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -3 },
-	    { name: "paandorasbox overdriveguitar", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -6.2 },
-	    { name: "paandorasbox flute", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -6 },
-	    { name: "paandorasbox legato violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -28 },
-	    { name: "paandorasbox tremolo violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -33 },
-	    { name: "paandorasbox amen break", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -55 },
-	    { name: "paandorasbox pizzicato violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -11 },
-	    { name: "paandorasbox tim allen grunt", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -20 },
-	    { name: "paandorasbox tuba", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 44 },
-	    { name: "paandorasbox loopingcymbal", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -17 },
-	    { name: "paandorasbox standardkick", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -7 },
-	    { name: "paandorasbox standardsnare", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-	    { name: "paandorasbox closedhihat", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 5 },
-	    { name: "paandorasbox foothihat", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 4 },
-	    { name: "paandorasbox openhihat", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -31 },
-	    { name: "paandorasbox crashcymbal", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -43 },
-	    { name: "paandorasbox pianoC4", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -42.5 },
-	    { name: "paandorasbox liver pad", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -22.5 },
-	    { name: "paandorasbox marimba", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -15.5 },
-	    { name: "paandorasbox susdotwav", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -24.5 },
-	    { name: "paandorasbox wackyboxtts", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -17.5 },
-	    { name: "paandorasbox peppersteak_1", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -42.2 },
-	    { name: "paandorasbox peppersteak_2", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -47 },
-	    { name: "paandorasbox vinyl_noise", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -50 },
-	    { name: "paandorasbeta slap bass", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -56 },
-	    { name: "paandorasbeta HD EB overdrive guitar", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -60 },
-	    { name: "paandorasbeta sunsoft bass", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -18.5 },
-	    { name: "paandorasbeta masculine choir", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -50 },
-	    { name: "paandorasbeta feminine choir", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -60.5 },
-	    { name: "paandorasbeta tololoche", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -29.5 },
-	    { name: "paandorasbeta harp", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -54 },
-	    { name: "paandorasbeta pan flute", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -58 },
-	    { name: "paandorasbeta krumhorn", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -46 },
-	    { name: "paandorasbeta timpani", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -50 },
-	    { name: "paandorasbeta crowd hey", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -29 },
-	    { name: "paandorasbeta wario land 4 brass", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -68 },
-	    { name: "paandorasbeta wario land 4 rock organ", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -63 },
-	    { name: "paandorasbeta wario land 4 DAOW", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -35 },
-	    { name: "paandorasbeta wario land 4 hour chime", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -47.5 },
-	    { name: "paandorasbeta wario land 4 tick", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -12.5 },
-	    { name: "paandorasbeta kirby kick", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
-	    { name: "paandorasbeta kirby snare", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
-	    { name: "paandorasbeta kirby bongo", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
-	    { name: "paandorasbeta kirby click", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
-	    { name: "paandorasbeta sonor kick", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -28.5 },
-	    { name: "paandorasbeta sonor snare", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -28.5 },
-	    { name: "paandorasbeta sonor snare (left hand)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -22.5 },
-	    { name: "paandorasbeta sonor snare (right hand)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -22.5 },
-	    { name: "paandorasbeta sonor high tom", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -41.5 },
-	    { name: "paandorasbeta sonor low tom", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -41.5 },
-	    { name: "paandorasbeta sonor hihat (closed)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -17 },
-	    { name: "paandorasbeta sonor hihat (half opened)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -21 },
-	    { name: "paandorasbeta sonor hihat (open)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -54.5 },
-	    { name: "paandorasbeta sonor hihat (open tip)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -43.5 },
-	    { name: "paandorasbeta sonor hihat (pedal)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -28 },
-	    { name: "paandorasbeta sonor crash", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -51 },
-	    { name: "paandorasbeta sonor crash (tip)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -50.5 },
-	    { name: "paandorasbeta sonor ride", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46 }
-	];
+    type PartiallyLoadedChipWave = Omit<ChipWave, "samples" | "index">;
 
-	sampleLoadingState.totalSamples += chipWaves.length;
-
-	// This assumes that Config.rawRawChipWaves and Config.chipWaves have
-	// the same number of elements.
-	const startIndex: number = Config.rawRawChipWaves.length;
-	for (const chipWave of chipWaves) {
-	    const chipWaveIndex: number = Config.rawRawChipWaves.length;
-	    const rawChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultSamples };
-	    const rawRawChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultSamples };
-	    const integratedChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultIntegratedSamples };
-	    Config.rawRawChipWaves[chipWaveIndex] = rawRawChipWave;
-	    Config.rawRawChipWaves.dictionary[chipWave.name] = rawRawChipWave;
-	    Config.rawChipWaves[chipWaveIndex] = rawChipWave;
-	    Config.rawChipWaves.dictionary[chipWave.name] = rawChipWave;
-	    Config.chipWaves[chipWaveIndex] = integratedChipWave;
-	    Config.chipWaves.dictionary[chipWave.name] = rawChipWave;
-	    sampleLoadingState.statusTable[chipWaveIndex] = SampleLoadingStatus.loading;
-	    sampleLoadingState.urlTable[chipWaveIndex] = bundledSamplePacks.legacy;
-	}
-
-	loadScript("samples.js")
-	.then(() => loadScript("samples2.js"))
-	.then(() => loadScript("samples3.js"))
-	.then(() => loadScript("drumsamples.js"))
-	.then(() => loadScript("wario_samples.js"))
-	.then(() => loadScript("kirby_samples.js"))
-	.then(() => {
-	    // Now put the right sounds in there after everything
-	    // got loaded.
-	    const chipWaveSamples: Float32Array[] = [
-		centerWave(kicksample),
-		centerWave(snaresample),
-		centerWave(pianosample),
-		centerWave(WOWsample),
-		centerWave(overdrivesample),
-		centerWave(trumpetsample),
-		centerWave(saxophonesample),
-		centerWave(orchhitsample),
-		centerWave(detatchedviolinsample),
-		centerWave(synthsample),
-		centerWave(sonic3snaresample),
-		centerWave(comeonsample),
-		centerWave(choirsample),
-		centerWave(overdrivensample),
-		centerWave(flutesample),
-		centerWave(legatoviolinsample),
-		centerWave(tremoloviolinsample),
-		centerWave(amenbreaksample),
-		centerWave(pizzicatoviolinsample),
-		centerWave(timallengruntsample),
-		centerWave(tubasample),
-		centerWave(loopingcymbalsample),
-		centerWave(kickdrumsample),
-		centerWave(snaredrumsample),
-		centerWave(closedhihatsample),
-		centerWave(foothihatsample),
-		centerWave(openhihatsample),
-		centerWave(crashsample),
-		centerWave(pianoC4sample),
-		centerWave(liverpadsample),
-		centerWave(marimbasample),
-		centerWave(susdotwavsample),
-		centerWave(wackyboxttssample),
-		centerWave(peppersteak1),
-		centerWave(peppersteak2),
-		centerWave(vinyl),
-		centerWave(slapbass),
-		centerWave(hdeboverdrive),
-		centerWave(sunsoftbass),
-		centerWave(masculinechoir),
-		centerWave(femininechoir),
-		centerWave(southtololoche),
-		centerWave(harp),
-		centerWave(panflute),
-		centerWave(krumhorn),
-		centerWave(timpani),
-		centerWave(crowdhey),
-		centerWave(warioland4brass),
-		centerWave(warioland4organ),
-		centerWave(warioland4daow),
-		centerWave(warioland4hourchime),
-		centerWave(warioland4tick),
-		centerWave(kirbykick),
-		centerWave(kirbysnare),
-		centerWave(kirbybongo),
-		centerWave(kirbyclick),
-		centerWave(funkkick),
-		centerWave(funksnare),
-		centerWave(funksnareleft),
-		centerWave(funksnareright),
-		centerWave(funktomhigh),
-		centerWave(funktomlow),
-		centerWave(funkhihatclosed),
-		centerWave(funkhihathalfopen),
-		centerWave(funkhihatopen),
-		centerWave(funkhihatopentip),
-		centerWave(funkhihatfoot),
-		centerWave(funkcrash),
-		centerWave(funkcrashtip),
-		centerWave(funkride)
-	    ];
-	    let chipWaveIndexOffset: number = 0;
-	    for (const chipWaveSample of chipWaveSamples) {
-		const chipWaveIndex: number = startIndex + chipWaveIndexOffset;
-		Config.rawChipWaves[chipWaveIndex].samples = chipWaveSample;
-		Config.rawRawChipWaves[chipWaveIndex].samples = chipWaveSample;
-		Config.chipWaves[chipWaveIndex].samples = performIntegral(chipWaveSample);
-		sampleLoadingState.statusTable[chipWaveIndex] = SampleLoadingStatus.loaded;
-		sampleLoadingState.samplesLoaded++;
-		sampleLoadEvents.dispatchEvent(new SampleLoadedEvent(
-		    sampleLoadingState.totalSamples,
-		    sampleLoadingState.samplesLoaded
-		));
-		chipWaveIndexOffset++;
-	    }
-	});
-	//EditorConfig.presetCategories[EditorConfig.presetCategories.length] = {name: "Legacy Sample Presets", presets:  { name: "Earthbound O. Guitar", midiProgram: 80, settings: { "type": "chip", "eqFilter": [], "effects": [], "transition": "normal", "fadeInSeconds": 0, "fadeOutTicks": -1, "chord": "arpeggio", "wave": "paandorasbox overdrive", "unison": "none", "envelopes": [] } }, index: EditorConfig.presetCategories.length,};
+    interface BuiltInSampleSet {
+        name: typeof bundledSamplePacks[keyof typeof bundledSamplePacks];
+        chipWaves: PartiallyLoadedChipWave[];
+        associatedScripts: string[];
+        getSampleArrays: () => Float32Array[];
     }
-    else if (set == 1) {
-	// Create chip waves with the wrong sound.
-	const chipWaves = [
-	    { name: "chronoperc1final", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-	    { name: "synthkickfm", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-	    { name: "mcwoodclick1", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-	    { name: "acoustic snare", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 }
-	];
 
-	sampleLoadingState.totalSamples += chipWaves.length;
+    const sets: BuiltInSampleSet[] = [
+        {
+            name: bundledSamplePacks.legacy,
+            chipWaves: [
+                { name: "paandorasbox kick", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
+                { name: "paandorasbox snare", expression: 3.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
+                { name: "paandorasbox piano1", expression: 3.0, isSampled: true, isPercussion: false, extraSampleDetune: 2 },
+                { name: "paandorasbox WOW", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: 0 },
+                { name: "paandorasbox overdrive", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -2 },
+                { name: "paandorasbox trumpet", expression: 3.0, isSampled: true, isPercussion: false, extraSampleDetune: 1.2 },
+                { name: "paandorasbox saxophone", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -5 },
+                { name: "paandorasbox orchestrahit", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 4.2 },
+                { name: "paandorasbox detatched violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 4.2 },
+                { name: "paandorasbox synth", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -0.8 },
+                { name: "paandorasbox sonic3snare", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
+                { name: "paandorasbox come on", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 0 },
+                { name: "paandorasbox choir", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -3 },
+                { name: "paandorasbox overdriveguitar", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -6.2 },
+                { name: "paandorasbox flute", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -6 },
+                { name: "paandorasbox legato violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -28 },
+                { name: "paandorasbox tremolo violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -33 },
+                { name: "paandorasbox amen break", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -55 },
+                { name: "paandorasbox pizzicato violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -11 },
+                { name: "paandorasbox tim allen grunt", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -20 },
+                { name: "paandorasbox tuba", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 44 },
+                { name: "paandorasbox loopingcymbal", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -17 },
+                { name: "paandorasbox standardkick", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -7 },
+                { name: "paandorasbox standardsnare", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
+                { name: "paandorasbox closedhihat", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 5 },
+                { name: "paandorasbox foothihat", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 4 },
+                { name: "paandorasbox openhihat", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -31 },
+                { name: "paandorasbox crashcymbal", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -43 },
+                { name: "paandorasbox pianoC4", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -42.5 },
+                { name: "paandorasbox liver pad", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -22.5 },
+                { name: "paandorasbox marimba", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -15.5 },
+                { name: "paandorasbox susdotwav", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -24.5 },
+                { name: "paandorasbox wackyboxtts", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -17.5 },
+                { name: "paandorasbox peppersteak_1", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -42.2 },
+                { name: "paandorasbox peppersteak_2", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -47 },
+                { name: "paandorasbox vinyl_noise", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -50 },
+                { name: "paandorasbeta slap bass", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -56 },
+                { name: "paandorasbeta HD EB overdrive guitar", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -60 },
+                { name: "paandorasbeta sunsoft bass", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -18.5 },
+                { name: "paandorasbeta masculine choir", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -50 },
+                { name: "paandorasbeta feminine choir", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -60.5 },
+                { name: "paandorasbeta tololoche", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -29.5 },
+                { name: "paandorasbeta harp", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -54 },
+                { name: "paandorasbeta pan flute", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -58 },
+                { name: "paandorasbeta krumhorn", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -46 },
+                { name: "paandorasbeta timpani", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -50 },
+                { name: "paandorasbeta crowd hey", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -29 },
+                { name: "paandorasbeta wario land 4 brass", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -68 },
+                { name: "paandorasbeta wario land 4 rock organ", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -63 },
+                { name: "paandorasbeta wario land 4 DAOW", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -35 },
+                { name: "paandorasbeta wario land 4 hour chime", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -47.5 },
+                { name: "paandorasbeta wario land 4 tick", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -12.5 },
+                { name: "paandorasbeta kirby kick", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
+                { name: "paandorasbeta kirby snare", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
+                { name: "paandorasbeta kirby bongo", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
+                { name: "paandorasbeta kirby click", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
+                { name: "paandorasbeta sonor kick", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -28.5 },
+                { name: "paandorasbeta sonor snare", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -28.5 },
+                { name: "paandorasbeta sonor snare (left hand)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -22.5 },
+                { name: "paandorasbeta sonor snare (right hand)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -22.5 },
+                { name: "paandorasbeta sonor high tom", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -41.5 },
+                { name: "paandorasbeta sonor low tom", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -41.5 },
+                { name: "paandorasbeta sonor hihat (closed)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -17 },
+                { name: "paandorasbeta sonor hihat (half opened)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -21 },
+                { name: "paandorasbeta sonor hihat (open)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -54.5 },
+                { name: "paandorasbeta sonor hihat (open tip)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -43.5 },
+                { name: "paandorasbeta sonor hihat (pedal)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -28 },
+                { name: "paandorasbeta sonor crash", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -51 },
+                { name: "paandorasbeta sonor crash (tip)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -50.5 },
+                { name: "paandorasbeta sonor ride", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46 }
+            ],
+            associatedScripts: [
+                "samples.js",
+                "samples2.js",
+                "samples3.js",
+                "drumsamples.js",
+                "wario_samples.js",
+                "kirby_samples.js"
+            ],
+            getSampleArrays: () => [
+                centerWave(kicksample),
+                centerWave(snaresample),
+                centerWave(pianosample),
+                centerWave(WOWsample),
+                centerWave(overdrivesample),
+                centerWave(trumpetsample),
+                centerWave(saxophonesample),
+                centerWave(orchhitsample),
+                centerWave(detatchedviolinsample),
+                centerWave(synthsample),
+                centerWave(sonic3snaresample),
+                centerWave(comeonsample),
+                centerWave(choirsample),
+                centerWave(overdrivensample),
+                centerWave(flutesample),
+                centerWave(legatoviolinsample),
+                centerWave(tremoloviolinsample),
+                centerWave(amenbreaksample),
+                centerWave(pizzicatoviolinsample),
+                centerWave(timallengruntsample),
+                centerWave(tubasample),
+                centerWave(loopingcymbalsample),
+                centerWave(kickdrumsample),
+                centerWave(snaredrumsample),
+                centerWave(closedhihatsample),
+                centerWave(foothihatsample),
+                centerWave(openhihatsample),
+                centerWave(crashsample),
+                centerWave(pianoC4sample),
+                centerWave(liverpadsample),
+                centerWave(marimbasample),
+                centerWave(susdotwavsample),
+                centerWave(wackyboxttssample),
+                centerWave(peppersteak1),
+                centerWave(peppersteak2),
+                centerWave(vinyl),
+                centerWave(slapbass),
+                centerWave(hdeboverdrive),
+                centerWave(sunsoftbass),
+                centerWave(masculinechoir),
+                centerWave(femininechoir),
+                centerWave(southtololoche),
+                centerWave(harp),
+                centerWave(panflute),
+                centerWave(krumhorn),
+                centerWave(timpani),
+                centerWave(crowdhey),
+                centerWave(warioland4brass),
+                centerWave(warioland4organ),
+                centerWave(warioland4daow),
+                centerWave(warioland4hourchime),
+                centerWave(warioland4tick),
+                centerWave(kirbykick),
+                centerWave(kirbysnare),
+                centerWave(kirbybongo),
+                centerWave(kirbyclick),
+                centerWave(funkkick),
+                centerWave(funksnare),
+                centerWave(funksnareleft),
+                centerWave(funksnareright),
+                centerWave(funktomhigh),
+                centerWave(funktomlow),
+                centerWave(funkhihatclosed),
+                centerWave(funkhihathalfopen),
+                centerWave(funkhihatopen),
+                centerWave(funkhihatopentip),
+                centerWave(funkhihatfoot),
+                centerWave(funkcrash),
+                centerWave(funkcrashtip),
+                centerWave(funkride)
+            ],
+        },
+        {
+            name: bundledSamplePacks.nintaribox,
+            chipWaves: [
+                { name: "chronoperc1final", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
+                { name: "synthkickfm", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
+                { name: "mcwoodclick1", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
+                { name: "acoustic snare", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 }
+            ],
+            associatedScripts: ["nintaribox_samples.js"],
+            getSampleArrays: () => [
+                centerWave(chronoperc1finalsample),
+                centerWave(synthkickfmsample),
+                centerWave(woodclicksample),
+                centerWave(acousticsnaresample)
+            ],
+        },
+        {
+            name: bundledSamplePacks.mariopaintbox,
+            chipWaves: [
+                { name: "cat", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -3 },
+                { name: "gameboy", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 7 },
+                { name: "mario", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 0 },
+                { name: "drum", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 4 },
+                { name: "yoshi", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -16 },
+                { name: "star", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -16 },
+                { name: "fire flower", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -1 },
+                { name: "dog", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -1 },
+                { name: "oink", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 3 },
+                { name: "swan", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 1 },
+                { name: "face", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -12 }
+            ],
+            associatedScripts: ["mario_paintbox_samples.js"],
+            getSampleArrays: () => [
+                centerWave(catpaintboxsample),
+                centerWave(gameboypaintboxsample),
+                centerWave(mariopaintboxsample),
+                centerWave(drumpaintboxsample),
+                centerWave(yoshipaintboxsample),
+                centerWave(starpaintboxsample),
+                centerWave(fireflowerpaintboxsample),
+                centerWave(dogpaintbox),
+                centerWave(oinkpaintbox),
+                centerWave(swanpaintboxsample),
+                centerWave(facepaintboxsample)
+            ],
+        }
+    ];
 
-	// This assumes that Config.rawRawChipWaves and Config.chipWaves have
-	// the same number of elements.
-	const startIndex: number = Config.rawRawChipWaves.length;
-	for (const chipWave of chipWaves) {
-	    const chipWaveIndex: number = Config.rawRawChipWaves.length;
-	    const rawChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultSamples };
-	    const rawRawChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultSamples };
-	    const integratedChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultIntegratedSamples };
-	    Config.rawRawChipWaves[chipWaveIndex] = rawRawChipWave;
-	    Config.rawRawChipWaves.dictionary[chipWave.name] = rawRawChipWave;
-	    Config.rawChipWaves[chipWaveIndex] = rawChipWave;
-	    Config.rawChipWaves.dictionary[chipWave.name] = rawChipWave;
-	    Config.chipWaves[chipWaveIndex] = integratedChipWave;
-	    Config.chipWaves.dictionary[chipWave.name] = rawChipWave;
-	    sampleLoadingState.statusTable[chipWaveIndex] = SampleLoadingStatus.loading;
-	    sampleLoadingState.urlTable[chipWaveIndex] = bundledSamplePacks.nintaribox;
-	}
+    if (set >= 0 && set < sets.length) {
+        const setDefinition: BuiltInSampleSet = sets[set];
 
-	loadScript("nintaribox_samples.js")
-	.then(() => {
-	    // Now put the right sounds in there after everything
-	    // got loaded.
-	    const chipWaveSamples: Float32Array[] = [
-		centerWave(chronoperc1finalsample),
-		centerWave(synthkickfmsample),
-		centerWave(woodclicksample),
-		centerWave(acousticsnaresample)
-	    ];
-	    let chipWaveIndexOffset: number = 0;
-	    for (const chipWaveSample of chipWaveSamples) {
-		const chipWaveIndex: number = startIndex + chipWaveIndexOffset;
-		Config.rawChipWaves[chipWaveIndex].samples = chipWaveSample;
-		Config.rawRawChipWaves[chipWaveIndex].samples = chipWaveSample;
-		Config.chipWaves[chipWaveIndex].samples = performIntegral(chipWaveSample);
-		sampleLoadingState.statusTable[chipWaveIndex] = SampleLoadingStatus.loaded;
-		sampleLoadingState.samplesLoaded++;
-		sampleLoadEvents.dispatchEvent(new SampleLoadedEvent(
-		    sampleLoadingState.totalSamples,
-		    sampleLoadingState.samplesLoaded
-		));
-		chipWaveIndexOffset++;
-	    }
-	});
-    }
-    else if (set == 2) {
-	// Create chip waves with the wrong sound.
-	const chipWaves = [
-	    { name: "cat", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -3 },
-	    { name: "gameboy", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 7 },
-	    { name: "mario", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 0 },
-	    { name: "drum", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 4 },
-	    { name: "yoshi", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -16 },
-	    { name: "star", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -16 },
-	    { name: "fire flower", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -1 },
-	    { name: "dog", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -1 },
-	    { name: "oink", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 3 },
-	    { name: "swan", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 1 },
-	    { name: "face", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -12 }
-	];
+        // Create chip waves with the wrong sound.
+        const chipWaves = setDefinition.chipWaves;
+        sampleLoadingState.totalSamples += chipWaves.length;
 
-	sampleLoadingState.totalSamples += chipWaves.length;
+        // This assumes that Config.rawRawChipWaves and Config.chipWaves have
+        // the same number of elements.
+        const startIndex: number = Config.rawRawChipWaves.length;
+        for (const chipWave of chipWaves) {
+            const chipWaveIndex: number = Config.rawRawChipWaves.length;
+            const rawChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultSamples };
+            const rawRawChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultSamples };
+            const integratedChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultIntegratedSamples };
+            Config.rawRawChipWaves[chipWaveIndex] = rawRawChipWave;
+            Config.rawRawChipWaves.dictionary[chipWave.name] = rawRawChipWave;
+            Config.rawChipWaves[chipWaveIndex] = rawChipWave;
+            Config.rawChipWaves.dictionary[chipWave.name] = rawChipWave;
+            Config.chipWaves[chipWaveIndex] = integratedChipWave;
+            Config.chipWaves.dictionary[chipWave.name] = rawChipWave;
+            sampleLoadingState.statusTable[chipWaveIndex] = SampleLoadingStatus.loading;
+            sampleLoadingState.urlTable[chipWaveIndex] = setDefinition.name;
+        }
 
-	// This assumes that Config.rawRawChipWaves and Config.chipWaves have
-	// the same number of elements.
-	const startIndex: number = Config.rawRawChipWaves.length;
-	for (const chipWave of chipWaves) {
-	    const chipWaveIndex: number = Config.rawRawChipWaves.length;
-	    const rawChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultSamples };
-	    const rawRawChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultSamples };
-	    const integratedChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultIntegratedSamples };
-	    Config.rawRawChipWaves[chipWaveIndex] = rawRawChipWave;
-	    Config.rawRawChipWaves.dictionary[chipWave.name] = rawRawChipWave;
-	    Config.rawChipWaves[chipWaveIndex] = rawChipWave;
-	    Config.rawChipWaves.dictionary[chipWave.name] = rawChipWave;
-	    Config.chipWaves[chipWaveIndex] = integratedChipWave;
-	    Config.chipWaves.dictionary[chipWave.name] = rawChipWave;
-	    sampleLoadingState.statusTable[chipWaveIndex] = SampleLoadingStatus.loading;
-	    sampleLoadingState.urlTable[chipWaveIndex] = bundledSamplePacks.mariopaintbox;
-	}
-
-	loadScript("mario_paintbox_samples.js")
-	.then(() => {
-	    // Now put the right sounds in there after everything
-	    // got loaded.
-	    const chipWaveSamples: Float32Array[] = [
-		centerWave(catpaintboxsample),
-		centerWave(gameboypaintboxsample),
-		centerWave(mariopaintboxsample),
-		centerWave(drumpaintboxsample),
-		centerWave(yoshipaintboxsample),
-		centerWave(starpaintboxsample),
-		centerWave(fireflowerpaintboxsample),
-		centerWave(dogpaintbox),
-		centerWave(oinkpaintbox),
-		centerWave(swanpaintboxsample),
-		centerWave(facepaintboxsample)
-	    ];
-	    let chipWaveIndexOffset: number = 0;
-	    for (const chipWaveSample of chipWaveSamples) {
-		const chipWaveIndex: number = startIndex + chipWaveIndexOffset;
-		Config.rawChipWaves[chipWaveIndex].samples = chipWaveSample;
-		Config.rawRawChipWaves[chipWaveIndex].samples = chipWaveSample;
-		Config.chipWaves[chipWaveIndex].samples = performIntegral(chipWaveSample);
-		sampleLoadingState.statusTable[chipWaveIndex] = SampleLoadingStatus.loaded;
-		sampleLoadingState.samplesLoaded++;
-		sampleLoadEvents.dispatchEvent(new SampleLoadedEvent(
-		    sampleLoadingState.totalSamples,
-		    sampleLoadingState.samplesLoaded
-		));
-		chipWaveIndexOffset++;
-	    }
-	});
-    }
-    else {
+        Promise.all(setDefinition.associatedScripts.map(url => loadScript(url))).then(() => {
+            // Now put the right sounds in there after everything
+            // got loaded.
+            const chipWaveSamples: Float32Array[] = setDefinition.getSampleArrays();
+            let chipWaveIndexOffset: number = 0;
+            for (const chipWaveSample of chipWaveSamples) {
+                const chipWaveIndex: number = startIndex + chipWaveIndexOffset;
+                Config.rawChipWaves[chipWaveIndex].samples = chipWaveSample;
+                Config.rawRawChipWaves[chipWaveIndex].samples = chipWaveSample;
+                Config.chipWaves[chipWaveIndex].samples = performIntegral(chipWaveSample);
+                sampleLoadingState.statusTable[chipWaveIndex] = SampleLoadingStatus.loaded;
+                sampleLoadingState.samplesLoaded++;
+                sampleLoadEvents.dispatchEvent(new SampleLoadedEvent(
+                    sampleLoadingState.totalSamples,
+                    sampleLoadingState.samplesLoaded,
+                    sampleLoadingState.samplesFailed
+                ));
+                chipWaveIndexOffset++;
+            }
+        });
+    } else {
         console.log("invalid set of built-in samples");
     }
 }
