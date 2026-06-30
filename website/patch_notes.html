@@ -61,6 +61,28 @@
 <font color="#FF8EC5">Patch Notes (in reverse chronological order);</font>
 </h1>
 
+<h2>Version 2.2.17</h2>
+	<h3> <ul>
+	<li>Correct input range for filter x/y mods</li>
+	<li>Modulated supersaw spread is now limited to avoid completely breaking the audio</li>
+	<li>Pitch shift can now be added via the Modulator Setting menu</li>
+	<li>The samples prompt was rewritten to be clearer</li>
+	<li>Fixed an off-by-one bug when using a temporary loop and a next bar mod</li>
+	<!-- <li>The offline version is now built via GitHub Actions</li> -->
+	<!-- <li><code>beepbox_synth.js</code> will no longer change <code>document.title</code></li> -->
+	<li>Effects are now reset in the song player when using <code>[</code>, <code>]</code>, or <code>f</code></li>
+	<li>Fixed an off-by-one bug with aliased custom chip instruments</li>
+	<li>Mute and solo should now say "unmute" and "unsolo" in the channel dropdown as necessary</li>
+	<li>Mod channels will no longer show the arrow for notes that are connected across bars when dragging</li>
+	<li>The drumset spectrum prompt will no longer use an unrelated initial undo state</li>
+	<li>Unison sign is now used with aliased samples</li>
+	<li>Song length when exporting should no longer become negative due to overlapping extreme tempo changes</li>
+	<li>Make Electron's built-in menu accessible via the File menu in the offline version</li>
+	<!-- <li>Some unnecessary instrument fields were removed from JSON exports</li> -->
+	<li>Added AbyssBox's sample loading bar in the song player</li>
+	</ul> </h3>
+	<p>6/30/2026</p>
+
 <h2>Version 2.2.16</h2>
 	<h3> <ul>
 	<li>Added the AxoBox and LemmBox themes</li>
