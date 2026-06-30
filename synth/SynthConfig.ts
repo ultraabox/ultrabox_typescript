@@ -789,7 +789,7 @@ export function loadBuiltInSamples(set: number): void {
             Config.rawChipWaves[chipWaveIndex] = rawChipWave;
             Config.rawChipWaves.dictionary[chipWave.name] = rawChipWave;
             Config.chipWaves[chipWaveIndex] = integratedChipWave;
-            Config.chipWaves.dictionary[chipWave.name] = rawChipWave;
+            Config.chipWaves.dictionary[chipWave.name] = integratedChipWave;
             sampleLoadingState.statusTable[chipWaveIndex] = SampleLoadingStatus.loading;
             sampleLoadingState.urlTable[chipWaveIndex] = setDefinition.name;
         }
