@@ -214,7 +214,7 @@ const stop2: SVGStopElement = SVG.stop({ "stop-color": "orange", offset: "90%" }
 const stop3: SVGStopElement = SVG.stop({ "stop-color": "red", offset: "100%" });
 const gradient: SVGGradientElement = SVG.linearGradient({ id: "volumeGrad2", gradientUnits: "userSpaceOnUse" }, stop1, stop2, stop3);
 const defs: SVGDefsElement = SVG.defs({}, gradient);
-const volumeBarContainer: SVGSVGElement = SVG.svg({ style: `touch-action: none; overflow: hidden; margin: auto;`, width: "160px", height: "10px", preserveAspectRatio: "none" },
+const volumeBarContainer: SVGSVGElement = SVG.svg({ style: `touch-action: none; overflow: hidden; margin: auto; width: 100%;`, width: "160px", height: "10px", preserveAspectRatio: "none" },
 	defs,
 	outVolumeBarBg,
 	outVolumeBar,
