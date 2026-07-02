@@ -1,6 +1,6 @@
 {
 	"name": "UltraBox",
-	"version": "2.2.15",
+	"version": "2.2.17",
 	"description": "UltraBox is a mod of BeepBox that aims to combine every other beepmod into one.",
 	"author": "Main",
 	"contributors": [
@@ -24,7 +24,8 @@
 		"build-offline-html": "bash ./compile_beepbox_offline_html.sh",
 		"deploy-files": "bash ./deploy_files.sh",
 		"start": "electron ./to_deploy",
-		"package": "electron-packager ./to_deploy --platform=darwin,linux,win32 --arch=ia32,x64,arm64 --asar --overwrite && npm run build-offline-html",
+		"package": "electron-packager ./to_deploy --platform=darwin,linux,win32 --arch=ia32,x64 --asar --overwrite && npm run build-offline-html",
+		"package-macos": "electron-packager ./to_deploy --platform=darwin --arch=arm64 --asar --overwrite && npm run build-offline-html",
 		"package-host": "electron-packager ./to_deploy UltraBox --asar --overwrite && npm run build-offline-html"
 	},
 	"repository": {

@@ -36,8 +36,13 @@ jobs:
         run: |
           npm run build-offline
       - name: Package
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
           npm run package
+      - name: Package (on macOS)
+        if: ${{ matrix.platform == 'macos-latest' }}
+        run: |
+          npm run package-macos
       - name: Bundle and compress win32-ia32 build
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
