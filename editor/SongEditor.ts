@@ -4982,8 +4982,12 @@ export class SongEditor {
                 (<any>navigator).share({ url: new URL("#" + this._doc.song.toBase64String(), location.href).href });
                 break;
             case "shortenUrl":
-                let shortenerStrategy: string = "https://tinyurl.com/api-create.php?url=";
+                let shortenerStrategy: string = "https://wackybox.org/api-create.php?url=";
                 const localShortenerStrategy: string | null = window.localStorage.getItem("shortenerStrategySelect");
+
+                if (localShortenerStrategy == "tinyurl") {
+                    window.localStorage.setItem("shortenerStrategySelect", "wackybox");    
+                }
 
                 // if (localShortenerStrategy == "beepboxnet") shortenerStrategy = "https://www.beepbox.net/api-create.php?url=";
                 if (localShortenerStrategy == "isgd") shortenerStrategy = "https://is.gd/create.php?format=simple&url=";

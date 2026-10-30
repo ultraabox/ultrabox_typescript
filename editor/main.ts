@@ -9,6 +9,7 @@ import {NotePin, Note, Pattern, Instrument, Channel, Song, Synth} from "../synth
 import {SongDocument} from "./SongDocument";
 import {ExportPrompt} from "./ExportPrompt";
 import {ChangePreset} from "./changes";
+import "select2";
 
 
 //namespace beepbox {
