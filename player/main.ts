@@ -6,6 +6,7 @@ import { EditorConfig } from "../editor/EditorConfig";
 import { NotePin, Note, Pattern, Instrument, Channel, Synth } from "../synth/synth";
 import { oscilloscopeCanvas } from "../global/Oscilloscope";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
+import { MediaSessionIntegration } from "../global/MediaSession";
 
 	const {a, button, div, h1, input, canvas} = HTML;
 	const {svg, circle, rect, path} = SVG;
@@ -420,12 +421,14 @@ function onTogglePlay(): void {
 		if (synth.playing) {
 			synth.pause();
 			volumeUpdate();
+			mediaSessionIntegration.pauseMediaSession();
 		} else {
 			synth.play();
 			setLocalStorage("playerId", id);
 			animate();
 			clearInterval(pauseIfAnotherPlayerStartsHandle!);
 			pauseIfAnotherPlayerStartsHandle = setInterval(pauseIfAnotherPlayerStarts, 100);
+			mediaSessionIntegration.playMediaSession();
 		}
 	}
 	renderPlayButton();
@@ -725,6 +728,47 @@ function onKeyPressed(event: KeyboardEvent): void {
 			break;
 	}
 }
+
+const mediaSessionIntegration: MediaSessionIntegration = new MediaSessionIntegration();
+
+mediaSessionIntegration._onMediaSessionPlay = () => {
+	if (!synth.playing) onTogglePlay();
+}
+mediaSessionIntegration._onMediaSessionPause = () => {
+	if (synth.playing) onTogglePlay();
+}
+mediaSessionIntegration._onMediaSessionStop = () => {
+	if (synth.playing) onTogglePlay();
+	// F keybind behavior
+	synth.playhead = 0;
+	synth.resetEffects();
+	synth.computeLatestModValues();
+	renderPlayhead();
+}
+mediaSessionIntegration._onMediaSessionSeekBackward = () => {
+	// left brace behavior
+	synth.goToPrevBar();
+	synth.resetEffects();
+	synth.computeLatestModValues();
+	renderPlayhead();
+}
+mediaSessionIntegration._onMediaSessionSeekForward = () => {
+	// right brace behavior
+	synth.goToNextBar();
+	synth.resetEffects();
+	synth.computeLatestModValues();
+	renderPlayhead();
+}
+mediaSessionIntegration._onMediaSessionSeekTo = () => {
+	// H keybind behavior
+	// @TODO: test this
+	synth.goToBar(Math.floor(synth.playhead));
+	synth.snapToBar();
+	synth.resetEffects();
+	synth.computeLatestModValues();
+	renderPlayhead();
+}
+mediaSessionIntegration.updateMediaSessionTitle(synth.song?.title);
 
 function onCopyClicked(): void {
 	// Set as any to allow compilation without clipboard types (since, uh, I didn't write this bit and don't know the proper types library) -jummbus

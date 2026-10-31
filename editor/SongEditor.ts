@@ -1718,6 +1718,75 @@ export class SongEditor {
             layoutOption.disabled = true;
             layoutOption.setAttribute("hidden", "");
         }
+
+        this._doc.performance._mediaSessionIntegration._onMediaSessionPlay = () => {
+			this._doc.performance.play();
+		}
+		this._doc.performance._mediaSessionIntegration._onMediaSessionPause = () => {
+			this._doc.performance.pause();
+		}
+        this._doc.performance._mediaSessionIntegration._onMediaSessionStop = () => {
+			this._doc.performance.pause();
+            // Behavior from F keybind
+            this._doc.synth.loopBarStart = -1;
+            this._doc.synth.loopBarEnd = -1;
+            this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+
+            this._doc.synth.goToBar(this._doc.song.loopStart);
+            this._doc.synth.snapToBar();
+            this._doc.synth.initModFilters(this._doc.song);
+            this._doc.synth.computeLatestModValues();
+            if (this._doc.prefs.autoFollow) {
+                this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
+            }
+		}
+        this._doc.performance._mediaSessionIntegration._onMediaSessionSeekBackward = () => {
+            // Behavior from left brace keybind
+            this._doc.synth.goToPrevBar();
+            this._doc.synth.initModFilters(this._doc.song);
+            this._doc.synth.computeLatestModValues();
+            if (Math.floor(this._doc.synth.playhead) < this._doc.synth.loopBarStart || Math.floor(this._doc.synth.playhead) > this._doc.synth.loopBarEnd) {
+                this._doc.synth.loopBarStart = -1;
+                this._doc.synth.loopBarEnd = -1;
+                this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+            }
+
+            if (this._doc.prefs.autoFollow) {
+                this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
+            }
+		}
+        this._doc.performance._mediaSessionIntegration._onMediaSessionSeekForward = () => {
+            // Behavior from right brace keybind
+            this._doc.synth.goToNextBar();
+            this._doc.synth.initModFilters(this._doc.song);
+            this._doc.synth.computeLatestModValues();
+            if (Math.floor(this._doc.synth.playhead) < this._doc.synth.loopBarStart || Math.floor(this._doc.synth.playhead) > this._doc.synth.loopBarEnd) {
+                this._doc.synth.loopBarStart = -1;
+                this._doc.synth.loopBarEnd = -1;
+                this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+            }
+
+            if (this._doc.prefs.autoFollow) {
+                this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
+            }
+		}
+        this._doc.performance._mediaSessionIntegration._onMediaSessionSeekTo = () => {
+            // Behavior from H keybind
+			this._doc.synth.goToBar(this._doc.bar);
+            this._doc.synth.snapToBar();
+            this._doc.synth.initModFilters(this._doc.song);
+            this._doc.synth.computeLatestModValues();
+
+            if (Math.floor(this._doc.synth.playhead) < this._doc.synth.loopBarStart || Math.floor(this._doc.synth.playhead) > this._doc.synth.loopBarEnd) {
+                this._doc.synth.loopBarStart = -1;
+                this._doc.synth.loopBarEnd = -1;
+                this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+            }
+
+            if (this._doc.prefs.autoFollow) {
+                this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
+            }
+		}
     }
 
     private _whenSampleLoadingStatusClicked = (): void => {
@@ -3444,6 +3513,7 @@ export class SongEditor {
          // Writeback to mods if control key is held while moving a slider.
          this.handleModRecording();
 
+        this._doc.performance._mediaSessionIntegration.updateMediaSessionTitle(this._doc.song.title);
         }
     
         public handleModRecording(): void {
