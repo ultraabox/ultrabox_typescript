@@ -43,6 +43,26 @@ jobs:
         if: ${{ matrix.platform == 'macos-latest' }}
         run: |
           npm run package-macos
+      - name: Add "samples" folder to win32-ia32 build
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        run: |
+          mkdir -p UltraBox-win32-ia32/samples
+      - name: Add "samples" folder to win32-x64 build
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        run: |
+          mkdir -p UltraBox-win32-x64/samples
+      - name: Add "samples" folder to darwin-x64 build
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        run: |
+          mkdir -p UltraBox-darwin-x64/samples
+      - name: Add "samples" folder to darwin-arm64 build
+        if: ${{ matrix.platform == 'macos-latest' }}
+        run: |
+          mkdir -p UltraBox-darwin-arm64/samples
+      - name: Add "samples" folder to linux-x64 build
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        run: |
+          mkdir -p UltraBox-linux-x64/samples
       - name: Bundle and compress win32-ia32 build
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
