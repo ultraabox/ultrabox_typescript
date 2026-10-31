@@ -534,7 +534,7 @@ export class ExportPrompt implements Prompt {
                 writeEventTime(0);
                 writer.writeUint8(MidiEventType.meta);
                 writer.writeMidi7Bits(MidiMetaEventMessage.text);
-                writer.writeMidiAscii("Composed with jummbus.bitbucket.io");
+                writer.writeMidiAscii("Composed with ultraabox.github.io");
 
                 writeEventTime(0);
                 writer.writeUint8(MidiEventType.meta);
