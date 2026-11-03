@@ -6,6 +6,7 @@ import {SongDocument} from "./SongDocument";
 import {ChangeGroup} from "./Change";
 import {ChangeChannelBar, ChangePinTime, ChangeEnsurePatternExists, ChangeNoteAdded, ChangeInsertBars, ChangeDeleteBars, ChangeNoteLength} from "./changes";
 import {Piano} from "./Piano";
+import { MediaSessionIntegration } from "../global/MediaSession";
 
 export class SongPerformance {
 	private _channelIsDrum: boolean = false;
@@ -26,6 +27,8 @@ export class SongPerformance {
 	private _lastNote: Note | null = null;
 	private _lastBassNote: Note | null = null;
 	private _recordingChange: ChangeGroup | null = null;
+
+	public readonly _mediaSessionIntegration: MediaSessionIntegration = new MediaSessionIntegration();
 	
 	constructor(private _doc: SongDocument) {
 		this._doc.notifier.watch(this._documentChanged);
@@ -38,6 +41,7 @@ export class SongPerformance {
 		this._doc.synth.enableMetronome = false;
 		this._doc.synth.countInMetronome = false
 		this._doc.synth.maintainLiveInput();
+		this._mediaSessionIntegration.playMediaSession();
 	}
 	
 	public pause(): void {
@@ -63,6 +67,7 @@ export class SongPerformance {
 			this._doc.synth.goToBar(this._doc.bar);
 		}
 		this._doc.synth.snapToBar();
+		this._mediaSessionIntegration.pauseMediaSession();
 	}
 	
 	public record(): void {
