@@ -1665,19 +1665,6 @@ export class SongEditor {
 		//this._trackAndMuteContainer.addEventListener("scroll", this._onTrackAreaScroll, {capture: false, passive: true});
 		(<Function>this._trackAndMuteContainer.addEventListener)("scroll", this._onTrackAreaScroll, {capture: false, passive: true});
 
-        if (isMobile) {
-            const autoPlayOption: HTMLOptionElement = <HTMLOptionElement>this._optionsMenu.querySelector("[value=autoPlay]");
-            autoPlayOption.disabled = true;
-            autoPlayOption.setAttribute("hidden", "");
-        }
-
-        // Beepbox uses availHeight too, but I have a display that fails the check even when one of the other layouts would look better on it. -jummbus
-        if (window.screen.availWidth < 710 /*|| window.screen.availHeight < 710*/) {
-            const layoutOption: HTMLOptionElement = <HTMLOptionElement>this._optionsMenu.querySelector("[value=layout]");
-            layoutOption.disabled = true;
-            layoutOption.setAttribute("hidden", "");
-        }
-
         this._doc.performance._mediaSessionIntegration._onMediaSessionPlay = () => {
 			this._doc.performance.play();
 		}
