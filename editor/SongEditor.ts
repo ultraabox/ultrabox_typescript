@@ -4942,10 +4942,6 @@ export class SongEditor {
                 let shortenerStrategy: string = "https://wackybox.org/api-create.php?url=";
                 const localShortenerStrategy: string | null = window.localStorage.getItem("shortenerStrategySelect");
 
-                if (localShortenerStrategy == "tinyurl") {
-                    window.localStorage.setItem("shortenerStrategySelect", "wackybox");    
-                }
-
                 // if (localShortenerStrategy == "beepboxnet") shortenerStrategy = "https://www.beepbox.net/api-create.php?url=";
                 if (localShortenerStrategy == "isgd") shortenerStrategy = "https://is.gd/create.php?format=simple&url=";
 

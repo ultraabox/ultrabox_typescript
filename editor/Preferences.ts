@@ -199,7 +199,7 @@ export class Preferences {
 		this.showInstrumentScrollbars = window.localStorage.getItem("showInstrumentScrollbars") == "true";
 		this.closePromptByClickoff = window.localStorage.getItem("closePromptByClickoff") == "true";
 		this.frostedGlassBackground = window.localStorage.getItem("frostedGlassBackground") == "true";
-		this.shortenerStrategySelect = window.localStorage.getItem("shortenerStrategySelect") || "tinyurl";
+		this.shortenerStrategySelect = window.localStorage.getItem("shortenerStrategySelect") || "wackybox";
 		this.removeWhitespace = window.localStorage.getItem("removeWhitespace") != "false";
 		this.keyboardLayout = window.localStorage.getItem("keyboardLayout") || "pianoTransposingC";
 		this.bassOffset = (+(<any>window.localStorage.getItem("bassOffset"))) || 0;

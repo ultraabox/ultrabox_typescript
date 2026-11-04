@@ -232,7 +232,7 @@ export class PreferencesPrompt implements Prompt {
 	private readonly _metronomeWhileRecording: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 
     private readonly _shortenerStrategySelect: HTMLSelectElement = select({ style: "width: 100%;" },
-        option({ value: "tinyurl" }, "tinyurl.com"),
+        option({ value: "wackybox" }, "wackybox.org"),
         option({ value: "isgd" }, "is.gd"),
 	);
 
