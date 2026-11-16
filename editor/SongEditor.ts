@@ -1,6 +1,5 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-//import {Layout} from "./Layout";
 import { sampleLoadEvents, SampleLoadedEvent, InstrumentType, EffectType, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeNoteFilter, effectsIncludeDistortion, effectsIncludeBitcrusher, effectsIncludePanning, effectsIncludeChorus, effectsIncludeEcho, effectsIncludeReverb, DropdownID } from "../synth/SynthConfig";
 import { BarScrollBar } from "./BarScrollBar";
 import { BeatsPerBarPrompt } from "./BeatsPerBarPrompt";
@@ -50,6 +49,7 @@ import { VisualLoopControlsPrompt } from "./VisualLoopControlsPrompt";
 import { SampleLoadingStatusPrompt } from "./SampleLoadingStatusPrompt";
 import { AddSamplesPrompt } from "./AddSamplesPrompt";
 import { PreferencesPrompt } from "./PreferencesPrompt";
+import { Layout } from "./Layout";
 
 const { button, div, input, select, span, optgroup, option, canvas } = HTML;
 
@@ -2033,6 +2033,14 @@ export class SongEditor {
             this._promptContainerBG.style.display = "none";
             this._promptContainer.style.display = "none";
             this._promptContainer.removeChild(this.prompt.container);
+            if (this.prompt instanceof PreferencesPrompt) {
+                // revert unsaved preferences
+                this._doc.prefs.reload();
+                Layout.setLayout(this._doc.prefs.layout);
+                ColorConfig.setTheme(this._doc.prefs.colorTheme);
+                // update UI to reflect preferences
+                this.whenUpdated();
+            }
             this.prompt.cleanUp();
             this.prompt = null;
             this.refocusStage();
@@ -2183,6 +2191,18 @@ export class SongEditor {
         }
 
         this._piano.container.style.display = prefs.showLetters ? "" : "none";
+        if (this.prompt instanceof PreferencesPrompt) {
+            this._piano.forceRender();
+            if (this._doc.prefs.frostedGlassBackground == true) {
+                this._promptContainerBG.style.backgroundColor = "rgba(0,0,0, 0)"; 
+                this._promptContainerBG.style.backdropFilter = "brightness(0.9) blur(14px)"; 
+                this._promptContainerBG.style.opacity = "1";
+            } else {
+                this._promptContainerBG.style.backgroundColor = "var(--editor-background)"; 
+                this._promptContainerBG.style.backdropFilter = ""; 
+                this._promptContainerBG.style.opacity = "0.5"; 
+            }
+        }
         this._octaveScrollBar.container.style.display = prefs.showScrollBar ? "" : "none";
         this._barScrollBar.container.style.display = this._doc.song.barCount > this._doc.trackVisibleBars ? "" : "none";
         this._volumeBarBox.style.display = this._doc.prefs.displayVolumeBar ? "" : "none";
@@ -3820,6 +3840,15 @@ export class SongEditor {
                 } else {
                     if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
                         this._openPrompt("songRecovery");
+                    }
+                }
+                event.preventDefault();
+                break;
+            case 188: // ,
+                if (canPlayNotes) break;
+                if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
+                    if (event.shiftKey) {
+                        this._openPrompt("preferences");
                     }
                 }
                 event.preventDefault();

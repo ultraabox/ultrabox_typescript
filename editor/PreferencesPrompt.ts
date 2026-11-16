@@ -176,7 +176,7 @@ export class PreferencesPrompt implements Prompt {
 			option({ value: "foxbox" }, "FoxBox"),
 			option({ value: "midbox" }, "Midbox"),
 			option({ value: "dogebox2" }, "Dogebox2"),
-			option({ value: "abyssbox classic"}, "AbyssBox Classic"),
+			option({ value: "abyssbox"}, "AbyssBox"),
 			option({ value: "abyssbox light"}, "AbyssBox Light"),
 			option({ value: "nepbox" }, "Nepbox"),
 			option({ value: "slarmoosbox"}, "Slarmoo's Box"),
@@ -236,11 +236,11 @@ export class PreferencesPrompt implements Prompt {
         option({ value: "isgd" }, "is.gd"),
 	);
 
-	private readonly _fileAreaButton: HTMLButtonElement = button({ class: "fileAreaButton no-underline" }, "File");
-	private readonly _audioAreaButton: HTMLButtonElement = button({ class: "audioAreaButton no-underline" }, "Audio");
-	private readonly _layoutAreaButton: HTMLButtonElement = button({ class: "layoutAreaButton no-underline"}, "Layout");
-	private readonly _themeAreaButton: HTMLButtonElement = button({ class: "themeAreaButton no-underline"}, "Theme");
-	private readonly _inputAreaButton: HTMLButtonElement = button({ class: "inputAreaButton no-underline last-button" }, "Input");
+	private readonly _fileAreaButton: HTMLButtonElement = button({ class: "no-underline" }, "File");
+	private readonly _audioAreaButton: HTMLButtonElement = button({ class: "no-underline" }, "Audio");
+	private readonly _layoutAreaButton: HTMLButtonElement = button({ class: "no-underline"}, "Layout");
+	private readonly _themeAreaButton: HTMLButtonElement = button({ class: "no-underline"}, "Theme");
+	private readonly _inputAreaButton: HTMLButtonElement = button({ class: "no-underline last-button" }, "Input");
 	private readonly _tabContainer: HTMLDivElement = div({ class: "instrument-bar", style: "justify-content: center; width: 100%;" },
 		this._fileAreaButton,
 		this._audioAreaButton,
@@ -248,7 +248,6 @@ export class PreferencesPrompt implements Prompt {
 		this._themeAreaButton,
 		this._inputAreaButton,
 	);
-	// private readonly _divWidth: number = isMobile ? 25 : 50;
 
 	private readonly _autoPlayRow: HTMLDivElement = div(
 		label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em; text-indent: 1em;" },
@@ -407,7 +406,7 @@ export class PreferencesPrompt implements Prompt {
 		div({ style: "text-align: left;" },
 			h3("Note Recording"),
 			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em; text-indent: 1em;" },
-				"Always show recording button:",
+				"Always display recording button:",
 				this._showRecordButton,
 			),
 			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em; text-indent: 1em;" },
@@ -539,6 +538,23 @@ export class PreferencesPrompt implements Prompt {
 		this._customThemeFileReset.addEventListener("click", this._resetCustomThemeFile);
 		this._colorInput.addEventListener("change", this._whenColorsChanged);
 		this._themeSelect.addEventListener("change", this._previewTheme);
+		this._layoutForm.addEventListener("change", this._previewLayout);
+		this._showFifth.addEventListener("change", this._previewMiscPrefs);
+		this._frostedGlassBackground.addEventListener("change", this._previewMiscPrefs);
+		this._showChannels.addEventListener("change", this._previewMiscPrefs);
+		this._showInstrumentScrollbars.addEventListener("change", this._previewMiscPrefs);
+		this._instrumentCopyPaste.addEventListener("change", this._previewMiscPrefs);
+		this._instrumentImportExport.addEventListener("change", this._previewMiscPrefs);
+		this._instrumentButtonsAtTop.addEventListener("change", this._previewMiscPrefs);
+		this._showLetters.addEventListener("change", this._previewMiscPrefs);
+		this._displayVolumeBar.addEventListener("change", this._previewMiscPrefs);
+		this._showOscilloscope.addEventListener("change", this._previewMiscPrefs);
+		this._showSampleLoadingStatus.addEventListener("change", this._previewMiscPrefs);
+		this._showDescription.addEventListener("change", this._previewMiscPrefs);
+		this._showScrollBar.addEventListener("change", this._previewMiscPrefs);
+		this._closePromptByClickoff.addEventListener("change", this._previewMiscPrefs);
+		this._enableChannelMuting.addEventListener("change", this._previewMiscPrefs);
+		this._showRecordButton.addEventListener("change", this._previewMiscPrefs);
 
 		this._fileAreaButton.addEventListener("click", this._renderFileArea);
 		this._audioAreaButton.addEventListener("click", this._renderAudioArea);
@@ -563,6 +579,7 @@ export class PreferencesPrompt implements Prompt {
 	}
 
 	private _close = (): void => {
+		// Layout.setLayout(this._doc.prefs.layout);
 		if (!this._newTheme && this._lastTheme != null) {
 			ColorConfig.setTheme(this._lastTheme);
 		} else if (!this._newTheme) {
@@ -590,7 +607,6 @@ export class PreferencesPrompt implements Prompt {
 
     private _confirm = (): void => {
 		this._doc.prefs.showFifth = this._showFifth.checked;
-		this._doc.prefs.notesFlashWhenPlayed = this._notesFlashWhenPlayed.checked;
 		this._doc.prefs.frostedGlassBackground = this._frostedGlassBackground.checked;
 		this._doc.prefs.showChannels = this._showChannels.checked;
 		this._doc.prefs.showInstrumentScrollbars = this._showInstrumentScrollbars.checked;
@@ -662,7 +678,7 @@ export class PreferencesPrompt implements Prompt {
 		this._themeArea.style.display = "none";
 		this._inputArea.style.display = "none";
 		this._fileAreaButton.style.color = ColorConfig.invertedText;
-		this._fileAreaButton.style.backgroundColor = ColorConfig.primaryText;
+		this._fileAreaButton.style.backgroundColor = ColorConfig.loopAccent;
 		this._audioAreaButton.style.color = ColorConfig.primaryText;
 		this._audioAreaButton.style.backgroundColor = ColorConfig.uiWidgetBackground;
 		this._layoutAreaButton.style.color = ColorConfig.primaryText;
@@ -685,7 +701,7 @@ export class PreferencesPrompt implements Prompt {
 		this._fileAreaButton.style.color = ColorConfig.primaryText;
 		this._fileAreaButton.style.backgroundColor = ColorConfig.uiWidgetBackground;
 		this._audioAreaButton.style.color = ColorConfig.invertedText;
-		this._audioAreaButton.style.backgroundColor = ColorConfig.primaryText;
+		this._audioAreaButton.style.backgroundColor = ColorConfig.loopAccent;
 		this._layoutAreaButton.style.color = ColorConfig.primaryText;
 		this._layoutAreaButton.style.backgroundColor = ColorConfig.uiWidgetBackground;
 		this._themeAreaButton.style.color = ColorConfig.primaryText;
@@ -708,7 +724,7 @@ export class PreferencesPrompt implements Prompt {
 		this._audioAreaButton.style.color = ColorConfig.primaryText;
 		this._audioAreaButton.style.backgroundColor = ColorConfig.uiWidgetBackground;
 		this._layoutAreaButton.style.color = ColorConfig.invertedText;
-		this._layoutAreaButton.style.backgroundColor = ColorConfig.primaryText;
+		this._layoutAreaButton.style.backgroundColor = ColorConfig.loopAccent;
 		this._themeAreaButton.style.color = ColorConfig.primaryText;
 		this._themeAreaButton.style.backgroundColor = ColorConfig.uiWidgetBackground;
 		this._inputAreaButton.style.color = ColorConfig.primaryText;
@@ -731,7 +747,7 @@ export class PreferencesPrompt implements Prompt {
 		this._layoutAreaButton.style.color = ColorConfig.primaryText;
 		this._layoutAreaButton.style.backgroundColor = ColorConfig.uiWidgetBackground;
 		this._themeAreaButton.style.color = ColorConfig.invertedText;
-		this._themeAreaButton.style.backgroundColor = ColorConfig.primaryText;
+		this._themeAreaButton.style.backgroundColor = ColorConfig.loopAccent;
 		this._inputAreaButton.style.color = ColorConfig.primaryText;
 		this._inputAreaButton.style.backgroundColor = ColorConfig.uiWidgetBackground;
 		this._currentTab = "theme";
@@ -754,7 +770,7 @@ export class PreferencesPrompt implements Prompt {
 		this._themeAreaButton.style.color = ColorConfig.primaryText;
 		this._themeAreaButton.style.backgroundColor = ColorConfig.uiWidgetBackground;
 		this._inputAreaButton.style.color = ColorConfig.invertedText;
-		this._inputAreaButton.style.backgroundColor = ColorConfig.primaryText;
+		this._inputAreaButton.style.backgroundColor = ColorConfig.loopAccent;
 		this._currentTab = "input";
 		window.localStorage.setItem("prefTab", "input");
 	}
@@ -805,6 +821,37 @@ export class PreferencesPrompt implements Prompt {
 	private _previewTheme = (): void => {
 		ColorConfig.setTheme(this._themeSelect.value);
 		this._doc.prefs.customColors = "";
+		//trick to trigger SongEditor.whenUpdated
+		window.dispatchEvent(new Event("resize"));
+	}
+
+	private _previewLayout = (): void => {
+		Layout.setLayout((<any>this._layoutForm.elements)["layout"].value);
+		//trick to trigger SongEditor.whenUpdated
+		window.dispatchEvent(new Event("resize"));
+	}
+
+	// the effects of these preferences can be seen while in the preference prompt, so we temporarily change them and force a UI update
+	// an if block in SongEditor._setPrompt reverts our changes
+	private _previewMiscPrefs = (): void => {
+		this._doc.prefs.showFifth = this._showFifth.checked;
+		this._doc.prefs.frostedGlassBackground = this._frostedGlassBackground.checked;
+		this._doc.prefs.showChannels = this._showChannels.checked;
+		this._doc.prefs.showInstrumentScrollbars = this._showInstrumentScrollbars.checked;
+		this._doc.prefs.instrumentCopyPaste = this._instrumentCopyPaste.checked;
+		this._doc.prefs.instrumentImportExport = this._instrumentImportExport.checked;
+		this._doc.prefs.instrumentButtonsAtTop = this._instrumentButtonsAtTop.checked;
+		this._doc.prefs.showLetters = this._showLetters.checked;
+		this._doc.prefs.displayVolumeBar = this._displayVolumeBar.checked;
+		this._doc.prefs.showOscilloscope = this._showOscilloscope.checked;
+		this._doc.prefs.showSampleLoadingStatus = this._showSampleLoadingStatus.checked;
+		this._doc.prefs.showDescription = this._showDescription.checked;
+		this._doc.prefs.showScrollBar = this._showScrollBar.checked;
+		this._doc.prefs.closePromptByClickoff = this._closePromptByClickoff.checked;
+		this._doc.prefs.enableChannelMuting = this._enableChannelMuting.checked;
+		this._doc.prefs.showRecordButton = this._showRecordButton.checked;
+		//trick to trigger SongEditor.whenUpdated
+		window.dispatchEvent(new Event("resize"));
 	}
 
 	private _whenColorsChanged = (): void => {
