@@ -596,6 +596,37 @@ export class PreferencesPrompt implements Prompt {
     public cleanUp = (): void => {
         this._okayButton.removeEventListener("click", this._confirm);
         this._cancelButton.removeEventListener("click", this._close);
+		this._keyboardLayout.removeEventListener("change", this._renderKeyboardLayoutPreview);
+		this._bassOffset.removeEventListener("change", this._renderKeyboardLayoutPreview);
+
+		this._customThemeFileInput.removeEventListener("change", this._whenCustomThemeFileSelected);
+		this._customThemeFileInput2.removeEventListener("change", this._whenCustomThemeFileSelected2);
+		this._customThemeFileReset.removeEventListener("click", this._resetCustomThemeFile);
+		this._colorInput.removeEventListener("change", this._whenColorsChanged);
+		this._themeSelect.removeEventListener("change", this._previewTheme);
+		this._layoutForm.removeEventListener("change", this._previewLayout);
+		this._showFifth.removeEventListener("change", this._previewMiscPrefs);
+		this._frostedGlassBackground.removeEventListener("change", this._previewMiscPrefs);
+		this._showChannels.removeEventListener("change", this._previewMiscPrefs);
+		this._showInstrumentScrollbars.removeEventListener("change", this._previewMiscPrefs);
+		this._instrumentCopyPaste.removeEventListener("change", this._previewMiscPrefs);
+		this._instrumentImportExport.removeEventListener("change", this._previewMiscPrefs);
+		this._instrumentButtonsAtTop.removeEventListener("change", this._previewMiscPrefs);
+		this._showLetters.removeEventListener("change", this._previewMiscPrefs);
+		this._displayVolumeBar.removeEventListener("change", this._previewMiscPrefs);
+		this._showOscilloscope.removeEventListener("change", this._previewMiscPrefs);
+		this._showSampleLoadingStatus.removeEventListener("change", this._previewMiscPrefs);
+		this._showDescription.removeEventListener("change", this._previewMiscPrefs);
+		this._showScrollBar.removeEventListener("change", this._previewMiscPrefs);
+		this._closePromptByClickoff.removeEventListener("change", this._previewMiscPrefs);
+		this._enableChannelMuting.removeEventListener("change", this._previewMiscPrefs);
+		this._showRecordButton.removeEventListener("change", this._previewMiscPrefs);
+
+		this._fileAreaButton.removeEventListener("click", this._renderFileArea);
+		this._audioAreaButton.removeEventListener("click", this._renderAudioArea);
+		this._layoutAreaButton.removeEventListener("click", this._renderLayoutArea);
+		this._themeAreaButton.removeEventListener("click", this._renderThemeArea);
+		this._inputAreaButton.removeEventListener("click", this._renderInputArea);
         this.container.removeEventListener("keydown", this._whenKeyPressed);
     }
 
