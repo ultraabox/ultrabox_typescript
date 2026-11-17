@@ -630,7 +630,7 @@ html {
 	mask-position: center;
 }
 
-.beepboxEditor .menu.preferences::before {
+.beepboxEditor button.preferences::before {
 	content: "";
 	flex-shrink: 0;
 	position: absolute;
@@ -739,15 +739,6 @@ html {
 
 .beepboxEditor .prompt label {
 	cursor: pointer;
-}
-
-.beepboxEditor .prompt.recordingSetupPrompt p {
-	margin-top: 0.75em;
-	margin-bottom: 0;
-}
-
-.beepboxEditor .prompt.recordingSetupPrompt > label:not(:first-child):not(.cancelButton) {
-	margin: 2px 0;
 }
 
 .beepboxEditor .layout-option {
@@ -983,6 +974,14 @@ html {
 	position: absolute;
 	top: 8px;
 	right: 8px;
+}
+
+.beepboxEditor button.okayButtonFloat {
+	float: right;
+	width: var(--button-size);
+	position: absolute;
+	right: 8px;
+	bottom: 8px;
 }
 
 .beepboxEditor .playback-bar-controls {

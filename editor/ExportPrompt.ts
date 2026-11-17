@@ -139,7 +139,7 @@ export class ExportPrompt implements Prompt {
             this._formatSelect.value = lastExportFormat;
         }
 
-        const lastExportWhitespace: boolean = window.localStorage.getItem("exportWhitespace") != "false";
+        const lastExportWhitespace: boolean | null = window.localStorage.getItem("removeWhitespace") != "false";
         if (lastExportWhitespace != null) {
             this._removeWhitespace.checked = lastExportWhitespace;
         }
@@ -231,7 +231,8 @@ export class ExportPrompt implements Prompt {
         if (this.outputStarted == true)
             return;
         window.localStorage.setItem("exportFormat", this._formatSelect.value);
-        window.localStorage.setItem("exportWhitespace", this._removeWhitespace.value);
+        this._doc.prefs.removeWhitespace = this._removeWhitespace.checked;
+        window.localStorage.setItem("removeWhitespace", String(this._removeWhitespace.checked));
         switch (this._formatSelect.value) {
             case "wav":
                 this.outputStarted = true;
